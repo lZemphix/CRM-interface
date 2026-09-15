@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM — современный дизайн-макет</title>
+<style>
+  :root{
+    --ink:#1B2430;
+    --ink-soft:#26313F;
+    --ink-line:#333F4E;
+    --paper:#F7F5F0;
+    --paper-dim:#EEE9DF;
+    --line:#DDD4C4;
+    --text:#20242B;
+    --text-muted:#6B6255;
+    --text-faint:#948C7E;
+    --accent:#2E7D6B;
+    --accent-dark:#255F52;
+    --accent-soft:#DCEAE4;
+    --warn:#C05B26;
+    --warn-soft:#F4E0D0;
+    --queue:#8B5FA6;
+    --queue-soft:#EAE1F0;
+    --radius-s:3px;
+    --radius-m:6px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    color:var(--text);
+    background:var(--ink);
+    font-size:14px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'IBM Plex Mono', ui-monospace, monospace;}
+  .app{
+    display:grid;
+    grid-template-columns:64px 300px 1fr;
+    height:100vh;
+    min-height:640px;
+    max-width:1440px;
+    margin:0 auto;
+    background:var(--paper);
+    box-shadow:0 0 60px rgba(0,0,0,0.35);
+  }
+
+  /* ---------- RAIL ---------- */
+  .rail{
+    background:var(--ink);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:16px 0;
+    border-right:1px solid #0F151C;
+  }
+  .rail-brand{
+    width:32px;height:32px;
+    border-radius:var(--radius-s);
+    background:var(--accent);
+    color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:14px;
+    margin-bottom:22px;
+    letter-spacing:-0.5px;
+  }
+  .rail-group{
+    display:flex;flex-direction:column;gap:4px;
+    width:100%;
+    align-items:center;
+  }
+  .rail-divider{
+    width:28px;height:1px;background:var(--ink-line);
+    margin:14px 0;
+  }
+  .rail-btn{
+    width:44px;height:44px;
+    border-radius:var(--radius-m);
+    display:flex;align-items:center;justify-content:center;
+    color:#8B93A0;
+    cursor:pointer;
+    position:relative;
+    border:none;background:none;
+  }
+  .rail-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6;}
+  .rail-btn:hover{background:var(--ink-soft);color:#DDE2E8;}
+  .rail-btn.active{background:var(--ink-soft);color:#fff;}
+  .rail-btn.active::before{
+    content:"";
+    position:absolute;left:-16px;top:8px;bottom:8px;width:3px;
+    background:var(--accent);border-radius:0 3px 3px 0;
+  }
+  .rail-btn.locked{color:#4A5361;cursor:default;}
+  .rail-btn.locked:hover{background:none;color:#4A5361;}
+  .rail-btn .lock-badge{
+    position:absolute;bottom:2px;right:2px;
+    width:12px;height:12px;
+    background:var(--ink);
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .rail-btn .lock-badge svg{width:8px;height:8px;stroke:#5C6675;stroke-width:2;}
+  .rail-foot{margin-top:auto;}
+  .rail-avatar{
+    width:32px;height:32px;border-radius:50%;
+    background:#3A4657;color:#DDE2E8;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:600;
+  }
+
+  /* ---------- LIST PANEL ---------- */
+  .list-panel{
+    background:var(--paper-dim);
+    border-right:1px solid var(--line);
+    display:flex;flex-direction:column;
+    overflow:hidden;
+  }
+  .list-header{
+    padding:20px 18px 14px;
+    border-bottom:1px solid var(--line);
+  }
+  .list-title{
+    font-size:19px;font-weight:600;letter-spacing:-0.2px;
+    margin:0 0 12px;
+    color:var(--text);
+  }
+  .search-box{
+    display:flex;align-items:center;gap:8px;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:var(--radius-m);
+    padding:8px 10px;
+  }
+  .search-box svg{width:14px;height:14px;stroke:var(--text-faint);fill:none;stroke-width:1.8;flex-shrink:0;}
+  .search-box input{
+    border:none;background:none;outline:none;
+    font-family:inherit;font-size:13px;color:var(--text);
+    width:100%;
+  }
+  .search-box input::placeholder{color:var(--text-faint);}
+  .list-scroll{overflow-y:auto;flex:1;}
+  .cust-row{
+    padding:12px 18px;
+    border-bottom:1px solid var(--line);
+    cursor:pointer;
+    border-left:3px solid transparent;
+    display:flex;flex-direction:column;gap:4px;
+  }
+  .cust-row:hover{background:#F4EFE3;}
+  .cust-row.selected{
+    background:var(--accent-soft);
+    border-left-color:var(--accent);
+  }
+  .cust-row-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+  .cust-name{font-weight:600;font-size:14px;color:var(--text);}
+  .cust-branch{
+    font-size:10.5px;color:var(--text-muted);
+    border:1px solid var(--line);
+    border-radius:20px;padding:2px 8px;
+    white-space:nowrap;
+  }
+  .cust-row-bottom{display:flex;justify-content:space-between;align-items:center;}
+  .cust-phone{font-size:12px;color:var(--text-muted);}
+  .source-dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:5px;position:relative;top:-1px;}
+  .list-legend{
+    padding:10px 18px;border-top:1px solid var(--line);
+    display:flex;gap:14px;flex-wrap:wrap;
+  }
+  .legend-item{font-size:11px;color:var(--text-faint);display:flex;align-items:center;}
+
+  /* ---------- DETAIL PANEL ---------- */
+  .detail-panel{
+    background:var(--paper);
+    overflow-y:auto;
+    padding:28px 40px 60px;
+  }
+  .detail-topbar{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    margin-bottom:22px;
+  }
+  .detail-name{
+    font-size:26px;font-weight:600;letter-spacing:-0.3px;margin:0 0 10px;
+  }
+  .detail-tags{display:flex;gap:8px;flex-wrap:wrap;}
+  .tag{
+    font-size:12px;color:var(--text-muted);
+    background:var(--paper-dim);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:4px 11px;
+    display:flex;align-items:center;gap:5px;
+  }
+  .tag b{color:var(--text);font-weight:600;}
+  .btn-primary{
+    background:var(--accent);color:#fff;border:none;
+    padding:9px 16px;border-radius:var(--radius-m);
+    font-family:inherit;font-size:13px;font-weight:600;
+    cursor:pointer;white-space:nowrap;
+  }
+  .btn-primary:hover{background:var(--accent-dark);}
+  .btn-ghost{
+    background:none;border:1px solid var(--line);color:var(--text);
+    padding:8px 14px;border-radius:var(--radius-m);
+    font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;
+  }
+  .btn-ghost:hover{border-color:var(--text-faint);}
+
+  section.block{margin-top:30px;}
+  .block-head{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:12px;
+  }
+  .block-title{font-size:13px;font-weight:600;color:var(--text-muted);margin:0;}
+  .add-link{font-size:12.5px;color:var(--accent-dark);cursor:pointer;font-weight:500;}
+
+  .contact-row{
+    display:flex;align-items:center;gap:12px;
+    padding:9px 0;border-bottom:1px solid var(--line);
+  }
+  .contact-row:last-child{border-bottom:none;}
+  .contact-icon{
+    width:26px;height:26px;border-radius:var(--radius-s);
+    background:var(--paper-dim);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .contact-icon svg{width:13px;height:13px;stroke:var(--text-muted);fill:none;stroke-width:1.7;}
+  .contact-value{font-size:13.5px;flex:1;}
+  .contact-label{font-size:11.5px;color:var(--text-faint);}
+
+  .note{
+    padding:14px 0;border-bottom:1px solid var(--line);
+  }
+  .note:last-of-type{border-bottom:none;}
+  .note-meta{
+    display:flex;justify-content:space-between;
+    font-size:12px;color:var(--text-faint);margin-bottom:5px;
+  }
+  .note-author{color:var(--text-muted);font-weight:500;}
+  .note-text{font-size:13.5px;color:var(--text);}
+  .note-compose{
+    margin-top:14px;display:flex;gap:10px;align-items:flex-start;
+  }
+  .note-compose textarea{
+    flex:1;resize:none;height:38px;
+    border:1px solid var(--line);border-radius:var(--radius-m);
+    padding:9px 11px;font-family:inherit;font-size:13px;color:var(--text);
+    background:var(--paper-dim);outline:none;
+  }
+  .note-compose textarea:focus{border-color:var(--accent);background:var(--paper);}
+
+  table.hist{width:100%;border-collapse:collapse;font-size:12.5px;}
+  table.hist th{
+    text-align:left;font-weight:500;color:var(--text-faint);
+    padding:6px 10px 8px 0;border-bottom:1px solid var(--line);
+    font-size:11.5px;
+  }
+  table.hist td{
+    padding:9px 10px 9px 0;border-bottom:1px solid var(--line);
+    color:var(--text);
+  }
+  table.hist tr:last-child td{border-bottom:none;}
+  .arrow{color:var(--text-faint);margin:0 6px;}
+
+  .task-mini{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 0;border-bottom:1px solid var(--line);
+  }
+  .task-mini:last-child{border-bottom:none;}
+  .status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .task-mini-title{flex:1;font-size:13.5px;}
+  .task-due{font-size:12px;color:var(--text-faint);}
+  .status-pill{
+    font-size:11px;padding:3px 9px;border-radius:20px;font-weight:500;
+  }
+
+  /* ---------- TASKS VIEW ---------- */
+  .tasks-view{display:none;}
+  .tasks-view.active{display:block;}
+  .customers-view.hidden, .placeholder-view.hidden{display:none;}
+  .tasks-columns{display:grid;grid-template-columns:1fr 1fr;gap:28px;}
+  .col-head{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:14px;
+  }
+  .col-title{font-size:15px;font-weight:600;margin:0;}
+  .col-count{
+    font-size:11.5px;color:var(--text-muted);
+    background:var(--paper-dim);border:1px solid var(--line);
+    border-radius:20px;padding:2px 9px;
+  }
+  .task-card{
+    background:var(--paper-dim);
+    border:1px solid var(--line);
+    border-radius:var(--radius-m);
+    padding:14px 16px;margin-bottom:10px;
+  }
+  .task-card-top{display:flex;justify-content:space-between;gap:10px;margin-bottom:8px;}
+  .task-card-title{font-size:14px;font-weight:600;}
+  .priority-pill{font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;height:fit-content;}
+  .task-card-meta{font-size:12px;color:var(--text-muted);margin-bottom:10px;}
+  .task-card-meta b{color:var(--text);font-weight:500;}
+  .task-card-foot{display:flex;justify-content:space-between;align-items:center;}
+  .empty-queue{
+    padding:30px 16px;text-align:center;color:var(--text-faint);
+    font-size:13px;border:1px dashed var(--line);border-radius:var(--radius-m);
+  }
+
+  /* ---------- PLACEHOLDER (branches/employees) ---------- */
+  .placeholder-view{padding-top:6px;}
+  .simple-list-item{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:14px 0;border-bottom:1px solid var(--line);
+  }
+  .simple-list-item:last-child{border-bottom:none;}
+  .simple-name{font-weight:600;font-size:14px;}
+  .simple-sub{font-size:12.5px;color:var(--text-muted);margin-top:2px;}
+
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:8px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  /* ---------- MODERN UI REFRESH ---------- */
+  :root{
+    --ink:#101828;
+    --ink-soft:#1D2939;
+    --ink-line:#344054;
+    --paper:#FFFFFF;
+    --paper-dim:#F8FAFC;
+    --line:#E4E7EC;
+    --text:#172033;
+    --text-muted:#667085;
+    --text-faint:#98A2B3;
+    --accent:#5B5BD6;
+    --accent-dark:#4949B8;
+    --accent-soft:#EEEEFF;
+    --warn:#D64545;
+    --warn-soft:#FFF0F0;
+    --queue:#7C3AED;
+    --queue-soft:#F3E8FF;
+    --radius-s:8px;
+    --radius-m:12px;
+  }
+  body{
+    background:#F1F5F9;
+    font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+  button,input,textarea{font:inherit;}
+  button:focus-visible,input:focus-visible,textarea:focus-visible{
+    outline:3px solid rgba(91,91,214,.22);outline-offset:2px;
+  }
+  .app{
+    grid-template-columns:76px 320px minmax(0,1fr);
+    width:100%;max-width:none;margin:0;box-shadow:none;background:var(--paper);
+  }
+  .rail{padding:18px 0;background:var(--ink);border-right:0;}
+  .rail-brand{width:40px;height:40px;border-radius:12px;margin-bottom:24px;background:linear-gradient(135deg,#7777EE,#4C4CC4);}
+  .rail-btn{width:44px;height:44px;border-radius:12px;transition:.16s ease;}
+  .rail-btn:hover{transform:translateY(-1px);background:rgba(255,255,255,.08);}
+  .rail-btn.active{background:var(--accent);box-shadow:0 8px 22px rgba(91,91,214,.32);}
+  .rail-btn.active::before{display:none;}
+  .rail-avatar{width:38px;height:38px;background:#344054;border:2px solid rgba(255,255,255,.18);}
+  .list-panel{background:var(--paper-dim);border-right:1px solid var(--line);}
+  .list-header{padding:22px 20px 16px;background:rgba(255,255,255,.72);backdrop-filter:blur(12px);}
+  .list-title{font-size:21px;font-weight:700;letter-spacing:-.5px;}
+  .search-box{padding:10px 12px;border-radius:12px;background:#fff;box-shadow:0 1px 2px rgba(16,24,40,.03);}
+  .search-box:focus-within{border-color:#A5A5F5;box-shadow:0 0 0 3px rgba(91,91,214,.1);}
+  .cust-row{margin:6px 10px;padding:13px 12px;border:0;border-radius:12px;gap:6px;}
+  .cust-row:hover{background:#fff;box-shadow:0 3px 12px rgba(16,24,40,.05);}
+  .cust-row.selected{background:#fff;border-left:0;box-shadow:0 6px 20px rgba(16,24,40,.08),inset 3px 0 var(--accent);}
+  .cust-name{font-size:14px;}
+  .cust-branch{font-size:11px;background:#F2F4F7;border:0;padding:3px 8px;}
+  .list-legend{display:none;}
+  .detail-panel{background:#F8FAFC;padding:28px 36px 60px;}
+  .detail-topbar{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin-bottom:18px;box-shadow:0 2px 8px rgba(16,24,40,.035);}
+  .detail-name{font-size:26px;font-weight:700;letter-spacing:-.6px;}
+  .tag{border:0;background:#F2F4F7;padding:5px 10px;}
+  .btn-primary{background:var(--accent);padding:9px 15px;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.08);}
+  .btn-primary:hover{background:var(--accent-dark);}
+  .btn-ghost{background:#fff;border-color:var(--border-strong,#D0D5DD);border-radius:10px;}
+  section.block{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-top:14px;box-shadow:0 2px 8px rgba(16,24,40,.025);}
+  .block-title{font-size:14px;color:var(--text);}
+  .contact-row,.note,.task-mini{border-color:var(--line);}
+  .note-compose textarea{border-radius:10px;background:#F8FAFC;min-height:84px;}
+  .tasks-columns{gap:18px;}
+  .task-card{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 2px 8px rgba(16,24,40,.035);}
+  .simple-list-item{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:10px;}
+  .record-head{display:flex;gap:14px;align-items:center;min-width:0;}
+  .record-avatar{width:50px;height:50px;border-radius:15px;background:linear-gradient(135deg,#EEEEFF,#D9D9FF);color:var(--accent);display:grid;place-items:center;font-weight:700;font-size:16px;flex:0 0 auto;}
+  .record-subtitle{display:flex;gap:8px;align-items:center;color:var(--text-muted);font-size:13px;flex-wrap:wrap;}
+  .live-dot{width:7px;height:7px;border-radius:50%;background:#12B76A;display:inline-block;}
+  .quick-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+  .record-stats{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:16px;}
+  .stat{background:#fff;padding:13px 16px;}
+  .stat-label{font-size:11px;color:var(--text-muted);margin-bottom:3px;}
+  .stat-value{font-size:13px;font-weight:600;}
+  .record-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;padding:0 4px;}
+  .record-tab{border:0;background:transparent;color:var(--text-muted);padding:10px 13px;font-weight:600;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;}
+  .record-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .tab-pane{display:none;}
+  .tab-pane.active{display:block;}
+  .overview-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,.75fr);gap:16px;align-items:start;}
+  .overview-grid section.block{margin-top:0;margin-bottom:16px;}
+  .next-action{border-left:3px solid var(--accent);}
+  .next-action-row{display:flex;justify-content:space-between;gap:16px;align-items:center;}
+  .eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:7px;}
+  .action-title{font-size:15px;font-weight:650;margin-bottom:4px;}
+  .action-meta{font-size:12px;color:var(--text-muted);}
+  .info-list{display:grid;gap:12px;}
+  .info-row{display:grid;grid-template-columns:105px 1fr;gap:12px;font-size:13px;}
+  .info-label{color:var(--text-muted);}
+  .timeline{position:relative;margin-top:6px;}
+  .timeline::before{content:"";position:absolute;left:7px;top:10px;bottom:10px;width:1px;background:var(--line);}
+  .timeline-item{position:relative;padding:0 0 20px 30px;}
+  .timeline-item:last-child{padding-bottom:0;}
+  .timeline-dot{position:absolute;left:0;top:4px;width:15px;height:15px;border-radius:50%;background:#fff;border:4px solid var(--accent);}
+  .timeline-title{font-size:13.5px;font-weight:600;}
+  .timeline-text{font-size:13px;color:var(--text-muted);margin-top:4px;}
+  .timeline-time{font-size:11px;color:var(--text-faint);margin-top:5px;}
+  .filter-row{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+  .filter-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 11px;font-size:12px;color:var(--text-muted);cursor:pointer;}
+  .filter-chip.active{background:var(--accent-soft);color:var(--accent);border-color:#D5D5FF;font-weight:600;}
+  .list-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .list-title-row .list-title{margin:0;}
+  .icon-add{width:32px;height:32px;border:0;border-radius:9px;background:var(--accent);color:#fff;font-size:20px;line-height:1;cursor:pointer;}
+  .list-filters{display:flex;gap:6px;margin-top:11px;overflow-x:auto;scrollbar-width:none;}
+  .list-filters .filter-chip{background:transparent;padding:5px 9px;white-space:nowrap;}
+  .cust-main{display:flex;gap:10px;align-items:center;}
+  .cust-avatar{width:35px;height:35px;border-radius:11px;background:#EAECF0;color:#475467;display:grid;place-items:center;font-size:11px;font-weight:700;flex:0 0 auto;}
+  .cust-copy{min-width:0;flex:1;}
+  .cust-meta{font-size:11.5px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .source-badge{font-size:10.5px;color:#5B21B6;background:#F3E8FF;border-radius:999px;padding:3px 7px;white-space:nowrap;}
+  .management-shell{display:grid;grid-template-columns:320px minmax(0,1fr);height:100vh;background:#F8FAFC;}
+  .entity-sidebar{display:flex;flex-direction:column;overflow:hidden;background:#fff;border-right:1px solid var(--line);}
+  .entity-sidebar-head{padding:22px 20px 16px;border-bottom:1px solid var(--line);}
+  .entity-list{padding:8px 10px;overflow-y:auto;}
+  .entity-row{display:flex;align-items:center;gap:11px;padding:12px;border-radius:12px;cursor:pointer;margin-bottom:4px;}
+  .entity-row:hover{background:#F8FAFC;}
+  .entity-row.active{background:var(--accent-soft);color:var(--accent);}
+  .entity-icon{width:38px;height:38px;border-radius:11px;background:#F2F4F7;color:#475467;display:grid;place-items:center;font-weight:700;font-size:12px;flex:0 0 auto;}
+  .entity-row.active .entity-icon{background:#fff;color:var(--accent);}
+  .entity-row-copy{min-width:0;flex:1;}
+  .entity-row-name{font-size:13.5px;font-weight:650;color:var(--text);}
+  .entity-row-sub{font-size:11.5px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+  .entity-detail{overflow-y:auto;padding:28px 36px 60px;}
+  .entity-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px;}
+  .entity-title{font-size:26px;line-height:1.2;letter-spacing:-.5px;margin:0 0 6px;}
+  .entity-subtitle{font-size:13px;color:var(--text-muted);}
+  .entity-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+  .entity-stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;}
+  .entity-stat-value{font-size:22px;font-weight:700;letter-spacing:-.4px;margin-top:3px;}
+  .entity-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(260px,.8fr);gap:16px;align-items:start;}
+  .entity-grid section.block{margin-top:0;margin-bottom:16px;}
+  .person-line{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);}
+  .person-line:last-child{border-bottom:0;}
+  .person-avatar{width:34px;height:34px;border-radius:10px;background:#F2F4F7;display:grid;place-items:center;font-size:11px;font-weight:700;color:#475467;}
+  .person-copy{flex:1;}
+  .person-name{font-size:13px;font-weight:600;}
+  .person-role{font-size:11.5px;color:var(--text-muted);}
+  @media(max-width:1100px){
+    .app{grid-template-columns:68px 280px minmax(0,1fr);}
+    .detail-panel{padding:24px 22px 50px;}
+    .tasks-columns{grid-template-columns:1fr;}
+    .overview-grid{grid-template-columns:1fr;}
+    .management-shell{grid-template-columns:280px minmax(0,1fr);}
+    .entity-detail{padding:24px 22px 50px;}
+    .entity-grid{grid-template-columns:1fr;}
+  }
+  @media(max-width:760px){
+    .app{grid-template-columns:60px minmax(0,1fr);}
+    .list-panel{display:none;}
+    #view-customers .detail-panel{grid-column:2;}
+    .detail-topbar{flex-direction:column;gap:16px;}
+    .record-stats{grid-template-columns:1fr;}
+    .management-shell{grid-template-columns:1fr;}
+    .entity-sidebar{display:none;}
+    .entity-stats{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- RAIL -->
+  <div class="rail">
+    <div class="rail-brand">ЛМ</div>
+    <div class="rail-group">
+      <button class="rail-btn active" data-target="customers" title="Клиенты">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>
+      </button>
+      <button class="rail-btn" data-target="tasks" title="Задачи">
+        <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12l2.5 2.5L16 9"/></svg>
+      </button>
+      <button class="rail-btn" data-target="branches" title="Филиалы">
+        <svg viewBox="0 0 24 24"><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/></svg>
+      </button>
+      <button class="rail-btn" data-target="employees" title="Сотрудники">
+        <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2 20c0-3 3-5 7-5s7 2 7 5"/><circle cx="18" cy="8" r="2.4"/><path d="M15 14c2.8.3 5 1.9 5 4"/></svg>
+      </button>
+    </div>
+    <div class="rail-divider"></div>
+    <div class="rail-group">
+      <button class="rail-btn locked" title="Модуль «Сделки» не подключён">
+        <svg viewBox="0 0 24 24"><path d="M3 12l4-7h10l4 7-9 9-9-9z"/></svg>
+        <span class="lock-badge"><svg viewBox="0 0 24 24"><rect x="6" y="10" width="12" height="9" rx="1.5"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></span>
+      </button>
+      <button class="rail-btn locked" title="Модуль «Лояльность» не подключён">
+        <svg viewBox="0 0 24 24"><path d="M12 21s-7-4.4-9.3-8.8C1 8.6 2.8 5 6.4 5c2 0 3.4 1 5.6 3.4C14.2 6 15.6 5 17.6 5c3.6 0 5.4 3.6 3.7 7.2C19 16.6 12 21 12 21z"/></svg>
+        <span class="lock-badge"><svg viewBox="0 0 24 24"><rect x="6" y="10" width="12" height="9" rx="1.5"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></span>
+      </button>
+      <button class="rail-btn locked" title="Модуль «Аналитика» не подключён">
+        <svg viewBox="0 0 24 24"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
+        <span class="lock-badge"><svg viewBox="0 0 24 24"><rect x="6" y="10" width="12" height="9" rx="1.5"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></span>
+      </button>
+    </div>
+    <div class="rail-foot">
+      <div class="rail-avatar">ИК</div>
+    </div>
+  </div>
+
+  <!-- ============ CUSTOMERS VIEW ============ -->
+  <div id="view-customers" style="display:contents;">
+    <div class="list-panel">
+      <div class="list-header">
+        <div class="list-title-row"><h1 class="list-title">Клиенты</h1><button class="icon-add" aria-label="Добавить клиента" onclick="showToast('Создание клиента')">+</button></div>
+        <div class="search-box">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input id="customer-search" type="text" placeholder="Имя или телефон">
+        </div>
+        <div class="list-filters"><button class="filter-chip active">Все</button><button class="filter-chip">Мои</button><button class="filter-chip">Без ответственного</button></div>
+      </div>
+      <div class="list-scroll" id="cust-list"></div>
+      <div class="list-legend">
+        <span class="legend-item"><span class="source-dot" style="background:#8B5FA6"></span>Instagram</span>
+        <span class="legend-item"><span class="source-dot" style="background:#2E7D6B"></span>Рекомендация</span>
+        <span class="legend-item"><span class="source-dot" style="background:#C9A227"></span>Сайт</span>
+      </div>
+    </div>
+    <div class="detail-panel" id="cust-detail"></div>
+  </div>
+
+  <!-- ============ TASKS VIEW ============ -->
+  <div id="view-tasks" style="display:none; grid-column: 2 / span 2;">
+    <div class="detail-panel" style="padding:28px 40px;">
+      <h1 class="list-title" style="margin-bottom:22px;">Задачи</h1>
+      <div class="tasks-columns">
+        <div>
+          <div class="col-head">
+            <h2 class="col-title">Общая очередь</h2>
+            <span class="col-count" id="queue-count">2</span>
+          </div>
+          <div id="queue-list"></div>
+        </div>
+        <div>
+          <div class="col-head">
+            <h2 class="col-title">Мои задачи — Ирина К.</h2>
+            <span class="col-count" id="mine-count">1</span>
+          </div>
+          <div id="mine-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ BRANCHES VIEW ============ -->
+  <div id="view-branches" style="display:none; grid-column: 2 / span 2;">
+    <div class="management-shell">
+      <aside class="entity-sidebar">
+        <div class="entity-sidebar-head">
+          <div class="list-title-row"><h1 class="list-title">Филиалы</h1><button class="icon-add" aria-label="Добавить филиал" onclick="showToast('Создание филиала')">+</button></div>
+          <div class="search-box"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="branch-search" placeholder="Название или адрес"></div>
+        </div>
+        <div class="entity-list" id="branch-list"></div>
+      </aside>
+      <main class="entity-detail" id="branch-detail"></main>
+    </div>
+  </div>
+
+  <!-- ============ EMPLOYEES VIEW ============ -->
+  <div id="view-employees" style="display:none; grid-column: 2 / span 2;">
+    <div class="management-shell">
+      <aside class="entity-sidebar">
+        <div class="entity-sidebar-head">
+          <div class="list-title-row"><h1 class="list-title">Сотрудники</h1><button class="icon-add" aria-label="Добавить сотрудника" onclick="showToast('Создание сотрудника')">+</button></div>
+          <div class="search-box"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="employee-search" placeholder="Имя или роль"></div>
+        </div>
+        <div class="entity-list" id="employee-list"></div>
+      </aside>
+      <main class="entity-detail" id="employee-detail"></main>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const customers = [
+  {
+    id: 1, name:"Анна Петрова", branch:"Центр", source:"Instagram", sourceColor:"#8B5FA6",
+    phone:"+7 916 233-10-45", responsible:"Ирина Ковалёва", referrer:null, createdBy:"сотрудником",
+    contacts:[
+      {icon:"phone", value:"+7 916 233-10-45", label:"основной"},
+      {icon:"mail", value:"anna.petrova@mail.ru", label:"запасной"}
+    ],
+    notes:[
+      {author:"Ирина К.", time:"2 дня назад", text:"Хочет попробовать окрашивание баланж, показала фото из Instagram."},
+      {author:"Светлана О.", time:"3 недели назад", text:"Перенесла запись на среду, попросила напомнить за день."}
+    ],
+    history:[
+      {date:"12.08.2026", from:"—", to:"Ирина Ковалёва", who:"Светлана О."}
+    ],
+    tasks:[
+      {title:"Напомнить о записи на стрижку", status:"Открыта", statusColor:"#C9A227", due:"завтра"}
+    ]
+  },
+  {
+    id: 2, name:"Максим Дорофеев", branch:"Правый берег", source:"Рекомендация", sourceColor:"#2E7D6B",
+    phone:"+7 903 555-67-12", responsible:"Дамир Юсупов", referrer:"Анна Петрова", createdBy:"сотрудником",
+    contacts:[
+      {icon:"phone", value:"+7 903 555-67-12", label:"основной"}
+    ],
+    notes:[
+      {author:"Дамир Ю.", time:"5 дней назад", text:"Постоянно опаздывает на 10–15 минут — предупреждать о времени записи заранее."}
+    ],
+    history:[
+      {date:"03.06.2026", from:"—", to:"Дамир Юсупов", who:"Дамир Ю. (взял из очереди)"}
+    ],
+    tasks:[
+      {title:"Перезвонить по поводу переноса записи", status:"В очереди", statusColor:"#8B5FA6", due:"завтра"}
+    ]
+  },
+  {
+    id: 3, name:"Ольга Синицына", branch:"Северный", source:"Сайт", sourceColor:"#C9A227",
+    phone:"+7 927 111-98-34", responsible:"Светлана Орлова", referrer:null, createdBy:"интеграцией (форма на сайте)",
+    contacts:[
+      {icon:"phone", value:"+7 927 111-98-34", label:"основной"},
+      {icon:"telegram", value:"@olga_s", label:"Telegram"}
+    ],
+    notes:[
+      {author:"Светлана О.", time:"вчера", text:"Спросила про абонемент на 5 стрижек для сына."}
+    ],
+    history:[
+      {date:"27.08.2026", from:"—", to:"Светлана Орлова", who:"система (заявка с сайта)"}
+    ],
+    tasks:[
+      {title:"Уточнить наличие абонементов", status:"В очереди", statusColor:"#8B5FA6", due:"сегодня"}
+    ]
+  }
+];
+
+const branches = [
+  {id:1,name:"Центр",address:"ул. Ленина, 14",phone:"+7 343 200-10-10",hours:"09:00–21:00",employees:3,customers:128,openTasks:7,people:["Ирина Ковалёва","Светлана Орлова","Алексей Миронов"],tasks:["Подтвердить записи на завтра","Заказать расходные материалы"]},
+  {id:2,name:"Правый берег",address:"пр. Гагарина, 5",phone:"+7 343 200-20-20",hours:"10:00–20:00",employees:2,customers:74,openTasks:3,people:["Дамир Юсупов","Мария Белова"],tasks:["Перезвонить клиентам из очереди"]},
+  {id:3,name:"Северный",address:"ул. Молодёжная, 22",phone:"+7 343 200-30-30",hours:"09:00–19:00",employees:1,customers:31,openTasks:2,people:["Ирина Ковалёва"],tasks:["Уточнить наличие абонементов"]}
+];
+
+const employees = [
+  {id:1,name:"Ирина Ковалёва",role:"Мастер",phone:"+7 900 101-20-30",email:"irina@crm.local",primary:"Центр",branches:["Центр","Северный"],activeTasks:6,todayTasks:2,customers:24,tasks:["Напомнить Анне о записи","Уточнить наличие абонементов"]},
+  {id:2,name:"Дамир Юсупов",role:"Мастер",phone:"+7 900 202-30-40",email:"damir@crm.local",primary:"Правый берег",branches:["Правый берег"],activeTasks:3,todayTasks:1,customers:18,tasks:["Перезвонить Максиму по переносу"]},
+  {id:3,name:"Светлана Орлова",role:"Администратор",phone:"+7 900 303-40-50",email:"svetlana@crm.local",primary:"Центр",branches:["Центр"],activeTasks:4,todayTasks:3,customers:37,tasks:["Распределить задачи общей очереди","Подтвердить записи на завтра"]}
+];
+
+const icons = {
+  phone: '<path d="M6 3h4l1.5 4-2 1.5a11 11 0 005 5l1.5-2 4 1.5v4a2 2 0 01-2 2C10 20 4 14 4 5a2 2 0 012-2z"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3 6l9 7 9-7"/>',
+  telegram: '<path d="M21 4L3 11l6 2m12-9l-3.5 16-8.5-6m12-10L9 13"/>'
+};
+
+function statusChip(status, color){
+  const bg = color+"22";
+  return `<span class="status-pill" style="background:${bg}; color:${color};">${status}</span>`;
+}
+
+let currentBranchId = 1;
+let currentEmployeeId = 1;
+
+function renderBranchList(){
+  const query = (document.getElementById('branch-search')?.value || '').toLowerCase();
+  const visible = branches.filter(branch => `${branch.name} ${branch.address}`.toLowerCase().includes(query));
+  document.getElementById('branch-list').innerHTML = visible.length ? visible.map(branch => `
+    <div class="entity-row ${branch.id===currentBranchId?'active':''}" onclick="selectBranch(${branch.id})">
+      <div class="entity-icon">${branch.name.slice(0,2).toUpperCase()}</div>
+      <div class="entity-row-copy"><div class="entity-row-name">${branch.name}</div><div class="entity-row-sub">${branch.address} · ${branch.employees} сотр.</div></div>
+    </div>`).join('') : `<div class="empty-queue">Филиалы не найдены</div>`;
+}
+
+function renderBranchDetail(branch){
+  document.getElementById('branch-detail').innerHTML = `
+    <div class="entity-head"><div><h2 class="entity-title">${branch.name}</h2><div class="entity-subtitle">${branch.address} · открыт сегодня ${branch.hours}</div></div><button class="btn-ghost" onclick="showToast('Редактирование филиала')">Изменить</button></div>
+    <div class="entity-stats"><div class="entity-stat"><div class="stat-label">Сотрудники</div><div class="entity-stat-value">${branch.employees}</div></div><div class="entity-stat"><div class="stat-label">Основной для клиентов</div><div class="entity-stat-value">${branch.customers}</div></div><div class="entity-stat"><div class="stat-label">Открытые задачи</div><div class="entity-stat-value">${branch.openTasks}</div></div></div>
+    <div class="entity-grid"><div><section class="block"><div class="block-head"><h3 class="block-title">Сотрудники филиала</h3><span class="add-link">+ добавить</span></div>${branch.people.map(name => `<div class="person-line"><div class="person-avatar">${name.split(' ').map(p=>p[0]).slice(0,2).join('')}</div><div class="person-copy"><div class="person-name">${name}</div><div class="person-role">Работает в филиале</div></div><button class="btn-ghost">Открыть</button></div>`).join('')}</section><section class="block"><div class="block-head"><h3 class="block-title">Текущие задачи</h3><span class="add-link">Все задачи →</span></div>${branch.tasks.map(task => `<div class="task-mini"><span class="status-dot" style="background:var(--accent)"></span><span class="task-mini-title">${task}</span>${statusChip('Открыта','#5B5BD6')}</div>`).join('')}</section></div><aside><section class="block"><div class="block-head"><h3 class="block-title">Данные филиала</h3></div><div class="info-list"><div class="info-row"><span class="info-label">Адрес</span><span>${branch.address}</span></div><div class="info-row"><span class="info-label">Телефон</span><span class="mono">${branch.phone}</span></div><div class="info-row"><span class="info-label">Режим</span><span>${branch.hours}</span></div><div class="info-row"><span class="info-label">Статус</span><span><i class="live-dot"></i> Работает</span></div></div></section></aside></div>`;
+}
+
+function selectBranch(id){currentBranchId=id;renderBranchList();renderBranchDetail(branches.find(branch=>branch.id===id));}
+
+function renderEmployeeList(){
+  const query = (document.getElementById('employee-search')?.value || '').toLowerCase();
+  const visible = employees.filter(employee => `${employee.name} ${employee.role}`.toLowerCase().includes(query));
+  document.getElementById('employee-list').innerHTML = visible.length ? visible.map(employee => `
+    <div class="entity-row ${employee.id===currentEmployeeId?'active':''}" onclick="selectEmployee(${employee.id})"><div class="entity-icon">${employee.name.split(' ').map(p=>p[0]).slice(0,2).join('')}</div><div class="entity-row-copy"><div class="entity-row-name">${employee.name}</div><div class="entity-row-sub">${employee.role} · ${employee.primary}</div></div></div>`).join('') : `<div class="empty-queue">Сотрудники не найдены</div>`;
+}
+
+function renderEmployeeDetail(employee){
+  document.getElementById('employee-detail').innerHTML = `
+    <div class="entity-head"><div class="record-head"><div class="record-avatar">${employee.name.split(' ').map(p=>p[0]).slice(0,2).join('')}</div><div><h2 class="entity-title">${employee.name}</h2><div class="entity-subtitle"><span class="live-dot"></span> Активен · ${employee.role}</div></div></div><button class="btn-ghost" onclick="showToast('Редактирование сотрудника')">Изменить</button></div>
+    <div class="entity-stats"><div class="entity-stat"><div class="stat-label">Активные задачи</div><div class="entity-stat-value">${employee.activeTasks}</div></div><div class="entity-stat"><div class="stat-label">На сегодня</div><div class="entity-stat-value">${employee.todayTasks}</div></div><div class="entity-stat"><div class="stat-label">Клиенты</div><div class="entity-stat-value">${employee.customers}</div></div></div>
+    <div class="entity-grid"><div><section class="block"><div class="block-head"><h3 class="block-title">Текущие задачи</h3><span class="add-link">Все задачи →</span></div>${employee.tasks.map(task => `<div class="task-mini"><span class="status-dot" style="background:var(--accent)"></span><span class="task-mini-title">${task}</span><span class="task-due">сегодня</span>${statusChip('В работе','#5B5BD6')}</div>`).join('')}</section><section class="block"><div class="block-head"><h3 class="block-title">Филиалы</h3><span class="add-link">Изменить</span></div>${employee.branches.map(branch => `<div class="person-line"><div class="entity-icon">${branch.slice(0,2).toUpperCase()}</div><div class="person-copy"><div class="person-name">${branch}</div><div class="person-role">${branch===employee.primary?'Основной филиал':'Дополнительный филиал'}</div></div>${branch===employee.primary?'<span class="tag">Основной</span>':''}</div>`).join('')}</section></div><aside><section class="block"><div class="block-head"><h3 class="block-title">Данные сотрудника</h3></div><div class="info-list"><div class="info-row"><span class="info-label">Роль</span><span>${employee.role}</span></div><div class="info-row"><span class="info-label">Телефон</span><span class="mono">${employee.phone}</span></div><div class="info-row"><span class="info-label">Email</span><span>${employee.email}</span></div><div class="info-row"><span class="info-label">Основной</span><span>${employee.primary}</span></div></div></section></aside></div>`;
+}
+
+function selectEmployee(id){currentEmployeeId=id;renderEmployeeList();renderEmployeeDetail(employees.find(employee=>employee.id===id));}
+
+function renderList(selectedId){
+  const el = document.getElementById('cust-list');
+  const query = (document.getElementById('customer-search')?.value || '').trim().toLowerCase();
+  const visible = customers.filter(c => `${c.name} ${c.phone}`.toLowerCase().includes(query));
+  el.innerHTML = visible.length ? visible.map(c => `
+    <div class="cust-row ${c.id===selectedId?'selected':''}" onclick="selectCustomer(${c.id})">
+      <div class="cust-main">
+        <div class="cust-avatar">${c.name.split(' ').map(part => part[0]).slice(0,2).join('')}</div>
+        <div class="cust-copy">
+          <div class="cust-row-top"><span class="cust-name">${c.name}</span><span class="source-badge">${c.source}</span></div>
+          <div class="cust-phone mono">${c.phone}</div>
+          <div class="cust-meta">${c.branch} · ${c.responsible}</div>
+        </div>
+      </div>
+    </div>
+  `).join('') : `<div class="empty-queue" style="margin:16px">Клиенты не найдены</div>`;
+}
+
+function renderDetail(c){
+  const el = document.getElementById('cust-detail');
+  const initials = c.name.split(' ').map(part => part[0]).slice(0,2).join('');
+  el.innerHTML = `
+    <div class="detail-topbar">
+      <div class="record-head">
+        <div class="record-avatar">${initials}</div>
+        <div>
+          <h2 class="detail-name">${c.name}</h2>
+          <div class="record-subtitle">
+            <span class="live-dot"></span><span>Активный клиент</span><span>·</span>
+            <span class="mono">${c.phone}</span><span>·</span><span>${c.branch}</span>
+          </div>
+        </div>
+      </div>
+      <div class="quick-actions">
+        <button class="btn-ghost" onclick="showToast('Звонок клиенту')">Позвонить</button>
+        <button class="btn-primary" onclick="showRecordTab('tasks')">+ Задача</button>
+        <button class="btn-ghost" onclick="showToast('Открыто меню действий')">•••</button>
+      </div>
+    </div>
+
+    <div class="record-stats">
+      <div class="stat"><div class="stat-label">Последний контакт</div><div class="stat-value">2 дня назад</div></div>
+      <div class="stat"><div class="stat-label">Следующее действие</div><div class="stat-value">${c.tasks[0]?.due || 'Не запланировано'}</div></div>
+      <div class="stat"><div class="stat-label">Ответственный</div><div class="stat-value">${c.responsible}</div></div>
+    </div>
+
+    <nav class="record-tabs" aria-label="Разделы карточки">
+      <button class="record-tab active" data-tab="overview" onclick="showRecordTab('overview')">Обзор</button>
+      <button class="record-tab" data-tab="activity" onclick="showRecordTab('activity')">Активность</button>
+      <button class="record-tab" data-tab="tasks" onclick="showRecordTab('tasks')">Задачи <span>${c.tasks.length}</span></button>
+      <button class="record-tab" data-tab="history" onclick="showRecordTab('history')">История</button>
+    </nav>
+
+    <div class="tab-pane active" data-pane="overview">
+      <div class="overview-grid">
+        <div>
+          <section class="block next-action">
+            <div class="eyebrow">Следующее действие</div>
+            <div class="next-action-row">
+              <div><div class="action-title">${c.tasks[0]?.title || 'Нет запланированных задач'}</div><div class="action-meta">Срок: ${c.tasks[0]?.due || '—'} · ${c.responsible}</div></div>
+              <button class="btn-primary" onclick="showToast('Задача отмечена выполненной')">Выполнено</button>
+            </div>
+          </section>
+          <section class="block">
+            <div class="block-head"><h3 class="block-title">Последняя активность</h3><span class="add-link" onclick="showRecordTab('activity')">Вся активность →</span></div>
+            <div class="timeline">
+              ${c.notes.slice(0,2).map(n => `<div class="timeline-item"><span class="timeline-dot"></span><div class="timeline-title">${n.author} добавил(а) заметку</div><div class="timeline-text">${n.text}</div><div class="timeline-time">${n.time}</div></div>`).join('')}
+            </div>
+          </section>
+        </div>
+        <aside>
+          <section class="block">
+            <div class="block-head"><h3 class="block-title">О клиенте</h3><span class="add-link" onclick="showToast('Редактирование клиента')">Изменить</span></div>
+            <div class="info-list">
+              <div class="info-row"><span class="info-label">Телефон</span><span class="mono">${c.phone}</span></div>
+              <div class="info-row"><span class="info-label">Филиал</span><span>${c.branch}</span></div>
+              <div class="info-row"><span class="info-label">Источник</span><span>${c.source}</span></div>
+              <div class="info-row"><span class="info-label">Привёл</span><span>${c.referrer || '—'}</span></div>
+              <div class="info-row"><span class="info-label">Создан</span><span>${c.createdBy}</span></div>
+            </div>
+          </section>
+          <section class="block">
+            <div class="block-head"><h3 class="block-title">Контакты</h3><span class="add-link">+ добавить</span></div>
+            ${c.contacts.map(ct => `<div class="contact-row"><div class="contact-icon"><svg viewBox="0 0 24 24">${icons[ct.icon]}</svg></div><span class="contact-value mono">${ct.value}</span><span class="contact-label">${ct.label}</span></div>`).join('')}
+          </section>
+        </aside>
+      </div>
+    </div>
+
+    <div class="tab-pane" data-pane="activity">
+      <section class="block">
+        <div class="block-head"><h3 class="block-title">Лента активности</h3><span class="add-link" onclick="toggleComposer()">+ заметка</span></div>
+        <div class="filter-row"><button class="filter-chip active">Все</button><button class="filter-chip">Заметки</button><button class="filter-chip">Задачи</button><button class="filter-chip">Назначения</button></div>
+        <div class="note-compose" id="note-compose"><textarea placeholder="Добавить рабочую заметку..."></textarea><button class="btn-primary" onclick="showToast('Заметка сохранена')">Сохранить</button></div>
+        <div class="timeline" style="margin-top:22px">
+          ${c.notes.map(n => `<div class="timeline-item"><span class="timeline-dot"></span><div class="timeline-title">${n.author} добавил(а) заметку</div><div class="timeline-text">${n.text}</div><div class="timeline-time">${n.time}</div></div>`).join('')}
+          ${c.history.map(h => `<div class="timeline-item"><span class="timeline-dot"></span><div class="timeline-title">Изменён ответственный: ${h.from} → ${h.to}</div><div class="timeline-text">Инициатор: ${h.who}</div><div class="timeline-time">${h.date}</div></div>`).join('')}
+        </div>
+      </section>
+    </div>
+
+    <div class="tab-pane" data-pane="tasks"><section class="block"><div class="block-head"><h3 class="block-title">Задачи клиента</h3><span class="add-link">+ новая задача</span></div>${c.tasks.map(t => `<div class="task-mini"><span class="status-dot" style="background:${t.statusColor}"></span><span class="task-mini-title">${t.title}</span><span class="task-due">${t.due}</span>${statusChip(t.status,t.statusColor)}</div>`).join('')}</section></div>
+
+    <div class="tab-pane" data-pane="history"><section class="block"><div class="block-head"><h3 class="block-title">История ответственных</h3></div><table class="hist"><tr><th>Дата</th><th>Изменение</th><th>Кто изменил</th></tr>${c.history.map(h => `<tr><td class="mono">${h.date}</td><td>${h.from}<span class="arrow">→</span>${h.to}</td><td>${h.who}</td></tr>`).join('')}</table></section></div>
+  `;
+}
+
+function showRecordTab(tab){
+  document.querySelectorAll('.record-tab').forEach(button => button.classList.toggle('active', button.dataset.tab === tab));
+  document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.toggle('active', pane.dataset.pane === tab));
+}
+
+function toggleComposer(){
+  const composer = document.getElementById('note-compose');
+  if(composer) composer.querySelector('textarea').focus();
+}
+
+function showToast(message){
+  let toast = document.getElementById('toast');
+  if(!toast){
+    toast = document.createElement('div'); toast.id = 'toast';
+    Object.assign(toast.style,{position:'fixed',right:'24px',bottom:'24px',padding:'11px 15px',background:'#101828',color:'#fff',borderRadius:'10px',fontSize:'13px',zIndex:'99',boxShadow:'0 10px 30px rgba(16,24,40,.2)',transition:'.2s'});
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message; toast.style.opacity = '1';
+  clearTimeout(window.toastTimer); window.toastTimer = setTimeout(() => toast.style.opacity = '0',1800);
+}
+
+let currentId = 1;
+function selectCustomer(id){
+  currentId = id;
+  renderList(id);
+  renderDetail(customers.find(c => c.id === id));
+}
+selectCustomer(1);
+document.getElementById('customer-search').addEventListener('input', () => renderList(currentId));
+selectBranch(1);
+selectEmployee(1);
+document.getElementById('branch-search').addEventListener('input', renderBranchList);
+document.getElementById('employee-search').addEventListener('input', renderEmployeeList);
+
+// ---------- TASKS VIEW ----------
+let queue = [
+  {id:101, title:"Уточнить наличие абонементов", customer:"Ольга Синицына", branch:"Северный", due:"сегодня", priority:"Обычный", pColor:"#6B6255"},
+  {id:102, title:"Перезвонить по поводу переноса записи", customer:"Максим Дорофеев", branch:"Правый берег", due:"завтра", priority:"Срочно", pColor:"#C05B26"}
+];
+let mine = [
+  {id:201, title:"Напомнить о записи на стрижку", customer:"Анна Петрова", branch:"Центр", due:"завтра", priority:"Обычный", pColor:"#6B6255"}
+];
+
+function priorityChip(t){
+  return `<span class="priority-pill" style="background:${t.pColor}22; color:${t.pColor};">${t.priority}</span>`;
+}
+
+function renderTasks(){
+  const q = document.getElementById('queue-list');
+  const m = document.getElementById('mine-list');
+  document.getElementById('queue-count').textContent = queue.length;
+  document.getElementById('mine-count').textContent = mine.length;
+
+  q.innerHTML = queue.length ? queue.map(t => `
+    <div class="task-card">
+      <div class="task-card-top">
+        <span class="task-card-title">${t.title}</span>
+        ${priorityChip(t)}
+      </div>
+      <div class="task-card-meta"><b>${t.customer}</b> · филиал ${t.branch} · срок: ${t.due}</div>
+      <div class="task-card-foot">
+        <span></span>
+        <button class="btn-primary" onclick="claimTask(${t.id})">Взять в работу</button>
+      </div>
+    </div>
+  `).join('') : `<div class="empty-queue">Очередь пуста — все задачи распределены</div>`;
+
+  m.innerHTML = mine.length ? mine.map(t => `
+    <div class="task-card">
+      <div class="task-card-top">
+        <span class="task-card-title">${t.title}</span>
+        ${priorityChip(t)}
+      </div>
+      <div class="task-card-meta"><b>${t.customer}</b> · филиал ${t.branch} · срок: ${t.due}</div>
+      <div class="task-card-foot">
+        ${statusChip("В работе", "#2E7D6B")}
+        <button class="btn-ghost">Выполнено</button>
+      </div>
+    </div>
+  `).join('') : `<div class="empty-queue">Нет активных задач</div>`;
+}
+
+function claimTask(id){
+  const idx = queue.findIndex(t => t.id === id);
+  if(idx === -1) return;
+  const [t] = queue.splice(idx, 1);
+  mine.push(t);
+  renderTasks();
+}
+renderTasks();
+
+// ---------- RAIL NAV ----------
+const views = {
+  customers: document.getElementById('view-customers'),
+  tasks: document.getElementById('view-tasks'),
+  branches: document.getElementById('view-branches'),
+  employees: document.getElementById('view-employees')
+};
+document.querySelectorAll('.rail-btn[data-target]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.rail-btn[data-target]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const target = btn.dataset.target;
+    Object.entries(views).forEach(([key, node]) => {
+      node.style.display = (key === target) ? (key === 'customers' ? 'contents' : 'block') : 'none';
+    });
+  });
+});
+</script>
+
+</body>
+</html>

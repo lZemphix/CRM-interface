@@ -1,4 +1,4 @@
-class Customer {
+coclass Customer {
   const Customer({
     required this.id,
     required this.fullName,

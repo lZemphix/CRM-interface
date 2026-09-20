@@ -14,7 +14,6 @@ class EntityPanel extends StatefulWidget {
 }
 
 class _ListPanelState extends State<EntityPanel> {
-
   late final Future<List<Customer>> customersFuture;
 
   @override
@@ -48,7 +47,7 @@ class _ListPanelState extends State<EntityPanel> {
               padding: EdgeInsets.symmetric(vertical: 20),
               child: listPanelHead(),
             ),
-            Expanded(child: customersList())
+            Expanded(child: customersList()),
           ],
         ),
       ),
@@ -119,18 +118,18 @@ class _ListPanelState extends State<EntityPanel> {
 
   Widget customersList() {
     return FutureBuilder<List<Customer>>(
-      future: customersFuture, 
+      future: customersFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(),);
+          return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
-          return Center(child: Text(snapshot.error.toString()),);
+          return Center(child: Text(snapshot.error.toString()));
         }
         final customers = snapshot.data ?? [];
 
         if (customers.isEmpty) {
-          return const Center(child: Text("Клиентов не найдено"),);
+          return const Center(child: Text("Клиентов не найдено"));
         }
 
         return ListView.builder(
@@ -140,14 +139,15 @@ class _ListPanelState extends State<EntityPanel> {
             return Container(
               padding: EdgeInsets.symmetric(vertical: 5),
               child: customerButton(
-              photo:  Icons.people, 
-              fullName:  customer.fullName, 
-              phoneNumber: customer.primaryContact, 
-              lastVisit: "never")
-              ); // TODO: Исправить
+                photo: Icons.people,
+                fullName: customer.fullName,
+                phoneNumber: customer.primaryContact,
+                lastVisit: "never",
+              ),
+            ); // TODO: Исправить
           }),
         );
-      }
+      },
     );
   }
 }

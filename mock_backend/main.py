@@ -1,63 +1,36 @@
-"""Локальная HTTP-заглушка: без БД, авторизации и сохранения изменений."""
+"""Локальная HTTP-заглушка: изменения живут только до перезапуска процесса."""
 
 from datetime import date, datetime
-from typing import Annotated, Literal
+from typing import Annotated
 
-from fastapi import FastAPI, HTTPException, Query
-from pydantic import BaseModel, model_validator
+from fastapi import Depends, FastAPI, HTTPException, Path, Query
+from pydantic import BaseModel
 
+from auth import require_mock_auth
+from auth import router as auth_router
 from data import CUSTOMERS
+from tasks import router as tasks_router
 
-app = FastAPI(title="CRM mock backend", version="0.2.0")
+app = FastAPI(title="CRM mock backend", version="0.3.0")
+app.include_router(auth_router)
+app.include_router(tasks_router)
 
 
 class ContactResponse(BaseModel):
     id: int
-    type: Literal["phone", "email", "telegram"]
+    type: str
     value: str
+    label: str | None = None
     is_primary: bool
+    created_at: datetime
 
 
 class NoteResponse(BaseModel):
     id: int
     author_employee_id: int
-    author_name: str
     text: str
     created_at: datetime
     edited_at: datetime | None
-    archived_at: datetime | None
-
-
-class AssignmentChangeResponse(BaseModel):
-    id: int
-    previous_employee_id: int | None
-    previous_employee_name: str | None
-    new_employee_id: int
-    new_employee_name: str
-    initiator_employee_id: int | None
-    initiator_name: str
-    changed_at: datetime
-
-
-class TaskResponse(BaseModel):
-    id: int
-    customer_id: int
-    title: str
-    status: Literal[
-        "new", "in_progress", "completed", "rework", "confirmed", "cancelled"
-    ]
-    priority: Literal["low", "normal", "high"]
-    due_at: datetime
-    author_employee_id: int
-    assignee_employee_id: int | None
-
-
-class InteractionResponse(BaseModel):
-    id: int
-    occurred_at: datetime
-    reason: str
-    campaign_name: str | None
-    result: str
 
 
 class CustomerSummaryResponse(BaseModel):
@@ -67,47 +40,40 @@ class CustomerSummaryResponse(BaseModel):
     date_of_birth: date | None
     status: str
     primary_contact: str | None
-    primary_phone: str | None
-    primary_branch_name: str
-    responsible_employee_name: str | None
     acquisition_source_name: str
-    last_interaction_at: datetime | None
 
 
-class CustomerDetailResponse(CustomerSummaryResponse):
-    primary_branch_id: int
+class CustomerListResponse(BaseModel):
+    items: list[CustomerSummaryResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+class CustomerDetailResponse(BaseModel):
+    id: int
+    full_name: str
+    gender: str | None
+    date_of_birth: date | None
+    status: str
     responsible_employee_id: int | None
-    acquisition_source_code: str
-    referred_by_customer_id: int | None
-    referred_by_customer_name: str | None
-    registration_method: Literal["employee", "integration"]
     created_by_employee_id: int | None
+    home_branch_id: int | None
+    acquisition_source_id: int
+    acquisition_source_code: str
+    acquisition_source_name: str
+    registration_method: str
+    referred_by_customer_id: int | None
+    created_at: datetime
+    updated_at: datetime
     contacts: list[ContactResponse]
     notes: list[NoteResponse]
-    assignment_history: list[AssignmentChangeResponse]
-    tasks: list[TaskResponse]
-    interactions: list[InteractionResponse]
-
-    @model_validator(mode="before")
-    @classmethod
-    def derive_summary_fields(cls, value: dict) -> dict:
-        contacts = value["contacts"]
-        interactions = value["interactions"]
-        primary_contact = next((c for c in contacts if c["is_primary"]), contacts[0])
-        primary_phone = next(
-            (c for c in contacts if c["type"] == "phone" and c["is_primary"]), None
-        )
-        return {
-            **value,
-            "primary_contact": primary_contact["value"],
-            "primary_phone": primary_phone["value"] if primary_phone else None,
-            "last_interaction_at": max(
-                (item["occurred_at"] for item in interactions), default=None
-            ),
-        }
 
 
-# Заглушка читает данные только из памяти; ни один endpoint их не меняет.
+# Карточки клиентов остаются фиксированными; канбан хранится отдельно в памяти.
+CUSTOMER_SUMMARIES = [
+    CustomerSummaryResponse.model_validate(item) for item in CUSTOMERS
+]
 CUSTOMER_DETAILS = [CustomerDetailResponse.model_validate(item) for item in CUSTOMERS]
 
 
@@ -116,17 +82,35 @@ async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.get("/customers", response_model=list[CustomerSummaryResponse])
+@app.get(
+    "/customers",
+    response_model=CustomerListResponse,
+    dependencies=[Depends(require_mock_auth)],
+)
 async def list_customers(
-    limit: Annotated[int, Query(ge=1)] = 50,
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
-) -> list[CustomerDetailResponse]:
-    return CUSTOMER_DETAILS[offset : offset + limit]
+) -> CustomerListResponse:
+    return CustomerListResponse(
+        items=CUSTOMER_SUMMARIES[offset : offset + limit],
+        total=len(CUSTOMER_SUMMARIES),
+        limit=limit,
+        offset=offset,
+    )
 
 
-@app.get("/customers/{customer_id}", response_model=CustomerDetailResponse)
-async def get_customer(customer_id: int) -> CustomerDetailResponse:
+@app.get(
+    "/customers/{customer_id}",
+    response_model=CustomerDetailResponse,
+    dependencies=[Depends(require_mock_auth)],
+)
+async def get_customer(
+    customer_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+) -> CustomerDetailResponse:
     for customer in CUSTOMER_DETAILS:
         if customer.id == customer_id:
             return customer
-    raise HTTPException(status_code=404, detail="Customer not found")
+    raise HTTPException(
+        status_code=404,
+        detail={"code": "customer_not_found", "message": "Клиент не найден"},
+    )

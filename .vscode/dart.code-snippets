@@ -1,0 +1,8 @@
+{
+  "String from str": {
+    "scope": "dart",
+    "prefix": "str",
+    "body": "String",
+    "description": "Insert Dart String type"
+  }
+}

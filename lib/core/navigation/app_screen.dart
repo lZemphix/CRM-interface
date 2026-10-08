@@ -1,1 +1,1 @@
-enum AppScreen { customers, tasks, branches, employees }
+enum AppScreen { customers, tasks, analytics, catalog }

@@ -52,10 +52,10 @@ class SideBar extends StatelessWidget {
           spacing: 10,
           children: [
             logo(),
-            sideBarButton(AppScreen.customers, Icons.people_alt_outlined),
+            sideBarButton(AppScreen.customers, Icons.badge_outlined),
             sideBarButton(AppScreen.tasks, Icons.task_alt_outlined),
-            sideBarButton(AppScreen.branches, Icons.home_mini_outlined),
-            sideBarButton(AppScreen.employees, Icons.people_outline),
+            sideBarButton(AppScreen.analytics, Icons.analytics_outlined),
+            sideBarButton(AppScreen.catalog, Icons.shopping_cart_outlined),
           ],
         ),
       ),

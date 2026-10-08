@@ -1,10 +1,16 @@
 import 'package:crm_interface/core/navigation/app_screen.dart';
+import 'package:crm_interface/core/api_client/client.dart';
 import 'package:crm_interface/modules/customers/screens/customers.dart';
+import 'package:crm_interface/modules/tasks/repos/tasks.dart';
+import 'package:crm_interface/modules/tasks/screens/tasks.dart';
 import 'package:flutter/material.dart';
 import 'package:crm_interface/layout/sidebar.dart';
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  const AppShell({super.key, required this.apiClient, required this.tasksRepository});
+
+  final ApiClient apiClient;
+  final TasksRepository tasksRepository;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -21,10 +27,10 @@ class _AppShellState extends State<AppShell> {
 
   Widget currentScreen() {
     return switch (activeScreen) {
-      AppScreen.customers => const CustomersScreen(),
-      AppScreen.tasks => const Center(child: Text("tasks")),
-      AppScreen.branches => const Center(child: Text("branches")),
-      AppScreen.employees => const Center(child: Text("employees")),
+      AppScreen.customers => CustomersScreen(apiClient: widget.apiClient),
+      AppScreen.tasks => TasksScreen(tasksRepository: widget.tasksRepository,),
+      AppScreen.analytics => const Center(child: Text("analytics")),
+      AppScreen.catalog => const Center(child: Text("catalog")),
     };
   }
 

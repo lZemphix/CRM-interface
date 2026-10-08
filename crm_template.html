@@ -459,6 +459,172 @@
   .person-copy{flex:1;}
   .person-name{font-size:13px;font-weight:600;}
   .person-role{font-size:11.5px;color:var(--text-muted);}
+  /* ---------- KANBAN PROTOTYPE ---------- */
+  .kanban-page{height:100%;display:flex;flex-direction:column;min-height:0;padding:28px 32px;background:var(--paper-dim);}
+  .kanban-toolbar,.analytics-header,.catalog-header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:24px;flex-wrap:wrap;}
+  .kanban-toolbar h1,.analytics-header h1,.catalog-header h1{font-size:25px;line-height:1.2;letter-spacing:-.5px;margin:0;}
+  .kanban-actions{display:flex;gap:9px;flex-wrap:wrap;}
+  .kanban-actions button,.kanban-add-task{border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--text);padding:9px 13px;font-weight:600;cursor:pointer;}
+  .kanban-actions .kanban-primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .kanban-actions .kanban-primary:hover{background:var(--accent-dark);}
+  .kanban-board{display:flex;gap:16px;overflow-x:auto;overflow-y:hidden;min-height:0;flex:1;padding:2px 2px 16px;align-items:stretch;}
+  .kanban-column{width:294px;min-width:294px;display:flex;flex-direction:column;min-height:0;background:#F1F3F8;border:1px solid var(--line);border-radius:16px;transition:border-color .15s,background .15s;}
+  .kanban-column.drag-over{border-color:var(--accent);background:#EAEAFE;}
+  .kanban-column-head{display:flex;align-items:center;gap:8px;padding:14px 14px 11px;}
+  .kanban-column-head h2{font-size:14px;margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .kanban-column-head .col-count{margin-left:auto;}
+  .kanban-column-menu{position:relative;}
+  .kanban-icon-button{border:0;background:transparent;color:var(--text-muted);width:28px;height:28px;border-radius:7px;cursor:pointer;display:grid;place-items:center;font-size:18px;line-height:1;}
+  .kanban-icon-button:hover{background:#E4E7EC;color:var(--text);}
+  .kanban-column-list{padding:0 10px 10px;overflow-y:auto;flex:1;min-height:0;}
+  .kanban-add-task{margin:0 10px 12px;text-align:left;color:var(--accent);background:transparent;border-style:dashed;}
+  .kanban-add-task:hover{background:#fff;}
+  .kanban-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(16,24,40,.04);cursor:grab;}
+  .kanban-card:active{cursor:grabbing;}
+  .kanban-card.dragging{opacity:.45;}
+  .kanban-card-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:6px;}
+  .kanban-card-title{font-size:13.5px;font-weight:700;line-height:1.4;min-width:0;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+  .kanban-card-description{font-size:12px;color:var(--text-muted);line-height:1.45;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;margin:0 0 12px;}
+  .kanban-card-meta{font-size:11px;color:var(--text-muted);display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px;}
+  .kanban-card-meta span{background:#F2F4F7;border-radius:6px;padding:3px 6px;}
+  .kanban-card-progress-row{display:flex;align-items:center;gap:9px;}
+  .kanban-progress-copy{font-size:11px;color:var(--text-muted);white-space:nowrap;}
+  .kanban-progress{height:7px;flex:1;min-width:0;appearance:none;border:0;border-radius:999px;overflow:hidden;background:#EAECF0;}
+  .kanban-progress::-webkit-progress-bar{background:#EAECF0;border-radius:999px;}
+  .kanban-progress::-webkit-progress-value{background:var(--accent);border-radius:999px;}
+  .kanban-progress::-moz-progress-bar{background:var(--accent);border-radius:999px;}
+  .kanban-menu{position:relative;flex:none;}
+  .kanban-menu summary{list-style:none;}
+  .kanban-menu summary::-webkit-details-marker{display:none;}
+  .kanban-menu-panel{position:fixed;z-index:100;background:#fff;border:1px solid var(--line);box-shadow:0 10px 26px rgba(16,24,40,.14);border-radius:10px;padding:5px;min-width:190px;}
+  .kanban-menu-panel button{display:block;width:100%;text-align:left;border:0;background:transparent;border-radius:6px;padding:8px 9px;font-size:12px;cursor:pointer;color:var(--text);}
+  .kanban-menu-panel button:hover{background:#F2F4F7;}
+  .kanban-menu-panel button.danger{color:#B42318;}
+  .kanban-subtasks{margin-top:10px;border-top:1px solid var(--line);padding-top:8px;}
+  .kanban-subtasks summary{font-size:11px;color:var(--accent);cursor:pointer;}
+  .kanban-subtask-check{display:flex;align-items:flex-start;gap:7px;font-size:12px;color:var(--text);margin-top:8px;cursor:pointer;}
+  .kanban-subtask-check input{margin:3px 0 0;accent-color:var(--accent);}
+  .kanban-subtask-check.done span{text-decoration:line-through;color:var(--text-faint);}
+  .kanban-empty{border:1px dashed #C9CFD9;border-radius:10px;text-align:center;color:var(--text-faint);font-size:12px;padding:22px 10px;}
+  .task-dialog{border:0;border-radius:16px;width:min(520px,calc(100vw - 28px));max-height:calc(100vh - 32px);padding:0;box-shadow:0 24px 70px rgba(16,24,40,.25);color:var(--text);}
+  .task-dialog::backdrop{background:rgba(16,24,40,.46);}
+  .task-dialog form{padding:24px;overflow-y:auto;max-height:calc(100vh - 32px);}
+  .task-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
+  .task-dialog-head h2{font-size:20px;margin:0;}
+  .task-field{display:block;margin-bottom:14px;}
+  .task-field>span,.subtask-editor-title{display:block;font-size:12px;font-weight:650;margin-bottom:6px;}
+  .task-field input,.task-field textarea,.task-field select,.subtask-editor-row input{width:100%;border:1px solid #D0D5DD;border-radius:9px;padding:10px 11px;background:#fff;color:var(--text);outline:none;}
+  .task-field textarea{min-height:76px;resize:vertical;}
+  .task-field input:focus,.task-field textarea:focus,.task-field select:focus,.subtask-editor-row input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,91,214,.12);}
+  .task-field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .subtask-editor{border:1px solid var(--line);background:#F8FAFC;border-radius:11px;padding:12px;margin-bottom:14px;}
+  .subtask-editor-row{display:flex;gap:7px;margin-top:8px;}
+  .subtask-editor-row button{border:1px solid var(--line);border-radius:8px;background:#fff;width:38px;flex:none;cursor:pointer;color:#B42318;font-size:18px;}
+  .subtask-add{border:0;background:transparent;color:var(--accent);font-weight:600;font-size:12px;padding:9px 0 1px;cursor:pointer;}
+  .task-dialog-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px;}
+  .task-dialog-actions button{border:1px solid var(--line);border-radius:9px;padding:10px 16px;cursor:pointer;background:#fff;font-weight:600;}
+  .task-dialog-actions button[type=submit]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  /* ---------- ANALYTICS PROTOTYPE ---------- */
+  .analytics-page{height:100%;overflow-y:auto;padding:28px 32px 60px;background:#F8FAFC;}
+  .analytics-overview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch;}
+  .analytics-chart-kicker{color:var(--accent);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+  .analytics-primary{border:0;border-radius:10px;background:var(--accent);color:#fff;font-weight:650;padding:11px 16px;cursor:pointer;}
+  .analytics-primary:hover{background:var(--accent-dark);}
+  .analytics-chart-card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:18px 20px 16px;box-shadow:0 2px 10px rgba(16,24,40,.035);}
+  .analytics-insights{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:12px;}
+  .analytics-insight{background:#fff;border:1px solid var(--line);border-radius:15px;padding:17px 20px;box-shadow:0 2px 10px rgba(16,24,40,.035);display:flex;flex-direction:column;justify-content:center;min-width:0;}
+  .analytics-insight span{color:var(--text-muted);font-size:12px;}
+  .analytics-insight strong{display:block;font-size:23px;letter-spacing:-.5px;margin:7px 0 2px;overflow-wrap:anywhere;}
+  .analytics-insight small{color:var(--text-faint);font-size:11px;}
+  .analytics-chart-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;flex-wrap:wrap;}
+  .analytics-chart-head h2{font-size:20px;margin:3px 0 2px;}
+  .analytics-chart-head p{margin:0;color:var(--text-muted);font-size:12px;}
+  .analytics-period-tabs{display:flex;gap:3px;background:#F2F4F7;border:1px solid var(--line);border-radius:10px;padding:4px;flex-wrap:wrap;}
+  .analytics-period-tabs button{border:0;border-radius:7px;padding:7px 11px;background:transparent;color:var(--text-muted);cursor:pointer;font-size:12px;font-weight:600;}
+  .analytics-period-tabs button.active{background:#fff;color:var(--accent);box-shadow:0 1px 4px rgba(16,24,40,.09);}
+  .analytics-period-nav{display:flex;justify-content:center;align-items:center;gap:17px;margin:16px 0 13px;text-align:center;}
+  .analytics-period-nav button{height:32px;width:32px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--text);font-size:24px;line-height:1;cursor:pointer;}
+  .analytics-period-nav button:hover:not(:disabled){background:var(--accent-soft);color:var(--accent);}
+  .analytics-period-nav button:disabled{opacity:.35;cursor:not-allowed;}
+  .analytics-period-nav strong{display:block;font-size:15px;}
+  .analytics-period-nav span{display:block;font-size:11px;color:var(--text-muted);min-height:16px;}
+  .analytics-chart-plot{display:flex;gap:10px;margin-top:19px;min-width:0;}
+  .analytics-y-axis{width:60px;flex:none;height:145px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;color:var(--text-faint);font-size:10px;padding-bottom:2px;}
+  .analytics-plot-main{min-width:0;flex:1;}
+  .analytics-bars{height:145px;display:grid;gap:4px;align-items:stretch;border-bottom:1px solid #CDD3DE;background:repeating-linear-gradient(to top, transparent 0,transparent calc(25% - 1px),#EEF0F4 calc(25% - 1px),#EEF0F4 25%);padding:0 2px;}
+  .analytics-bar{height:100%;width:100%;padding:0;border:0;background:transparent;cursor:pointer;position:relative;}
+  .analytics-bar::before{content:"";position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:min(var(--bar-width),100%);height:var(--bar-height);min-height:3px;border-radius:6px 6px 1px 1px;background:linear-gradient(180deg,#9B99ED,#7774DC);transition:background .15s,box-shadow .15s;}
+  .analytics-bar:hover::before,.analytics-bar.selected::before,.analytics-bar:focus-visible::before{background:linear-gradient(180deg,#7774E6,#5451C9);box-shadow:0 2px 8px rgba(91,91,214,.24);}
+  .analytics-bar:focus-visible{outline:none;}
+  .analytics-bar:focus-visible::before{outline:2px solid var(--accent);outline-offset:3px;}
+  .analytics-bar-tooltip{position:fixed;z-index:200;display:none;pointer-events:none;background:#172033;color:#fff;border-radius:9px;padding:8px 11px;box-shadow:0 9px 25px rgba(16,24,40,.2);text-align:center;white-space:nowrap;font-size:11px;line-height:1.4;}
+  .analytics-bar-tooltip strong{display:block;font-size:12px;margin-top:2px;}
+  .analytics-x-axis{display:grid;gap:4px;color:var(--text-faint);font-size:10px;margin-top:7px;text-align:center;}
+  .analytics-x-axis span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .analytics-custom-head{display:flex;align-items:baseline;gap:11px;margin:25px 0 12px;flex-wrap:wrap;}
+  .analytics-custom-head h2{font-size:16px;margin:0;}
+  .analytics-custom-head span{font-size:12px;color:var(--text-muted);}
+  .analytics-custom-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;}
+  .analytics-custom-card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:16px;}
+  .analytics-custom-card-head{display:flex;justify-content:space-between;gap:10px;align-items:center;}
+  .analytics-custom-card h3{font-size:14px;margin:0;overflow-wrap:anywhere;}
+  .analytics-custom-card p{color:var(--text-muted);font-size:12px;margin:7px 0;overflow-wrap:anywhere;}
+  .analytics-custom-card small{display:block;color:var(--text-faint);font-size:11px;overflow-wrap:anywhere;}
+  .analytics-draft-tag{font-size:10px;border-radius:20px;background:#FFF4E5;color:#9A6700;padding:3px 7px;white-space:nowrap;}
+  .analytics-custom-card button{border:0;background:none;color:#B42318;cursor:pointer;padding:8px 0 0;font-size:11px;}
+  .analytics-empty{border:1px dashed #CDD3DE;border-radius:12px;padding:23px;background:#fff;color:var(--text-muted);font-size:12px;grid-column:1/-1;}
+  /* ---------- CATALOG PROTOTYPE ---------- */
+  .catalog-page{height:100%;overflow-y:auto;padding:28px 32px 60px;background:#F8FAFC;}
+  .catalog-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px;}
+  .catalog-stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px 20px;min-width:0;}
+  .catalog-stat span{display:block;font-size:12px;color:var(--text-muted);}
+  .catalog-stat strong{display:block;font-size:25px;line-height:1.25;margin-top:6px;}
+  .catalog-panel{background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:0 2px 10px rgba(16,24,40,.035);overflow:hidden;}
+  .catalog-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:17px 20px;border-bottom:1px solid var(--line);}
+  .catalog-search{display:flex;align-items:center;gap:8px;min-width:210px;flex:1;max-width:390px;border:1px solid var(--line);border-radius:9px;padding:9px 11px;color:var(--text-faint);}
+  .catalog-search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,91,214,.1);}
+  .catalog-search input{min-width:0;width:100%;border:0;outline:0;background:transparent;color:var(--text);font-size:12px;}
+  .catalog-search input:focus-visible{outline:0;}
+  .catalog-filters{display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+  .catalog-tabs{display:flex;gap:3px;padding:3px;background:#F2F4F7;border-radius:9px;}
+  .catalog-tabs button{border:0;background:transparent;color:var(--text-muted);padding:7px 10px;border-radius:7px;font-size:12px;cursor:pointer;}
+  .catalog-tabs button.active{background:#fff;color:var(--accent);font-weight:700;box-shadow:0 1px 4px rgba(16,24,40,.08);}
+  .catalog-category-filter{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;max-width:170px;}
+  .catalog-list-header,.catalog-row{display:grid;grid-template-columns:minmax(250px,2.3fr) minmax(115px,1fr) minmax(115px,1fr) minmax(100px,.8fr) 80px;gap:14px;align-items:center;}
+  .catalog-list-header{padding:10px 20px;background:#F9FAFB;border-bottom:1px solid var(--line);font-size:11px;font-weight:700;color:var(--text-muted);}
+  .catalog-row{padding:14px 20px;border-bottom:1px solid #F0F2F5;min-height:72px;}
+  .catalog-row:last-child{border-bottom:0;}
+  .catalog-row:hover{background:#FCFCFF;}
+  .catalog-name{display:flex;align-items:center;gap:12px;min-width:0;}
+  .catalog-item-icon{height:40px;width:40px;flex:none;display:grid;place-items:center;border-radius:10px;background:#EEEEFF;color:var(--accent);font-weight:800;font-size:16px;}
+  .catalog-item-icon.product{background:#E7F5EE;color:#21865D;}
+  .catalog-name strong{display:block;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .catalog-name small{display:block;color:var(--text-faint);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .catalog-cell{font-size:12px;color:var(--text-muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .catalog-price{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;}
+  .catalog-status{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;background:#ECFDF3;color:#027A48;border-radius:20px;font-size:11px;font-weight:650;white-space:nowrap;}
+  .catalog-status.hidden{background:#F2F4F7;color:#667085;}
+  .catalog-status::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
+  .catalog-row-actions{display:flex;justify-content:flex-end;gap:3px;}
+  .catalog-row-actions button{border:0;background:transparent;color:var(--text-muted);border-radius:6px;padding:5px 7px;cursor:pointer;font-size:14px;}
+  .catalog-row-actions button:hover{background:var(--accent-soft);color:var(--accent);}
+  .catalog-row-actions button.danger:hover{background:#FFF0F0;color:#B42318;}
+  .catalog-empty{padding:55px 22px;text-align:center;color:var(--text-muted);font-size:13px;}
+  .catalog-empty strong{display:block;color:var(--text);font-size:15px;margin-bottom:4px;}
+  .catalog-footer{border-top:1px solid var(--line);padding:11px 20px;color:var(--text-faint);font-size:11px;}
+  .catalog-form-note{font-size:11px;color:var(--text-muted);margin:1px 0 12px;}
+  .catalog-check{display:flex;align-items:center;gap:9px;font-size:12px;cursor:pointer;}
+  .catalog-check input{accent-color:var(--accent);}
+  .task-field[hidden]{display:none;}
+  .chart-types{border:0;padding:0;margin:0;display:flex;gap:10px;flex-wrap:wrap;}
+  .chart-types legend{font-size:12px;font-weight:650;margin-bottom:8px;padding:0;}
+  .chart-type-option{cursor:pointer;}
+  .chart-type-option input{position:absolute;opacity:0;width:1px;height:1px;}
+  .chart-type-option span{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:98px;padding:10px;border:1px solid var(--line);border-radius:10px;color:var(--text-muted);font-size:11px;}
+  .chart-type-option svg{width:40px;height:32px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+  .chart-type-option input:checked+span{color:var(--accent);border-color:var(--accent);background:var(--accent-soft);}
+  .chart-type-option input:focus-visible+span{outline:3px solid rgba(91,91,214,.22);outline-offset:2px;}
+  .chart-form-note{font-size:11px;color:var(--text-muted);margin:16px 0 0;}
   @media(max-width:1100px){
     .app{grid-template-columns:68px 280px minmax(0,1fr);}
     .detail-panel{padding:24px 22px 50px;}
@@ -467,6 +633,10 @@
     .management-shell{grid-template-columns:280px minmax(0,1fr);}
     .entity-detail{padding:24px 22px 50px;}
     .entity-grid{grid-template-columns:1fr;}
+    .kanban-page{padding:22px;}
+    .analytics-page,.catalog-page{padding:22px;}
+    .catalog-list-header,.catalog-row{grid-template-columns:minmax(200px,2fr) minmax(100px,1fr) minmax(105px,1fr) 80px;}
+    .catalog-list-header>span:nth-child(2),.catalog-row>.catalog-cell:nth-child(2){display:none;}
   }
   @media(max-width:760px){
     .app{grid-template-columns:60px minmax(0,1fr);}
@@ -477,6 +647,28 @@
     .management-shell{grid-template-columns:1fr;}
     .entity-sidebar{display:none;}
     .entity-stats{grid-template-columns:1fr;}
+    .kanban-page{padding:18px;}
+    .task-field-row{grid-template-columns:1fr;gap:0;}
+    .analytics-chart-card{padding:18px;}
+    .analytics-y-axis{width:39px;font-size:9px;}
+    .analytics-period-tabs{width:100%;}
+    .analytics-overview{grid-template-columns:1fr;}
+    .analytics-insight{padding:14px;}
+    .analytics-insight strong{font-size:17px;}
+    .analytics-page,.catalog-page{padding:18px;}
+    .catalog-summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;}
+    .catalog-stat{padding:11px;}
+    .catalog-stat strong{font-size:20px;}
+    .catalog-toolbar{padding:13px;}
+    .catalog-search{max-width:none;flex-basis:100%;}
+    .catalog-list-header{display:none;}
+    .catalog-row{grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:13px;}
+    .catalog-row>.catalog-cell,.catalog-row>.catalog-price{grid-column:1;}
+    .catalog-row>.catalog-status{grid-column:2;grid-row:1;}
+    .catalog-row-actions{grid-column:2;grid-row:2 / span 2;align-self:end;}
+  }
+  @media(min-width:761px) and (max-width:980px){
+    .analytics-overview{grid-template-columns:1fr;}
   }
 </style>
 </head>
@@ -494,11 +686,11 @@
       <button class="rail-btn" data-target="tasks" title="Задачи">
         <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12l2.5 2.5L16 9"/></svg>
       </button>
-      <button class="rail-btn" data-target="branches" title="Филиалы">
-        <svg viewBox="0 0 24 24"><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/></svg>
+      <button class="rail-btn" data-target="analytics" title="Аналитика" aria-label="Аналитика">
+        <svg viewBox="0 0 24 24"><path d="M3 20h18M6 17v-5M11 17V7M16 17v-8M21 17V4"/></svg>
       </button>
-      <button class="rail-btn" data-target="employees" title="Сотрудники">
-        <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2 20c0-3 3-5 7-5s7 2 7 5"/><circle cx="18" cy="8" r="2.4"/><path d="M15 14c2.8.3 5 1.9 5 4"/></svg>
+      <button class="rail-btn" data-target="catalog" title="Каталог" aria-label="Каталог">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v16M8 10h13M12 14h5"/></svg>
       </button>
     </div>
     <div class="rail-divider"></div>
@@ -509,10 +701,6 @@
       </button>
       <button class="rail-btn locked" title="Модуль «Лояльность» не подключён">
         <svg viewBox="0 0 24 24"><path d="M12 21s-7-4.4-9.3-8.8C1 8.6 2.8 5 6.4 5c2 0 3.4 1 5.6 3.4C14.2 6 15.6 5 17.6 5c3.6 0 5.4 3.6 3.7 7.2C19 16.6 12 21 12 21z"/></svg>
-        <span class="lock-badge"><svg viewBox="0 0 24 24"><rect x="6" y="10" width="12" height="9" rx="1.5"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></span>
-      </button>
-      <button class="rail-btn locked" title="Модуль «Аналитика» не подключён">
-        <svg viewBox="0 0 24 24"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
         <span class="lock-badge"><svg viewBox="0 0 24 24"><rect x="6" y="10" width="12" height="9" rx="1.5"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></span>
       </button>
     </div>
@@ -544,25 +732,99 @@
 
   <!-- ============ TASKS VIEW ============ -->
   <div id="view-tasks" style="display:none; grid-column: 2 / span 2;">
-    <div class="detail-panel" style="padding:28px 40px;">
-      <h1 class="list-title" style="margin-bottom:22px;">Задачи</h1>
-      <div class="tasks-columns">
-        <div>
-          <div class="col-head">
-            <h2 class="col-title">Общая очередь</h2>
-            <span class="col-count" id="queue-count">2</span>
-          </div>
-          <div id="queue-list"></div>
-        </div>
-        <div>
-          <div class="col-head">
-            <h2 class="col-title">Мои задачи — Ирина К.</h2>
-            <span class="col-count" id="mine-count">1</span>
-          </div>
-          <div id="mine-list"></div>
+    <div class="kanban-page">
+      <div class="kanban-toolbar">
+        <h1>Задачи</h1>
+        <div class="kanban-actions">
+          <button type="button" id="add-kanban-column">+ Колонка</button>
+          <button type="button" class="kanban-primary" id="add-kanban-task">+ Добавить задачу</button>
         </div>
       </div>
+      <div class="kanban-board" id="kanban-board" aria-label="Доска задач"></div>
     </div>
+  </div>
+
+  <!-- ============ ANALYTICS VIEW ============ -->
+  <div id="view-analytics" style="display:none; grid-column: 2 / span 2;">
+    <main class="analytics-page">
+      <header class="analytics-header">
+        <h1>Дашборды</h1>
+        <button class="analytics-primary" id="add-chart-button" type="button">+ Добавить график</button>
+      </header>
+      <div class="analytics-overview">
+      <section class="analytics-chart-card" aria-labelledby="profit-chart-title">
+        <div class="analytics-chart-head">
+          <div>
+            <span class="analytics-chart-kicker">ДЕМО-ГРАФИК</span>
+            <h2 id="profit-chart-title">Прибыль</h2>
+            <p>Пример отображения показателя; реальные данные пока не подключены.</p>
+          </div>
+          <div class="analytics-period-tabs" role="group" aria-label="Интервал графика">
+            <button type="button" data-period="week" class="active">Неделя</button>
+            <button type="button" data-period="month">Месяц</button>
+            <button type="button" data-period="year">Год</button>
+            <button type="button" data-period="all">Всё время</button>
+          </div>
+        </div>
+        <div class="analytics-period-nav">
+          <button type="button" id="chart-prev" aria-label="Предыдущий период">‹</button>
+          <div>
+            <strong id="chart-period-title"></strong>
+            <span id="chart-period-subtitle"></span>
+          </div>
+          <button type="button" id="chart-next" aria-label="Следующий период">›</button>
+        </div>
+        <div class="analytics-chart-plot">
+          <div class="analytics-y-axis" id="chart-y-axis"></div>
+          <div class="analytics-plot-main">
+            <div class="analytics-bars" id="chart-bars" role="group" aria-label="Значения прибыли по периодам"></div>
+            <div class="analytics-x-axis" id="chart-x-axis"></div>
+          </div>
+        </div>
+      </section>
+      <aside class="analytics-insights" aria-label="Сводка графика">
+        <div class="analytics-insight"><span>Прибыль за всё время</span><strong id="chart-insight-all-time"></strong><small>С начала демоданных</small></div>
+        <div class="analytics-insight"><span>Прибыль за период</span><strong id="chart-insight-period"></strong><small id="chart-insight-period-label"></small></div>
+        <div class="analytics-insight"><span>Выполнено задач</span><strong id="chart-insight-completed"></strong><small>В колонке «Готово»</small></div>
+        <div class="analytics-insight"><span>Активные задачи</span><strong id="chart-insight-active"></strong><small>Во всех остальных колонках</small></div>
+      </aside>
+      </div>
+      <div class="analytics-custom-head"><h2>Мои графики</h2><span>Черновики без подключения к данным</span></div>
+      <div class="analytics-custom-list" id="custom-charts"></div>
+    </main>
+  </div>
+
+  <!-- ============ CATALOG VIEW ============ -->
+  <div id="view-catalog" style="display:none; grid-column: 2 / span 2;">
+    <main class="catalog-page">
+      <div class="catalog-content">
+        <header class="catalog-header">
+          <h1>Каталог</h1>
+          <button class="analytics-primary" id="catalog-add" type="button">+ Добавить позицию</button>
+        </header>
+        <div class="catalog-summary" aria-label="Сводка каталога">
+          <div class="catalog-stat"><span>Всего позиций</span><strong id="catalog-total">0</strong></div>
+          <div class="catalog-stat"><span>Услуги</span><strong id="catalog-services">0</strong></div>
+          <div class="catalog-stat"><span>Товары</span><strong id="catalog-products">0</strong></div>
+        </div>
+        <section class="catalog-panel" aria-label="Позиции каталога">
+          <div class="catalog-toolbar">
+            <label class="catalog-search"><span aria-hidden="true">⌕</span><input id="catalog-search" type="search" placeholder="Поиск по названию, категории или артикулу" aria-label="Поиск по каталогу"></label>
+            <div class="catalog-filters">
+              <div class="catalog-tabs" role="group" aria-label="Тип позиции">
+                <button type="button" data-catalog-kind="all" class="active">Все</button>
+                <button type="button" data-catalog-kind="service">Услуги</button>
+                <button type="button" data-catalog-kind="product">Товары</button>
+              </div>
+              <select id="catalog-category" class="catalog-category-filter" aria-label="Фильтр по категории"><option value="">Все категории</option></select>
+            </div>
+          </div>
+          <div class="catalog-list-header" aria-hidden="true"><span>Название</span><span>Категория</span><span>Цена</span><span>Статус</span><span></span></div>
+          <div id="catalog-list"></div>
+          <div class="catalog-footer" id="catalog-footer"></div>
+        </section>
+      </div>
+    </main>
   </div>
 
   <!-- ============ BRANCHES VIEW ============ -->
@@ -593,6 +855,94 @@
     </div>
   </div>
 
+</div>
+
+<dialog class="task-dialog" id="task-dialog" aria-labelledby="task-dialog-title">
+  <form id="task-form">
+    <div class="task-dialog-head">
+      <h2 id="task-dialog-title">Новая задача</h2>
+      <button type="button" class="kanban-icon-button" id="close-task-dialog" aria-label="Закрыть">×</button>
+    </div>
+    <label class="task-field"><span>Название</span><input id="task-title" name="title" maxlength="255" required placeholder="Что нужно сделать?"></label>
+    <label class="task-field"><span>Описание</span><textarea id="task-description" name="description" placeholder="Детали задачи"></textarea></label>
+    <label class="task-field"><span>Важность</span>
+      <select id="task-priority" name="priority">
+        <option value="normal">Обычная</option><option value="low">Низкая</option><option value="high">Высокая</option><option value="urgent">Срочная</option>
+      </select>
+    </label>
+    <div class="subtask-editor">
+      <span class="subtask-editor-title">Подзадачи</span>
+      <div id="subtask-editor-list"></div>
+      <button type="button" class="subtask-add" id="add-subtask">+ Добавить подзадачу</button>
+    </div>
+    <div class="task-field-row">
+      <label class="task-field"><span>Ответственный</span><select id="task-assignee" name="assignee"></select></label>
+      <label class="task-field"><span>Крайний срок</span><input id="task-due" name="due" type="date"></label>
+    </div>
+    <label class="task-field"><span>Колонка после создания</span><select id="task-column" name="column"></select></label>
+    <div class="task-dialog-actions">
+      <button type="button" id="cancel-task-dialog">Отмена</button>
+      <button type="submit" id="save-task-button">Создать</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="task-dialog" id="chart-dialog" aria-labelledby="chart-dialog-title">
+  <form id="chart-form">
+    <div class="task-dialog-head">
+      <h2 id="chart-dialog-title">Новый график</h2>
+      <button type="button" class="kanban-icon-button" id="close-chart-dialog" aria-label="Закрыть">×</button>
+    </div>
+    <label class="task-field"><span>Название</span><input id="new-chart-title" maxlength="80" required placeholder="Например, динамика заказов"></label>
+    <label class="task-field"><span>Описание</span><textarea id="new-chart-description" placeholder="Что показывает график"></textarea></label>
+    <div class="task-field-row">
+      <label class="task-field"><span>Метрика X</span><input id="new-chart-x" maxlength="80" required placeholder="Например, время"></label>
+      <label class="task-field"><span>Метрика Y</span><input id="new-chart-y" maxlength="80" required placeholder="Например, количество"></label>
+    </div>
+    <fieldset class="chart-types">
+      <legend>Тип графика</legend>
+      <label class="chart-type-option"><input type="radio" name="chart-type" value="bar" checked><span><svg viewBox="0 0 40 32"><path d="M3 29h34M7 27V17h6v10M17 27V8h6v19M27 27V13h6v14"/></svg>Столбцы</span></label>
+      <label class="chart-type-option"><input type="radio" name="chart-type" value="line"><span><svg viewBox="0 0 40 32"><path d="M3 28h34M5 21l10-9 9 6 11-13"/><circle cx="5" cy="21" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="24" cy="18" r="2"/><circle cx="35" cy="5" r="2"/></svg>Линия</span></label>
+      <label class="chart-type-option"><input type="radio" name="chart-type" value="pie"><span><svg viewBox="0 0 40 32"><circle cx="20" cy="16" r="12"/><path d="M20 4v12h12"/></svg>Диаграмма</span></label>
+    </fieldset>
+    <p class="chart-form-note">Это черновик конфигурации: источники метрик и построение пользовательских графиков обсудим позже.</p>
+    <div class="task-dialog-actions">
+      <button type="button" id="cancel-chart-dialog">Отмена</button>
+      <button type="submit">Сохранить черновик</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="task-dialog" id="catalog-dialog" aria-labelledby="catalog-dialog-title">
+  <form id="catalog-form">
+    <div class="task-dialog-head">
+      <h2 id="catalog-dialog-title">Новая позиция</h2>
+      <button type="button" class="kanban-icon-button" id="catalog-close" aria-label="Закрыть">×</button>
+    </div>
+    <div class="task-field-row">
+      <label class="task-field"><span>Тип</span><select id="catalog-kind"><option value="service">Услуга</option><option value="product">Товар</option></select></label>
+      <label class="task-field"><span>Категория</span><input id="catalog-item-category" list="catalog-category-options" maxlength="60" required placeholder="Например, уход"></label>
+    </div>
+    <datalist id="catalog-category-options"></datalist>
+    <label class="task-field"><span>Название</span><input id="catalog-name" maxlength="120" required placeholder="Название товара или услуги"></label>
+    <label class="task-field"><span>Описание</span><textarea id="catalog-description" maxlength="1000" placeholder="Кратко о позиции"></textarea></label>
+    <div class="task-field-row">
+      <label class="task-field"><span>Цена, ₽</span><input id="catalog-price" type="number" min="0" step="1" required placeholder="0"></label>
+      <label class="task-field" id="catalog-duration-field"><span>Длительность, мин</span><input id="catalog-duration" type="number" min="1" step="1" placeholder="Например, 60"></label>
+      <label class="task-field" id="catalog-sku-field" hidden><span>Артикул</span><input id="catalog-sku" maxlength="50" placeholder="Необязательно"></label>
+    </div>
+    <label class="catalog-check"><input id="catalog-active" type="checkbox" checked> Позиция активна в каталоге</label>
+    <p class="catalog-form-note">Демоданные хранятся только в этом браузере. Филиалы, остатки и продажи здесь не учитываются.</p>
+    <div class="task-dialog-actions">
+      <button type="button" id="catalog-cancel">Отмена</button>
+      <button type="submit" id="catalog-save">Добавить</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="analytics-bar-tooltip" id="chart-tooltip" role="tooltip">
+  <span id="chart-tooltip-period"></span>
+  <strong id="chart-tooltip-value"></strong>
 </div>
 
 <script>
@@ -853,66 +1203,744 @@ document.getElementById('branch-search').addEventListener('input', renderBranchL
 document.getElementById('employee-search').addEventListener('input', renderEmployeeList);
 
 // ---------- TASKS VIEW ----------
-let queue = [
-  {id:101, title:"Уточнить наличие абонементов", customer:"Ольга Синицына", branch:"Северный", due:"сегодня", priority:"Обычный", pColor:"#6B6255"},
-  {id:102, title:"Перезвонить по поводу переноса записи", customer:"Максим Дорофеев", branch:"Правый берег", due:"завтра", priority:"Срочно", pColor:"#C05B26"}
+const boardStorageKey = 'crm-template-kanban-v1';
+const initialBoard = () => ({
+  columns: [
+    {id:'queue', name:'Общая очередь'},
+    {id:'work', name:'В работе'},
+    {id:'review', name:'На проверке'},
+    {id:'done', name:'Готово'}
+  ],
+  tasks: [
+    {id:'task-101', columnId:'queue', title:'Уточнить наличие абонементов', description:'Связаться с клиентом, проверить доступные варианты и сообщить условия.', priority:'normal', assignee:'', due:'2026-09-29', subtasks:[{id:'sub-101-1', title:'Проверить наличие', done:true},{id:'sub-101-2', title:'Позвонить клиенту', done:false}]},
+    {id:'task-102', columnId:'queue', title:'Перезвонить по поводу переноса записи', description:'Согласовать удобное время и подтвердить новую запись.', priority:'urgent', assignee:'', due:'2026-09-28', subtasks:[{id:'sub-102-1', title:'Уточнить свободные окна', done:false},{id:'sub-102-2', title:'Перезвонить', done:false}]},
+    {id:'task-201', columnId:'work', title:'Напомнить о записи на стрижку', description:'Написать клиенту и подтвердить визит.', priority:'normal', assignee:'Ирина Ковалёва', due:'2026-09-28', subtasks:[{id:'sub-201-1', title:'Подготовить сообщение', done:true},{id:'sub-201-2', title:'Получить подтверждение', done:false}]}
+  ]
+});
+function loadBoard(){
+  try {
+    const saved = JSON.parse(localStorage.getItem(boardStorageKey));
+    if(saved && Array.isArray(saved.columns) && saved.columns.length && Array.isArray(saved.tasks)) return saved;
+  } catch(error) { /* Повреждённые демоданные не должны ломать весь шаблон. */ }
+  return initialBoard();
+}
+let board = loadBoard();
+let editingTaskId = null;
+const kanbanRoot = document.getElementById('kanban-board');
+const taskDialog = document.getElementById('task-dialog');
+const taskForm = document.getElementById('task-form');
+const subtaskEditor = document.getElementById('subtask-editor-list');
+const priorityLabels = {low:'Низкая', normal:'Обычная', high:'Высокая', urgent:'Срочная'};
+const priorityColors = {low:'#667085', normal:'#5B5BD6', high:'#B54708', urgent:'#C43232'};
+const newBoardId = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+const node = (tag, className, content) => {
+  const element = document.createElement(tag);
+  if(className) element.className = className;
+  if(content != null) element.textContent = content;
+  return element;
+};
+function saveBoard(){
+  try { localStorage.setItem(boardStorageKey, JSON.stringify(board)); }
+  catch(error) { showToast('Не удалось сохранить изменения в браузере'); }
+}
+function menuButton(label, action, id, danger=false){
+  const button = node('button', danger ? 'danger' : '', label);
+  button.type = 'button';
+  button.dataset.action = action;
+  button.dataset.id = id;
+  return button;
+}
+function renderTaskCard(task){
+  const card = node('article', 'kanban-card');
+  card.draggable = true;
+  card.dataset.taskId = task.id;
+  const top = node('div', 'kanban-card-top');
+  const title = node('div', 'kanban-card-title', task.title);
+  title.title = task.title;
+  top.append(title);
+  const priority = node('span', 'priority-pill', priorityLabels[task.priority] || 'Обычная');
+  const color = priorityColors[task.priority] || priorityColors.normal;
+  priority.style.color = color;
+  priority.style.backgroundColor = `${color}1A`;
+  top.append(priority);
+  card.append(top);
+  if(task.description) {
+    const description = node('p', 'kanban-card-description', task.description);
+    description.title = task.description;
+    card.append(description);
+  }
+  const meta = node('div', 'kanban-card-meta');
+  meta.append(node('span', '', task.assignee || 'Без ответственного'));
+  if(task.due) meta.append(node('span', '', `Срок: ${task.due.split('-').reverse().join('.')}`));
+  card.append(meta);
+  const subtasks = Array.isArray(task.subtasks) ? task.subtasks : [];
+  const completed = subtasks.filter(item => item.done).length;
+  const progressRow = node('div', 'kanban-card-progress-row');
+  progressRow.append(node('span', 'kanban-progress-copy', `${completed}/${subtasks.length}`));
+  const progress = node('progress', 'kanban-progress');
+  progress.max = Math.max(subtasks.length, 1);
+  progress.value = completed;
+  progress.setAttribute('aria-label', `Подзадач выполнено: ${completed} из ${subtasks.length}`);
+  progressRow.append(progress);
+  const menu = node('details', 'kanban-menu');
+  const toggle = node('summary', 'kanban-icon-button', '⋯');
+  toggle.setAttribute('aria-label', `Действия с задачей ${task.title}`);
+  menu.append(toggle);
+  const panel = node('div', 'kanban-menu-panel');
+  panel.append(menuButton('Редактировать', 'edit-task', task.id));
+  panel.append(menuButton('Назначить ответственного', 'assign-task', task.id));
+  panel.append(menuButton('Удалить задачу', 'delete-task', task.id, true));
+  menu.append(panel);
+  progressRow.append(menu);
+  card.append(progressRow);
+  if(subtasks.length){
+    const details = node('details', 'kanban-subtasks');
+    details.append(node('summary', '', `Подзадачи · ${completed}/${subtasks.length}`));
+    subtasks.forEach(subtask => {
+      const label = node('label', `kanban-subtask-check${subtask.done ? ' done' : ''}`);
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = !!subtask.done;
+      checkbox.dataset.taskId = task.id;
+      checkbox.dataset.subtaskId = subtask.id;
+      label.append(checkbox, node('span', '', subtask.title));
+      details.append(label);
+    });
+    card.append(details);
+  }
+  return card;
+}
+function renderKanban(){
+  kanbanRoot.replaceChildren();
+  board.columns.forEach(column => {
+    const wrapper = node('section', 'kanban-column');
+    wrapper.dataset.columnId = column.id;
+    const header = node('div', 'kanban-column-head');
+    header.append(node('h2', '', column.name));
+    const tasks = board.tasks.filter(task => task.columnId === column.id);
+    header.append(node('span', 'col-count', String(tasks.length)));
+    const menu = node('details', 'kanban-menu kanban-column-menu');
+    const toggle = node('summary', 'kanban-icon-button', '⋯');
+    toggle.setAttribute('aria-label', `Действия с колонкой ${column.name}`);
+    menu.append(toggle);
+    const panel = node('div', 'kanban-menu-panel');
+    panel.append(menuButton('Переименовать', 'rename-column', column.id));
+    panel.append(menuButton('Удалить колонку', 'delete-column', column.id, true));
+    menu.append(panel);
+    header.append(menu);
+    wrapper.append(header);
+    const list = node('div', 'kanban-column-list');
+    tasks.forEach(task => list.append(renderTaskCard(task)));
+    if(!tasks.length) list.append(node('div', 'kanban-empty', 'Перетащите задачу сюда'));
+    wrapper.append(list);
+    const add = menuButton('+ Новая задача', 'new-task', column.id);
+    add.className = 'kanban-add-task';
+    wrapper.append(add);
+    kanbanRoot.append(wrapper);
+  });
+  renderTaskInsights();
+}
+function renderTaskInsights(){
+  const completed = board.tasks.filter(task => task.columnId === 'done').length;
+  document.getElementById('chart-insight-completed').textContent = String(completed);
+  document.getElementById('chart-insight-active').textContent = String(board.tasks.length - completed);
+}
+function addSubtaskEditorRow(subtask){
+  const row = node('div', 'subtask-editor-row');
+  row.dataset.subtaskId = subtask?.id || newBoardId();
+  row.dataset.done = subtask?.done ? 'true' : 'false';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.maxLength = 255;
+  input.placeholder = 'Задача';
+  input.value = subtask?.title || '';
+  input.setAttribute('aria-label', 'Подзадача');
+  const remove = node('button', '', '×');
+  remove.type = 'button';
+  remove.setAttribute('aria-label', 'Удалить подзадачу');
+  remove.addEventListener('click', () => row.remove());
+  row.append(input, remove);
+  subtaskEditor.append(row);
+}
+function fillTaskSelects(){
+  const assignee = document.getElementById('task-assignee');
+  assignee.replaceChildren(new Option('Не назначен', ''));
+  employees.forEach(employee => assignee.add(new Option(employee.name, employee.name)));
+  const columns = document.getElementById('task-column');
+  columns.replaceChildren();
+  board.columns.forEach(column => columns.add(new Option(column.name, column.id)));
+}
+function openTaskDialog(columnId, taskId, focusAssignee=false){
+  const task = board.tasks.find(item => item.id === taskId);
+  editingTaskId = task?.id || null;
+  taskForm.reset();
+  fillTaskSelects();
+  document.getElementById('task-dialog-title').textContent = task ? 'Редактировать задачу' : 'Новая задача';
+  document.getElementById('save-task-button').textContent = task ? 'Сохранить' : 'Создать';
+  document.getElementById('task-title').value = task?.title || '';
+  document.getElementById('task-description').value = task?.description || '';
+  document.getElementById('task-priority').value = task?.priority || 'normal';
+  document.getElementById('task-assignee').value = task?.assignee || '';
+  document.getElementById('task-due').value = task?.due || '';
+  document.getElementById('task-column').value = task?.columnId || columnId || board.columns[0].id;
+  subtaskEditor.replaceChildren();
+  if(task?.subtasks?.length) task.subtasks.forEach(addSubtaskEditorRow);
+  else addSubtaskEditorRow();
+  taskDialog.showModal();
+  if(focusAssignee) document.getElementById('task-assignee').focus();
+}
+taskForm.addEventListener('submit', event => {
+  event.preventDefault();
+  if(!taskForm.reportValidity()) return;
+  const title = document.getElementById('task-title').value.trim();
+  if(!title) { document.getElementById('task-title').focus(); return; }
+  const subtasks = [...subtaskEditor.querySelectorAll('.subtask-editor-row')].map(row => ({
+    id:row.dataset.subtaskId,
+    title:row.querySelector('input').value.trim(),
+    done:row.dataset.done === 'true'
+  })).filter(item => item.title);
+  const values = {
+    title,
+    description:document.getElementById('task-description').value.trim(),
+    priority:document.getElementById('task-priority').value,
+    assignee:document.getElementById('task-assignee').value,
+    due:document.getElementById('task-due').value,
+    columnId:document.getElementById('task-column').value,
+    subtasks
+  };
+  if(editingTaskId) Object.assign(board.tasks.find(item => item.id === editingTaskId), values);
+  else board.tasks.push({id:newBoardId(), ...values});
+  saveBoard();
+  renderKanban();
+  taskDialog.close();
+});
+document.getElementById('add-subtask').addEventListener('click', () => addSubtaskEditorRow());
+document.getElementById('close-task-dialog').addEventListener('click', () => taskDialog.close());
+document.getElementById('cancel-task-dialog').addEventListener('click', () => taskDialog.close());
+document.getElementById('add-kanban-task').addEventListener('click', () => openTaskDialog());
+document.getElementById('add-kanban-column').addEventListener('click', () => {
+  const name = prompt('Название новой колонки:');
+  if(!name?.trim()) return;
+  board.columns.push({id:newBoardId(), name:name.trim().slice(0, 50)});
+  saveBoard();
+  renderKanban();
+});
+kanbanRoot.addEventListener('click', event => {
+  const button = event.target.closest('button[data-action]');
+  if(!button) return;
+  const parentMenu = button.closest('details.kanban-menu');
+  if(parentMenu) parentMenu.open = false;
+  const {action, id} = button.dataset;
+  if(action === 'new-task') openTaskDialog(id);
+  if(action === 'edit-task') openTaskDialog(null, id);
+  if(action === 'assign-task') openTaskDialog(null, id, true);
+  if(action === 'delete-task') {
+    const task = board.tasks.find(item => item.id === id);
+    if(task && confirm(`Удалить задачу «${task.title}»?`)) {
+      board.tasks = board.tasks.filter(item => item.id !== id);
+      saveBoard(); renderKanban();
+    }
+  }
+  if(action === 'rename-column') {
+    const column = board.columns.find(item => item.id === id);
+    const name = prompt('Новое название колонки:', column?.name || '');
+    if(column && name?.trim()) {
+      column.name = name.trim().slice(0, 50);
+      saveBoard(); renderKanban();
+    }
+  }
+  if(action === 'delete-column') {
+    if(board.columns.length === 1) { alert('Нельзя удалить единственную колонку.'); return; }
+    const column = board.columns.find(item => item.id === id);
+    const target = board.columns.find(item => item.id !== id);
+    if(column && confirm(`Удалить колонку «${column.name}»? Её задачи переместятся в «${target.name}».`)) {
+      board.tasks.forEach(task => { if(task.columnId === id) task.columnId = target.id; });
+      board.columns = board.columns.filter(item => item.id !== id);
+      saveBoard(); renderKanban();
+    }
+  }
+});
+kanbanRoot.addEventListener('toggle', event => {
+  const menu = event.target;
+  if(!menu.matches?.('details.kanban-menu') || !menu.open) return;
+  kanbanRoot.querySelectorAll('details.kanban-menu[open]').forEach(other => {
+    if(other !== menu) other.open = false;
+  });
+  const anchor = menu.querySelector('summary').getBoundingClientRect();
+  const panel = menu.querySelector('.kanban-menu-panel');
+  const width = panel.offsetWidth;
+  const height = panel.offsetHeight;
+  panel.style.left = `${Math.max(8, Math.min(anchor.right - width, window.innerWidth - width - 8))}px`;
+  panel.style.top = `${anchor.bottom + height + 8 <= window.innerHeight ? anchor.bottom + 4 : Math.max(8, anchor.top - height - 4)}px`;
+}, true);
+kanbanRoot.addEventListener('change', event => {
+  const checkbox = event.target.closest('input[data-subtask-id]');
+  if(!checkbox) return;
+  const task = board.tasks.find(item => item.id === checkbox.dataset.taskId);
+  const subtask = task?.subtasks?.find(item => item.id === checkbox.dataset.subtaskId);
+  if(!subtask) return;
+  subtask.done = checkbox.checked;
+  saveBoard();
+  const details = checkbox.closest('details.kanban-subtasks');
+  const wasOpen = details?.open;
+  const taskId = task.id;
+  renderKanban();
+  if(wasOpen) kanbanRoot.querySelector(`[data-task-id="${CSS.escape(taskId)}"] details.kanban-subtasks`)?.setAttribute('open', '');
+});
+kanbanRoot.addEventListener('dragstart', event => {
+  const card = event.target.closest('.kanban-card');
+  if(!card) return;
+  event.dataTransfer.setData('text/plain', card.dataset.taskId);
+  event.dataTransfer.effectAllowed = 'move';
+  requestAnimationFrame(() => card.classList.add('dragging'));
+});
+kanbanRoot.addEventListener('dragover', event => {
+  const column = event.target.closest('.kanban-column');
+  if(!column) return;
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+  kanbanRoot.querySelectorAll('.kanban-column.drag-over').forEach(item => item.classList.remove('drag-over'));
+  column.classList.add('drag-over');
+});
+kanbanRoot.addEventListener('drop', event => {
+  const column = event.target.closest('.kanban-column');
+  if(!column) return;
+  event.preventDefault();
+  const task = board.tasks.find(item => item.id === event.dataTransfer.getData('text/plain'));
+  if(task) { task.columnId = column.dataset.columnId; saveBoard(); renderKanban(); }
+});
+kanbanRoot.addEventListener('dragend', () => {
+  kanbanRoot.querySelectorAll('.drag-over,.dragging').forEach(item => item.classList.remove('drag-over','dragging'));
+});
+renderKanban();
+
+// ---------- ANALYTICS VIEW (DEMO DATA ONLY) ----------
+const dayMs = 24 * 60 * 60 * 1000;
+const analyticsToday = new Date();
+const analyticsCurrentDay = new Date(Date.UTC(
+  analyticsToday.getFullYear(), analyticsToday.getMonth(), analyticsToday.getDate()
+));
+const demoDataStart = new Date(Date.UTC(2024, 0, 1));
+const analyticsState = {period:'week', anchor:new Date(analyticsCurrentDay), selectedIndex:null};
+const profitFormatter = new Intl.NumberFormat('ru-RU', {style:'currency', currency:'RUB', maximumFractionDigits:0});
+const compactFormatter = new Intl.NumberFormat('ru-RU', {notation:'compact', maximumFractionDigits:1});
+const dateFormatter = new Intl.DateTimeFormat('ru-RU', {day:'numeric', month:'short', timeZone:'UTC'});
+const fullDateFormatter = new Intl.DateTimeFormat('ru-RU', {day:'numeric', month:'long', year:'numeric', timeZone:'UTC'});
+const monthFormatter = new Intl.DateTimeFormat('ru-RU', {month:'long', year:'numeric', timeZone:'UTC'});
+const shortMonthFormatter = new Intl.DateTimeFormat('ru-RU', {month:'short', timeZone:'UTC'});
+const weekdayLabels = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+function mondayOf(date){
+  const result = new Date(date);
+  result.setUTCDate(result.getUTCDate() - (result.getUTCDay() + 6) % 7);
+  return result;
+}
+function startOfPeriod(date, period){
+  if(period === 'week') return mondayOf(date);
+  if(period === 'month') return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+  if(period === 'year') return new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return new Date(demoDataStart);
+}
+function isoWeek(date){
+  const thursday = new Date(date);
+  thursday.setUTCDate(thursday.getUTCDate() + 3 - (thursday.getUTCDay() + 6) % 7);
+  const isoYear = thursday.getUTCFullYear();
+  const yearStart = new Date(Date.UTC(isoYear, 0, 1));
+  return {year:isoYear, number:1 + Math.floor((thursday - yearStart) / (7 * dayMs))};
+}
+function demoDailyProfit(date){
+  const dayNumber = Math.floor(date.getTime() / dayMs);
+  const weekday = (date.getUTCDay() + 6) % 7;
+  const weekly = weekday >= 5 ? 3100 : 6900;
+  const variation = 2700 * Math.sin(dayNumber * .29) + 1900 * Math.cos(dayNumber * .13);
+  return Math.max(1800, Math.round(weekly + variation + 5400));
+}
+function demoProfitBetween(start, end){
+  let result = 0;
+  const from = Math.max(start.getTime(), demoDataStart.getTime());
+  const until = Math.min(end.getTime(), analyticsCurrentDay.getTime() + dayMs);
+  for(let time = from; time < until; time += dayMs){
+    result += demoDailyProfit(new Date(time));
+  }
+  return result;
+}
+function niceChartCeiling(value){
+  if(value <= 0) return 1;
+  const order = Math.pow(10, Math.floor(Math.log10(value)));
+  const scaled = value / order;
+  return (scaled <= 1 ? 1 : scaled <= 2 ? 2 : scaled <= 5 ? 5 : 10) * order;
+}
+function analyticsBuckets(){
+  const period = analyticsState.period;
+  const start = startOfPeriod(analyticsState.anchor, period);
+  let end;
+  let title;
+  let subtitle;
+  const buckets = [];
+  if(period === 'week'){
+    end = new Date(start.getTime() + 7 * dayMs);
+    const week = isoWeek(start);
+    title = `Неделя ${week.number} · ${week.year}`;
+    subtitle = `${dateFormatter.format(start)} — ${dateFormatter.format(new Date(end.getTime() - dayMs))}`;
+    for(let index = 0; index < 7; index++){
+      const from = new Date(start.getTime() + index * dayMs);
+      const to = new Date(from.getTime() + dayMs);
+      buckets.push({label:fullDateFormatter.format(from), tick:weekdayLabels[index], value:demoProfitBetween(from, to)});
+    }
+  } else if(period === 'month'){
+    end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1));
+    const month = monthFormatter.format(start);
+    title = month.charAt(0).toUpperCase() + month.slice(1);
+    subtitle = `1–${Math.round((end - start) / dayMs)} число · каждый столбец — день`;
+    for(let from = new Date(start); from < end; from = new Date(from.getTime() + dayMs)){
+      const day = from.getUTCDate();
+      buckets.push({label:fullDateFormatter.format(from), tick:day === 1 || day % 5 === 0 ? String(day) : '', value:demoProfitBetween(from, new Date(from.getTime() + dayMs))});
+    }
+  } else if(period === 'year'){
+    end = new Date(Date.UTC(start.getUTCFullYear() + 1, 0, 1));
+    title = String(start.getUTCFullYear());
+    subtitle = 'Каждый столбец — месяц';
+    for(let month = 0; month < 12; month++){
+      const from = new Date(Date.UTC(start.getUTCFullYear(), month, 1));
+      const to = new Date(Date.UTC(start.getUTCFullYear(), month + 1, 1));
+      buckets.push({label:monthFormatter.format(from), tick:shortMonthFormatter.format(from), value:demoProfitBetween(from, to)});
+    }
+  } else {
+    end = new Date(analyticsCurrentDay.getTime() + dayMs);
+    title = 'Всё время';
+    const totalWeeks = Math.ceil((end - start) / (7 * dayMs));
+    let stepWeeks = 1;
+    while(Math.ceil(totalWeeks / stepWeeks) > 52) stepWeeks *= 2;
+    subtitle = `2024–${analyticsCurrentDay.getUTCFullYear()} · шаг: ${stepWeeks} нед.`;
+    let index = 0;
+    for(let from = new Date(start); from < end; from = new Date(from.getTime() + stepWeeks * 7 * dayMs)){
+      const to = new Date(Math.min(from.getTime() + stepWeeks * 7 * dayMs, end.getTime()));
+      const lastDay = new Date(to.getTime() - dayMs);
+      const firstWeek = isoWeek(from);
+      const lastWeek = isoWeek(lastDay);
+      const label = stepWeeks === 1
+        ? `${firstWeek.number}-я неделя · ${firstWeek.year}`
+        : firstWeek.year === lastWeek.year
+          ? `Недели ${firstWeek.number}–${lastWeek.number} · ${firstWeek.year}`
+          : `${fullDateFormatter.format(from)} — ${fullDateFormatter.format(lastDay)}`;
+      buckets.push({label, tick:index % 6 === 0 ? shortMonthFormatter.format(from) : '', value:demoProfitBetween(from, to)});
+      index++;
+    }
+  }
+  return {buckets, title, subtitle};
+}
+function showChartTooltip(bar, point){
+  const tooltip = document.getElementById('chart-tooltip');
+  document.getElementById('chart-tooltip-period').textContent = point.label;
+  document.getElementById('chart-tooltip-value').textContent = profitFormatter.format(point.value);
+  tooltip.style.display = 'block';
+  const rect = bar.getBoundingClientRect();
+  const barTop = rect.bottom - Math.max(3, rect.height * Number(bar.dataset.heightRatio));
+  const width = tooltip.offsetWidth;
+  const height = tooltip.offsetHeight;
+  tooltip.style.left = `${Math.max(8, Math.min(rect.left + rect.width / 2 - width / 2, window.innerWidth - width - 8))}px`;
+  tooltip.style.top = `${barTop - height - 8 >= 8 ? barTop - height - 8 : barTop + 8}px`;
+}
+function hideChartTooltip(){
+  document.getElementById('chart-tooltip').style.display = 'none';
+}
+function renderProfitChart(){
+  hideChartTooltip();
+  const {buckets, title, subtitle} = analyticsBuckets();
+  document.getElementById('chart-period-title').textContent = title;
+  document.getElementById('chart-period-subtitle').textContent = subtitle;
+  const total = buckets.reduce((sum, item) => sum + item.value, 0);
+  document.getElementById('chart-insight-all-time').textContent = profitFormatter.format(
+    demoProfitBetween(demoDataStart, new Date(analyticsCurrentDay.getTime() + dayMs))
+  );
+  document.getElementById('chart-insight-period').textContent = profitFormatter.format(total);
+  document.getElementById('chart-insight-period-label').textContent = title;
+  const maximum = niceChartCeiling(Math.max(...buckets.map(item => item.value)) * 1.1);
+  const yAxis = document.getElementById('chart-y-axis');
+  yAxis.replaceChildren();
+  for(let mark = 4; mark >= 0; mark--) yAxis.append(node('span', '', `${compactFormatter.format(maximum * mark / 4)} ₽`));
+  const bars = document.getElementById('chart-bars');
+  const xAxis = document.getElementById('chart-x-axis');
+  bars.replaceChildren(); xAxis.replaceChildren();
+  const grid = `repeat(${buckets.length},minmax(0,1fr))`;
+  bars.style.gridTemplateColumns = grid;
+  bars.style.setProperty('--bar-width', buckets.length <= 12 ? '14px' : buckets.length <= 31 ? '8px' : '5px');
+  xAxis.style.gridTemplateColumns = grid;
+  bars.style.gap = buckets.length > 35 ? '2px' : '4px';
+  xAxis.style.gap = bars.style.gap;
+  buckets.forEach((bucket, index) => {
+    const bar = node('button', 'analytics-bar');
+    bar.type = 'button';
+    const heightRatio = Math.max(.01, bucket.value / maximum);
+    bar.dataset.heightRatio = String(heightRatio);
+    bar.style.setProperty('--bar-height', `${heightRatio * 100}%`);
+    bar.title = `${bucket.label}: ${profitFormatter.format(bucket.value)}`;
+    bar.setAttribute('aria-label', bar.title);
+    bar.addEventListener('mouseenter', () => showChartTooltip(bar, bucket));
+    bar.addEventListener('mouseleave', hideChartTooltip);
+    bar.addEventListener('focus', () => showChartTooltip(bar, bucket));
+    bar.addEventListener('blur', hideChartTooltip);
+    bar.addEventListener('click', () => {
+      analyticsState.selectedIndex = index;
+      bars.querySelectorAll('.selected').forEach(item => item.classList.remove('selected'));
+      bar.classList.add('selected');
+      showChartTooltip(bar, bucket);
+    });
+    if(index === analyticsState.selectedIndex) bar.classList.add('selected');
+    bars.append(bar);
+    xAxis.append(node('span', '', bucket.tick));
+  });
+  document.getElementById('chart-next').disabled = analyticsState.period === 'all' ||
+    startOfPeriod(analyticsState.anchor, analyticsState.period).getTime() >=
+    startOfPeriod(analyticsCurrentDay, analyticsState.period).getTime();
+  document.getElementById('chart-prev').disabled = analyticsState.period === 'all';
+  if(analyticsState.period !== 'all') {
+    document.getElementById('chart-prev').disabled =
+      startOfPeriod(analyticsState.anchor, analyticsState.period).getTime() <= demoDataStart.getTime();
+  }
+  document.querySelectorAll('.analytics-period-tabs button').forEach(button => {
+    button.classList.toggle('active', button.dataset.period === analyticsState.period);
+  });
+}
+document.querySelectorAll('.analytics-period-tabs button').forEach(button => {
+  button.addEventListener('click', () => {
+    analyticsState.period = button.dataset.period;
+    analyticsState.anchor = new Date(analyticsCurrentDay);
+    analyticsState.selectedIndex = null;
+    renderProfitChart();
+  });
+});
+function shiftChartPeriod(direction){
+  const {period, anchor} = analyticsState;
+  if(period === 'all') return;
+  const next = startOfPeriod(anchor, period);
+  if(period === 'week') next.setUTCDate(next.getUTCDate() + 7 * direction);
+  if(period === 'month') next.setUTCMonth(next.getUTCMonth() + direction);
+  if(period === 'year') next.setUTCFullYear(next.getUTCFullYear() + direction);
+  if(next > startOfPeriod(analyticsCurrentDay, period)) return;
+  if(next < demoDataStart) return;
+  analyticsState.anchor = next;
+  analyticsState.selectedIndex = null;
+  renderProfitChart();
+}
+document.getElementById('chart-prev').addEventListener('click', () => shiftChartPeriod(-1));
+document.getElementById('chart-next').addEventListener('click', () => shiftChartPeriod(1));
+
+const customChartsStorageKey = 'crm-template-chart-drafts-v1';
+function loadChartDrafts(){
+  try { const value = JSON.parse(localStorage.getItem(customChartsStorageKey)); return Array.isArray(value) ? value : []; }
+  catch(error) { return []; }
+}
+let chartDrafts = loadChartDrafts();
+function saveChartDrafts(){
+  try { localStorage.setItem(customChartsStorageKey, JSON.stringify(chartDrafts)); }
+  catch(error) { showToast('Не удалось сохранить черновики графиков'); }
+}
+function renderChartDrafts(){
+  const container = document.getElementById('custom-charts');
+  container.replaceChildren();
+  if(!chartDrafts.length){
+    container.append(node('div', 'analytics-empty', 'Здесь появятся ваши графики. Пока можно создать черновик с названием, осями и типом.'));
+    return;
+  }
+  const typeNames = {bar:'Столбцы', line:'Линия', pie:'Диаграмма'};
+  chartDrafts.forEach(draft => {
+    const card = node('article', 'analytics-custom-card');
+    const head = node('div', 'analytics-custom-card-head');
+    head.append(node('h3', '', draft.title), node('span', 'analytics-draft-tag', 'Черновик'));
+    card.append(head);
+    if(draft.description) card.append(node('p', '', draft.description));
+    card.append(node('small', '', `${typeNames[draft.type] || 'График'} · X: ${draft.x} · Y: ${draft.y}`));
+    const remove = node('button', '', 'Удалить черновик');
+    remove.type = 'button';
+    remove.addEventListener('click', () => {
+      if(!confirm(`Удалить черновик «${draft.title}»?`)) return;
+      chartDrafts = chartDrafts.filter(item => item.id !== draft.id);
+      saveChartDrafts(); renderChartDrafts();
+    });
+    card.append(remove);
+    container.append(card);
+  });
+}
+const chartDialog = document.getElementById('chart-dialog');
+const chartForm = document.getElementById('chart-form');
+document.getElementById('add-chart-button').addEventListener('click', () => { chartForm.reset(); chartDialog.showModal(); });
+document.getElementById('close-chart-dialog').addEventListener('click', () => chartDialog.close());
+document.getElementById('cancel-chart-dialog').addEventListener('click', () => chartDialog.close());
+chartForm.addEventListener('submit', event => {
+  event.preventDefault();
+  if(!chartForm.reportValidity()) return;
+  const title = document.getElementById('new-chart-title').value.trim();
+  const x = document.getElementById('new-chart-x').value.trim();
+  const y = document.getElementById('new-chart-y').value.trim();
+  if(!title || !x || !y) return;
+  chartDrafts.push({
+    id:newBoardId(), title,
+    description:document.getElementById('new-chart-description').value.trim(),
+    x, y, type:chartForm.elements['chart-type'].value
+  });
+  saveChartDrafts(); renderChartDrafts(); chartDialog.close();
+});
+renderProfitChart();
+renderChartDrafts();
+
+// ---------- CATALOG VIEW (LOCAL PROTOTYPE) ----------
+const catalogStorageKey = 'crm-template-catalog-v1';
+const initialCatalog = () => [
+  {id:'catalog-1', kind:'service', category:'Стрижки', name:'Женская стрижка', description:'Консультация, стрижка и укладка.', price:2500, duration:60, sku:'', active:true},
+  {id:'catalog-2', kind:'service', category:'Окрашивание', name:'Окрашивание в один тон', description:'Стоимость материалов уточняется при записи.', price:6500, duration:150, sku:'', active:true},
+  {id:'catalog-3', kind:'service', category:'Уход', name:'Восстанавливающий уход', description:'Процедура для волос с подбором состава.', price:3200, duration:75, sku:'', active:true},
+  {id:'catalog-4', kind:'product', category:'Уход', name:'Шампунь для ежедневного ухода', description:'Флакон 250 мл.', price:1400, duration:null, sku:'SH-250', active:true},
+  {id:'catalog-5', kind:'product', category:'Уход', name:'Маска для волос', description:'Банка 200 мл.', price:2100, duration:null, sku:'MS-200', active:false}
 ];
-let mine = [
-  {id:201, title:"Напомнить о записи на стрижку", customer:"Анна Петрова", branch:"Центр", due:"завтра", priority:"Обычный", pColor:"#6B6255"}
-];
-
-function priorityChip(t){
-  return `<span class="priority-pill" style="background:${t.pColor}22; color:${t.pColor};">${t.priority}</span>`;
+function loadCatalog(){
+  try {
+    const saved = JSON.parse(localStorage.getItem(catalogStorageKey));
+    if(Array.isArray(saved) && saved.every(item => item && typeof item.id === 'string' && typeof item.name === 'string' && ['service','product'].includes(item.kind))) return saved;
+  } catch(error) { /* Повреждённые локальные данные не должны ломать шаблон. */ }
+  return initialCatalog();
 }
-
-function renderTasks(){
-  const q = document.getElementById('queue-list');
-  const m = document.getElementById('mine-list');
-  document.getElementById('queue-count').textContent = queue.length;
-  document.getElementById('mine-count').textContent = mine.length;
-
-  q.innerHTML = queue.length ? queue.map(t => `
-    <div class="task-card">
-      <div class="task-card-top">
-        <span class="task-card-title">${t.title}</span>
-        ${priorityChip(t)}
-      </div>
-      <div class="task-card-meta"><b>${t.customer}</b> · филиал ${t.branch} · срок: ${t.due}</div>
-      <div class="task-card-foot">
-        <span></span>
-        <button class="btn-primary" onclick="claimTask(${t.id})">Взять в работу</button>
-      </div>
-    </div>
-  `).join('') : `<div class="empty-queue">Очередь пуста — все задачи распределены</div>`;
-
-  m.innerHTML = mine.length ? mine.map(t => `
-    <div class="task-card">
-      <div class="task-card-top">
-        <span class="task-card-title">${t.title}</span>
-        ${priorityChip(t)}
-      </div>
-      <div class="task-card-meta"><b>${t.customer}</b> · филиал ${t.branch} · срок: ${t.due}</div>
-      <div class="task-card-foot">
-        ${statusChip("В работе", "#2E7D6B")}
-        <button class="btn-ghost">Выполнено</button>
-      </div>
-    </div>
-  `).join('') : `<div class="empty-queue">Нет активных задач</div>`;
+let catalogItems = loadCatalog();
+let catalogKind = 'all';
+let editingCatalogId = null;
+const catalogDialog = document.getElementById('catalog-dialog');
+const catalogForm = document.getElementById('catalog-form');
+const catalogMoney = new Intl.NumberFormat('ru-RU', {style:'currency', currency:'RUB', maximumFractionDigits:0});
+function saveCatalog(){
+  try { localStorage.setItem(catalogStorageKey, JSON.stringify(catalogItems)); }
+  catch(error) { showToast('Не удалось сохранить каталог в браузере'); }
 }
-
-function claimTask(id){
-  const idx = queue.findIndex(t => t.id === id);
-  if(idx === -1) return;
-  const [t] = queue.splice(idx, 1);
-  mine.push(t);
-  renderTasks();
+function refreshCatalogCategories(){
+  const filter = document.getElementById('catalog-category');
+  const selected = filter.value;
+  const options = document.getElementById('catalog-category-options');
+  const categories = [...new Set(catalogItems.map(item => item.category).filter(Boolean))].sort((a,b) => a.localeCompare(b,'ru'));
+  filter.replaceChildren(new Option('Все категории', ''));
+  options.replaceChildren();
+  categories.forEach(category => {
+    filter.add(new Option(category, category));
+    const option = document.createElement('option');
+    option.value = category;
+    options.append(option);
+  });
+  filter.value = categories.includes(selected) ? selected : '';
 }
-renderTasks();
+function renderCatalog(){
+  refreshCatalogCategories();
+  document.getElementById('catalog-total').textContent = String(catalogItems.length);
+  document.getElementById('catalog-services').textContent = String(catalogItems.filter(item => item.kind === 'service').length);
+  document.getElementById('catalog-products').textContent = String(catalogItems.filter(item => item.kind === 'product').length);
+  const query = document.getElementById('catalog-search').value.trim().toLocaleLowerCase('ru');
+  const category = document.getElementById('catalog-category').value;
+  const shown = catalogItems.filter(item =>
+    (catalogKind === 'all' || item.kind === catalogKind) &&
+    (!category || item.category === category) &&
+    (!query || [item.name,item.category,item.sku].some(value => String(value || '').toLocaleLowerCase('ru').includes(query)))
+  );
+  const list = document.getElementById('catalog-list');
+  list.replaceChildren();
+  if(!shown.length){
+    const empty = node('div', 'catalog-empty');
+    empty.append(node('strong', '', catalogItems.length ? 'Ничего не найдено' : 'Каталог пока пуст'),
+      node('span', '', catalogItems.length ? 'Попробуйте изменить поиск или фильтры.' : 'Добавьте первую услугу или товар.'));
+    list.append(empty);
+  }
+  shown.forEach(item => {
+    const row = node('div', 'catalog-row');
+    const name = node('div', 'catalog-name');
+    name.append(node('div', `catalog-item-icon${item.kind === 'product' ? ' product' : ''}`, item.kind === 'product' ? 'Т' : 'У'));
+    const nameCopy = node('div', '');
+    nameCopy.style.minWidth = '0';
+    nameCopy.append(node('strong', '', item.name), node('small', '', item.kind === 'service'
+      ? `Услуга${item.duration ? ` · ${item.duration} мин` : ''}`
+      : `Товар${item.sku ? ` · ${item.sku}` : ''}`));
+    name.append(nameCopy);
+    const status = node('span', `catalog-status${item.active ? '' : ' hidden'}`, item.active ? 'Доступна' : 'Скрыта');
+    const actions = node('div', 'catalog-row-actions');
+    const edit = node('button', '', '✎');
+    edit.type = 'button'; edit.dataset.action = 'edit'; edit.dataset.id = item.id;
+    edit.setAttribute('aria-label', `Редактировать «${item.name}»`);
+    const remove = node('button', 'danger', '×');
+    remove.type = 'button'; remove.dataset.action = 'delete'; remove.dataset.id = item.id;
+    remove.setAttribute('aria-label', `Удалить «${item.name}»`);
+    actions.append(edit, remove);
+    row.append(name, node('span', 'catalog-cell', item.category || 'Без категории'),
+      node('span', 'catalog-price', catalogMoney.format(Number(item.price) || 0)), status, actions);
+    list.append(row);
+  });
+  document.getElementById('catalog-footer').textContent = `Показано ${shown.length} из ${catalogItems.length} · локальные демоданные`;
+}
+function toggleCatalogFields(){
+  const isService = document.getElementById('catalog-kind').value === 'service';
+  document.getElementById('catalog-duration-field').hidden = !isService;
+  document.getElementById('catalog-sku-field').hidden = isService;
+}
+function openCatalogDialog(id = null){
+  const item = catalogItems.find(entry => entry.id === id);
+  editingCatalogId = item?.id || null;
+  catalogForm.reset();
+  document.getElementById('catalog-dialog-title').textContent = item ? 'Редактировать позицию' : 'Новая позиция';
+  document.getElementById('catalog-save').textContent = item ? 'Сохранить' : 'Добавить';
+  document.getElementById('catalog-kind').value = item?.kind || 'service';
+  document.getElementById('catalog-item-category').value = item?.category || '';
+  document.getElementById('catalog-name').value = item?.name || '';
+  document.getElementById('catalog-description').value = item?.description || '';
+  document.getElementById('catalog-price').value = item?.price ?? '';
+  document.getElementById('catalog-duration').value = item?.duration ?? '';
+  document.getElementById('catalog-sku').value = item?.sku || '';
+  document.getElementById('catalog-active').checked = item?.active ?? true;
+  toggleCatalogFields();
+  catalogDialog.showModal();
+  document.getElementById('catalog-name').focus();
+}
+document.getElementById('catalog-add').addEventListener('click', () => openCatalogDialog());
+document.getElementById('catalog-close').addEventListener('click', () => catalogDialog.close());
+document.getElementById('catalog-cancel').addEventListener('click', () => catalogDialog.close());
+document.getElementById('catalog-kind').addEventListener('change', toggleCatalogFields);
+document.getElementById('catalog-search').addEventListener('input', renderCatalog);
+document.getElementById('catalog-category').addEventListener('change', renderCatalog);
+document.querySelectorAll('[data-catalog-kind]').forEach(button => button.addEventListener('click', () => {
+  catalogKind = button.dataset.catalogKind;
+  document.querySelectorAll('[data-catalog-kind]').forEach(tab => tab.classList.toggle('active', tab === button));
+  renderCatalog();
+}));
+document.getElementById('catalog-list').addEventListener('click', event => {
+  const button = event.target.closest('button[data-action]');
+  if(!button) return;
+  const item = catalogItems.find(entry => entry.id === button.dataset.id);
+  if(!item) return;
+  if(button.dataset.action === 'edit') openCatalogDialog(item.id);
+  if(button.dataset.action === 'delete' && confirm(`Удалить «${item.name}» из каталога?`)){
+    catalogItems = catalogItems.filter(entry => entry.id !== item.id);
+    saveCatalog(); renderCatalog();
+  }
+});
+catalogForm.addEventListener('submit', event => {
+  event.preventDefault();
+  if(!catalogForm.reportValidity()) return;
+  const kind = document.getElementById('catalog-kind').value;
+  const values = {
+    kind,
+    category:document.getElementById('catalog-item-category').value.trim(),
+    name:document.getElementById('catalog-name').value.trim(),
+    description:document.getElementById('catalog-description').value.trim(),
+    price:Number(document.getElementById('catalog-price').value),
+    duration:kind === 'service' ? Number(document.getElementById('catalog-duration').value) || null : null,
+    sku:kind === 'product' ? document.getElementById('catalog-sku').value.trim() : '',
+    active:document.getElementById('catalog-active').checked
+  };
+  if(!values.name || !values.category) return;
+  if(editingCatalogId) Object.assign(catalogItems.find(item => item.id === editingCatalogId), values);
+  else catalogItems.unshift({id:newBoardId(), ...values});
+  saveCatalog(); renderCatalog(); catalogDialog.close();
+});
+renderCatalog();
 
 // ---------- RAIL NAV ----------
 const views = {
   customers: document.getElementById('view-customers'),
   tasks: document.getElementById('view-tasks'),
+  analytics: document.getElementById('view-analytics'),
+  catalog: document.getElementById('view-catalog'),
   branches: document.getElementById('view-branches'),
   employees: document.getElementById('view-employees')
 };

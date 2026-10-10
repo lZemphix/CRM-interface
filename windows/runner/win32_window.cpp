@@ -179,6 +179,16 @@ Win32Window::MessageHandler(HWND hwnd,
                             WPARAM const wparam,
                             LPARAM const lparam) noexcept {
   switch (message) {
+    case WM_SYSCOMMAND:
+      // Without a native menu bar, Alt (also after Alt+Shift) can enter an
+      // invisible menu loop and consume the next key. Keep Alt+Space and
+      // other system commands working by suppressing only bare menu activation.
+      if ((wparam & 0xFFF0) == SC_KEYMENU && lparam == 0 &&
+          GetMenu(hwnd) == nullptr) {
+        return 0;
+      }
+      break;
+
     case WM_DESTROY:
       window_handle_ = nullptr;
       Destroy();

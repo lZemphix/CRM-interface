@@ -23,17 +23,21 @@ class TaskColumnFooter extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: onCreate,
               icon: const Icon(Icons.add_rounded, size: 16),
-              label: const Text('Новая задача'),
+              label: const Text(
+                'Новая задача',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
               style: OutlinedButton.styleFrom(
                 alignment: Alignment.centerLeft,
                 foregroundColor: AppColors.activeElement,
                 backgroundColor: Colors.transparent,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
+                  horizontal: 8,
                   vertical: 12,
                 ),
                 textStyle: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
                 side: BorderSide.none,

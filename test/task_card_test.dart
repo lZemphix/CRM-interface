@@ -58,6 +58,56 @@ Future<void> pumpCard(
 }
 
 void main() {
+  testWidgets('narrow kanban cards keep menus and subtasks usable', (
+    tester,
+  ) async {
+    final task = makeTask(
+      title: 'Подготовить документы для первого посещения клиента',
+      description:
+          'Длинное описание задачи, которое должно аккуратно обрезаться.',
+      responsibleName: 'Ответственный сотрудник с длинным именем',
+      responsibleId: 4,
+      dueAt: DateTime(2026, 10, 8, 12, 30),
+      subtasks: const [
+        TaskboardTaskSubtask(
+          id: 1,
+          title: 'Проверить документы клиента',
+          done: false,
+          order: 0,
+        ),
+      ],
+    );
+    for (final width in [170.0, 200.0]) {
+      final actions = <TaskCardAction>[];
+      final checked = <bool>[];
+      await pumpCard(
+        tester,
+        task,
+        width: width,
+        onAction: actions.add,
+        onSubtaskChanged: (_, done) async => checked.add(done),
+      );
+      expect(tester.getSize(find.byType(TaskCard)).width, width);
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.text('Подзадачи · 0/1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(Checkbox));
+      await tester.pumpAndSettle();
+      expect(checked, [true]);
+      await tester.tap(find.byTooltip('Действия с задачей'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('История задачи'));
+      await tester.pumpAndSettle();
+      expect(actions, [TaskCardAction.history]);
+      expect(tester.takeException(), isNull);
+      // Remove ExpansionTile/PageStorage state before testing the other width.
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+    await pumpCard(tester, makeTask(), width: 170);
+    expect(find.text('Без подзадач'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'customer variant is substantially shorter and uses horizontal metadata',
     (tester) async {

@@ -283,7 +283,7 @@ void main() {
   testWidgets(
     'template column frames fill available height and scroll with board',
     (tester) async {
-      tester.view.physicalSize = const Size(1200, 750);
+      tester.view.physicalSize = const Size(700, 750);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -333,6 +333,7 @@ void main() {
       );
       expect(tester.getSize(frames).height, greaterThan(600));
       final board = tester.widget<AppFlowyBoard>(find.byType(AppFlowyBoard));
+      expect(board.groupConstraints.maxWidth, 250);
       final bottomScrollbar = tester.widget<Scrollbar>(
         find.byWidgetPredicate(
           (widget) =>

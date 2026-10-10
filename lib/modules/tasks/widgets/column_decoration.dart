@@ -6,7 +6,7 @@ class TaskColumnFrames extends CustomPainter {
   TaskColumnFrames({required this.columns, required this.scrollController})
     : super(repaint: scrollController);
 
-  static const slotWidth = 310.0;
+  static const slotWidth = 250.0;
   static const margin = 8.0;
   final int columns;
   final ScrollController scrollController;

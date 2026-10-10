@@ -43,7 +43,7 @@ class TaskCard extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(10),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -226,28 +226,37 @@ class TaskCard extends StatelessWidget {
   };
 
   Widget _buildHeading() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Tooltip(
-            message: task.title,
-            child: Text(
-              task.title,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 14,
-                height: 1.4,
-                fontWeight: FontWeight.w700,
-                color: AppColors.taskCardText,
-              ),
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        final title = Tooltip(
+          message: task.title,
+          child: Text(
+            task.title,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.4,
+              fontWeight: FontWeight.w700,
+              color: AppColors.taskCardText,
             ),
           ),
-        ),
-        const SizedBox(width: 8),
-        _buildPriority(),
-      ],
+        );
+        if (constraints.maxWidth < 200) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [title, const SizedBox(height: 6), _buildPriority()],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: title),
+            const SizedBox(width: 8),
+            _buildPriority(),
+          ],
+        );
+      },
     );
   }
 
@@ -360,25 +369,47 @@ class TaskCard extends StatelessWidget {
     final completed = task.subtasks.where((subtask) => subtask.done).length;
     final progress = total == 0 ? 0.0 : completed / total;
 
-    return Row(
-      children: [
-        Text(
-          total == 0 ? 'Без подзадач' : '$completed/$total',
-          style: const TextStyle(fontSize: 11, color: AppColors.textMutted),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: LinearProgressIndicator(
-            value: progress,
-            minHeight: 6,
-            borderRadius: BorderRadius.circular(99),
-            color: AppColors.activeElement,
-            backgroundColor: AppColors.notActiveBorder,
-            semanticsLabel: 'Подзадачи: выполнено $completed из $total',
-          ),
-        ),
-        if (showMenu) ...[const SizedBox(width: 9), _buildActionMenu()],
-      ],
+    final indicator = LinearProgressIndicator(
+      value: progress,
+      minHeight: 6,
+      borderRadius: BorderRadius.circular(99),
+      color: AppColors.activeElement,
+      backgroundColor: AppColors.notActiveBorder,
+      semanticsLabel: 'Подзадачи: выполнено $completed из $total',
+    );
+    final label = Text(
+      total == 0 ? 'Без подзадач' : '$completed/$total',
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(fontSize: 11, color: AppColors.textMutted),
+    );
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        if (showMenu && constraints.maxWidth < 180) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(child: label),
+                  const SizedBox(width: 6),
+                  _buildActionMenu(),
+                ],
+              ),
+              const SizedBox(height: 4),
+              indicator,
+            ],
+          );
+        }
+        return Row(
+          children: [
+            label,
+            const SizedBox(width: 10),
+            Expanded(child: indicator),
+            if (showMenu) ...[const SizedBox(width: 9), _buildActionMenu()],
+          ],
+        );
+      },
     );
   }
 

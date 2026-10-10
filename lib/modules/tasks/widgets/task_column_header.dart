@@ -20,7 +20,7 @@ class TaskColumnHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 11),
+      padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -42,12 +42,12 @@ class TaskColumnHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Semantics(
                 label: 'Задач в колонке: $taskCount',
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 9,
+                    horizontal: 7,
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
@@ -64,7 +64,7 @@ class TaskColumnHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               SizedBox(
                 width: 28,
                 height: 28,

@@ -10,7 +10,7 @@ void main() {
           body: Align(
             alignment: Alignment.topLeft,
             child: SizedBox(
-              width: 294,
+              width: 184,
               child: TaskColumnHeader(title: 'Новые', taskCount: 0),
             ),
           ),
@@ -32,7 +32,7 @@ void main() {
           body: Align(
             alignment: Alignment.topLeft,
             child: SizedBox(
-              width: 220,
+              width: 184,
               child: TaskColumnHeader(
                 title: 'Очень длинное название колонки ' * 5,
                 taskCount: 123,

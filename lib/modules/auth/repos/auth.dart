@@ -3,11 +3,24 @@ import 'package:crm_interface/modules/auth/auth_session.dart';
 import 'package:dio/dio.dart';
 import 'package:fresh_dio/fresh_dio.dart';
 
+import '../models/profile.dart';
+
 class AuthRepository {
   const AuthRepository(this.apiClient, this.sessionStore);
 
   final ApiClient apiClient;
   final SessionStore sessionStore;
+
+  Future<AuthProfile> getProfile() async {
+    final response = await apiClient.dio.get<Map<String, dynamic>>('/auth/me');
+    final data = response.data;
+    if (data == null) throw const FormatException('Пустой ответ профиля');
+    try {
+      return AuthProfile.fromApi(data);
+    } on TypeError {
+      throw const FormatException('Некорректный ответ профиля');
+    }
+  }
 
   Future<bool> auth({required String login, required String password}) async {
     final response = await apiClient.dio.post<Map<String, dynamic>>(

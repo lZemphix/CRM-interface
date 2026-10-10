@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:crm_interface/core/api_client/client.dart';
-import 'package:crm_interface/core/navigation/app_screen.dart';
+import 'package:crm_interface/bootstrap/modules.g.dart';
 import 'package:crm_interface/layout/app_shell.dart';
 import 'package:crm_interface/layout/sidebar.dart';
 import 'package:crm_interface/modules/auth/auth_session.dart';
@@ -9,7 +9,6 @@ import 'package:crm_interface/modules/auth/models/profile.dart';
 import 'package:crm_interface/modules/auth/repos/auth.dart';
 import 'package:crm_interface/modules/auth/screens/auth_screen.dart';
 import 'package:crm_interface/modules/auth/screens/session_gate.dart';
-import 'package:crm_interface/modules/tasks/repos/tasks.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -107,9 +106,8 @@ Future<void> openShell(
   await tester.pumpWidget(
     MaterialApp(
       home: AppShell(
-        apiClient: repository.apiClient,
+        modules: createModuleRegistry(repository.apiClient),
         authRepository: repository,
-        tasksRepository: TasksRepository(repository.apiClient),
       ),
     ),
   );
@@ -130,9 +128,8 @@ Future<void> openGatedShell(WidgetTester tester, ProfileRepository repo) async {
       home: SessionGate(
         authRepository: repo,
         authenticatedBuilder: (_) => AppShell(
-          apiClient: repo.apiClient,
+          modules: createModuleRegistry(repo.apiClient),
           authRepository: repo,
-          tasksRepository: TasksRepository(repo.apiClient),
         ),
       ),
     ),
@@ -161,15 +158,17 @@ void main() {
       tester,
     ) async {
       var taps = 0;
-      AppScreen? selected;
+      String? selected;
+      final modules = createModuleRegistry(makeClient());
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: SizedBox(
               height: height,
               child: SideBar(
-                activeScreen: AppScreen.customers,
-                onScreenSelected: (screen) => selected = screen,
+                modules: modules.modules,
+                activeModuleId: 'customers',
+                onModuleSelected: (id) => selected = id,
                 accountProfile: profile,
                 onLogout: () => taps++,
               ),
@@ -204,7 +203,7 @@ void main() {
       final analytics = find.byIcon(Icons.analytics_outlined);
       await tester.ensureVisible(analytics);
       await tester.tap(analytics);
-      expect(selected, AppScreen.analytics);
+      expect(selected, 'analytics');
       expect(tester.takeException(), isNull);
     });
   }

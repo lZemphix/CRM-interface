@@ -1,38 +1,27 @@
 import 'package:crm_interface/core/api_client/client.dart';
+import 'package:crm_interface/bootstrap/modules.g.dart';
+import 'package:crm_interface/core/modules/module_registry.dart';
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
 import 'package:crm_interface/layout/app_shell.dart';
 import 'package:crm_interface/modules/auth/auth_session.dart';
 import 'package:crm_interface/modules/auth/repos/auth.dart';
 import 'package:crm_interface/modules/auth/screens/session_gate.dart';
-import 'package:crm_interface/modules/tasks/repos/tasks.dart';
 import 'package:flutter/material.dart';
 
 void main() {
   final sessionStore = SessionStore();
   final apiClient = ApiClient(sessionStore);
   final authRepository = AuthRepository(apiClient, sessionStore);
-  final tasksRepository = TasksRepository(apiClient);
+  final modules = createModuleRegistry(apiClient);
 
-  runApp(
-    MyApp(
-      authRepository: authRepository,
-      apiClient: apiClient,
-      tasksRepository: tasksRepository,
-    ),
-  );
+  runApp(MyApp(authRepository: authRepository, modules: modules));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({
-    super.key,
-    required this.authRepository,
-    required this.apiClient,
-    required this.tasksRepository,
-  });
+  const MyApp({super.key, required this.authRepository, required this.modules});
 
   final AuthRepository authRepository;
-  final ApiClient apiClient;
-  final TasksRepository tasksRepository;
+  final ModuleRegistry modules;
 
   @override
   Widget build(BuildContext context) {
@@ -57,11 +46,8 @@ class MyApp extends StatelessWidget {
       ),
       home: SessionGate(
         authRepository: authRepository,
-        authenticatedBuilder: (context) => AppShell(
-          apiClient: apiClient,
-          tasksRepository: tasksRepository,
-          authRepository: authRepository,
-        ),
+        authenticatedBuilder: (context) =>
+            AppShell(modules: modules, authRepository: authRepository),
       ),
     );
   }

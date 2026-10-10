@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:crm_interface/core/navigation/app_screen.dart';
+import 'package:crm_interface/core/modules/module_definition.dart';
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
 import 'package:crm_interface/modules/auth/models/profile.dart';
 import 'package:flutter/material.dart';
@@ -17,8 +17,9 @@ String accountInitials(String name) {
 class SideBar extends StatelessWidget {
   const SideBar({
     super.key,
-    required this.activeScreen,
-    required this.onScreenSelected,
+    required this.modules,
+    required this.activeModuleId,
+    required this.onModuleSelected,
     this.accountProfile,
     this.accountLoading = false,
     this.accountError = false,
@@ -27,8 +28,9 @@ class SideBar extends StatelessWidget {
     this.onLogout,
   });
 
-  final AppScreen activeScreen;
-  final ValueChanged<AppScreen> onScreenSelected;
+  final List<ModuleDefinition> modules;
+  final String? activeModuleId;
+  final ValueChanged<String> onModuleSelected;
   final AuthProfile? accountProfile;
   final bool accountLoading;
   final bool accountError;
@@ -47,21 +49,25 @@ class SideBar extends StatelessWidget {
     );
   }
 
-  Widget sideBarButton(AppScreen buttonScreen, IconData icon) {
-    final bool isActive = activeScreen == buttonScreen;
+  Widget sideBarButton(ModuleDefinition module) {
+    final bool isActive = activeModuleId == module.id;
 
-    return InkWell(
-      onTap: () => onScreenSelected(buttonScreen),
-      hoverColor: AppColors.hoveredElement,
-      borderRadius: BorderRadius.all(Radius.circular(10)),
-      child: Container(
-        decoration: BoxDecoration(
-          color: isActive ? AppColors.activeElement : Colors.transparent,
-          borderRadius: BorderRadius.all(Radius.circular(12)),
+    return Tooltip(
+      message: module.title,
+      child: InkWell(
+        key: ValueKey('sidebar-module-${module.id}'),
+        onTap: () => onModuleSelected(module.id),
+        hoverColor: AppColors.hoveredElement,
+        borderRadius: BorderRadius.all(Radius.circular(10)),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isActive ? AppColors.activeElement : Colors.transparent,
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+          ),
+          width: 44,
+          height: 44,
+          child: Icon(module.icon, color: AppColors.sidebarElement),
         ),
-        width: 44,
-        height: 44,
-        child: Icon(icon, color: AppColors.sidebarElement),
       ),
     );
   }
@@ -81,16 +87,7 @@ class SideBar extends StatelessWidget {
                 child: Column(
                   spacing: 10,
                   children: [
-                    sideBarButton(AppScreen.customers, Icons.badge_outlined),
-                    sideBarButton(AppScreen.tasks, Icons.task_alt_outlined),
-                    sideBarButton(
-                      AppScreen.analytics,
-                      Icons.analytics_outlined,
-                    ),
-                    sideBarButton(
-                      AppScreen.catalog,
-                      Icons.shopping_cart_outlined,
-                    ),
+                    for (final module in modules) sideBarButton(module),
                   ],
                 ),
               ),

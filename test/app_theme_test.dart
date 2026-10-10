@@ -1,10 +1,10 @@
 import 'package:crm_interface/core/api_client/client.dart';
+import 'package:crm_interface/bootstrap/modules.g.dart';
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
 import 'package:crm_interface/main.dart';
 import 'package:crm_interface/modules/auth/auth_session.dart';
 import 'package:crm_interface/modules/auth/repos/auth.dart';
 import 'package:crm_interface/modules/auth/screens/auth_screen.dart';
-import 'package:crm_interface/modules/tasks/repos/tasks.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -15,8 +15,7 @@ Future<void> openApp(WidgetTester tester) async {
   await tester.pumpWidget(
     MyApp(
       authRepository: AuthRepository(api, session),
-      apiClient: api,
-      tasksRepository: TasksRepository(api),
+      modules: createModuleRegistry(api),
     ),
   );
   await tester.pumpAndSettle();

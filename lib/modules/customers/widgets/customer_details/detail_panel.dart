@@ -1,7 +1,10 @@
 // import 'package:crm_interface/core/theme/light/colorscheme.dart';
 import 'package:crm_interface/core/api_client/client.dart';
+import 'package:crm_interface/core/widgets/section_refresh_controller.dart';
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
-import 'package:crm_interface/core/widgets/material_button.dart';
+
+import 'customer_action_button.dart';
+
 import 'package:crm_interface/modules/customers/models/customer.dart';
 import 'package:crm_interface/modules/customers/models/customer_note.dart';
 import 'package:crm_interface/modules/customers/models/create_customer.dart';
@@ -37,7 +40,15 @@ class DetailPanel extends StatefulWidget {
   State<StatefulWidget> createState() => _DetailPanelState();
 }
 
-class _DetailPanelState extends State<DetailPanel> {
+class _DetailPanelState extends State<DetailPanel>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+  final _tabRefresh = List.generate(4, (_) => SectionRefreshController());
+  bool _refreshingCustomer = false;
+  bool get _busy =>
+      _openingTask ||
+      _refreshingCustomer ||
+      _tabRefresh.any((controller) => controller.isBusy);
   late Future<CustomerDetails> customerDetailsFuture;
   late final CustomersRepository repository;
   late final TasksRepository _tasksRepository;
@@ -51,6 +62,12 @@ class _DetailPanelState extends State<DetailPanel> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 5, vsync: this);
+    _tabRefresh[0].attach(
+      this,
+      refresh: _reloadCustomerData,
+      busy: () => _openingTask,
+    );
 
     repository = CustomersRepository(widget.apiClient);
     _tasksRepository = TasksRepository(widget.apiClient);
@@ -62,19 +79,65 @@ class _DetailPanelState extends State<DetailPanel> {
     );
   }
 
-  void _refreshCustomer() {
+  @override
+  void dispose() {
+    _tabController.dispose();
+    for (final controller in _tabRefresh) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _reloadCustomerData() async {
+    final customerId = widget.customer.id;
     final details = repository.getCustomerDetails(id: widget.customer.id);
     final branches = repository.getBranches();
-    details.ignore();
     branches.ignore();
+    final fresh = await details;
+    if (!mounted || widget.customer.id != customerId) return;
     setState(() {
-      customerDetailsFuture = details;
+      customerDetailsFuture = Future.value(fresh);
       _branchesFuture = branches;
-      _notes = null;
-      _taskReloadToken++;
-      _overviewReloadToken++;
-      _activityReloadToken++;
+      _notes = fresh.notes;
     });
+    // Branch failures remain a local ID fallback, not a failed customer refresh.
+    try {
+      await branches;
+    } on CustomerRequestException {
+      return;
+    }
+  }
+
+  Future<void> _refreshSelectedTab() async {
+    if (_busy || _tabController.index >= _tabRefresh.length) return;
+    try {
+      await _tabRefresh[_tabController.index].refresh();
+    } on CustomerRequestException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    }
+  }
+
+  Future<void> _refreshCustomer() async {
+    if (_busy) return;
+    final customerId = widget.customer.id;
+    setState(() => _refreshingCustomer = true);
+    try {
+      await _tabRefresh[0].refresh();
+      if (!mounted || widget.customer.id != customerId) return;
+      await Future.wait(
+        _tabRefresh.skip(1).map((controller) => controller.refresh()),
+      );
+    } on CustomerRequestException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _refreshingCustomer = false);
+    }
   }
 
   Future<void> _createCustomerTask() async {
@@ -158,7 +221,8 @@ class _DetailPanelState extends State<DetailPanel> {
     return FutureBuilder(
       future: customerDetailsFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            snapshot.data?.id != widget.customer.id) {
           return Center(child: Text("Загрузка данных..."));
         }
 
@@ -203,27 +267,48 @@ class _DetailPanelState extends State<DetailPanel> {
   }
 
   Widget tabBars() {
-    return TabBar(
-      isScrollable: true,
-      tabAlignment: TabAlignment.start,
-      labelPadding: EdgeInsets.all(10),
-      unselectedLabelColor: AppColors.textMutted,
-      labelColor: AppColors.activeElement,
-      indicatorColor: AppColors.activeElement,
-      dividerColor: AppColors.notActiveBorder,
-      tabs: [
-        Text('Обзор'),
-        Text('Активность'),
-        Text('Заметки'),
-        Text('Задачи'),
-        Text('История'),
-      ],
+    return AnimatedBuilder(
+      animation: Listenable.merge([_tabController, ..._tabRefresh]),
+      builder: (_, _) => Row(
+        children: [
+          Expanded(
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              labelPadding: EdgeInsets.all(10),
+              unselectedLabelColor: AppColors.textMutted,
+              labelColor: AppColors.activeElement,
+              indicatorColor: AppColors.activeElement,
+              dividerColor: AppColors.notActiveBorder,
+              tabs: [
+                Text('Обзор'),
+                Text('Активность'),
+                Text('Заметки'),
+                Text('Задачи'),
+                Text('История посещений'),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Обновить вкладку',
+            onPressed:
+                _busy ||
+                    _tabController.index >= _tabRefresh.length ||
+                    !_tabRefresh[_tabController.index].canRefresh
+                ? null
+                : _refreshSelectedTab,
+            icon: const Icon(Icons.refresh, size: 20),
+          ),
+        ],
+      ),
     );
   }
 
   Widget tabs(CustomerDetails customer, String branchLabel) {
     return Expanded(
       child: TabBarView(
+        controller: _tabController,
         children: [
           overviewTab(
             customer,
@@ -233,12 +318,14 @@ class _DetailPanelState extends State<DetailPanel> {
               customerId: customer.id,
               repository: repository,
               reloadToken: _activityReloadToken,
+              refreshController: _tabRefresh[0],
             ),
             nextTask: CustomerNextTask(
               key: ValueKey(customer.id),
               customerId: customer.id,
               repository: _tasksRepository,
               reloadToken: _overviewReloadToken,
+              refreshController: _tabRefresh[0],
               onChanged: () => setState(() {
                 _taskReloadToken++;
                 _activityReloadToken++;
@@ -250,12 +337,19 @@ class _DetailPanelState extends State<DetailPanel> {
             customerId: customer.id,
             repository: repository,
             reloadToken: _activityReloadToken,
+            refreshController: _tabRefresh[1],
           ),
           CustomerNotesPanel(
             key: ValueKey(customer.id),
             customerId: customer.id,
             initialNotes: _notes ?? customer.notes,
             repository: repository,
+            refreshController: _tabRefresh[2],
+            onReloaded: (notes) {
+              if (mounted && widget.customer.id == customer.id) {
+                setState(() => _notes = notes);
+              }
+            },
             onChanged: (notes) {
               if (mounted && widget.customer.id == customer.id) {
                 setState(() {
@@ -270,32 +364,35 @@ class _DetailPanelState extends State<DetailPanel> {
             customerId: customer.id,
             repository: _tasksRepository,
             reloadToken: _taskReloadToken,
+            refreshController: _tabRefresh[3],
             onChanged: () => setState(() {
               _overviewReloadToken++;
               _activityReloadToken++;
             }),
           ),
-          Center(child: Text('История пока не доступна.')),
+          const Center(
+            child: Text(
+              'История посещений ещё не подключена: API посещений пока нет.',
+              textAlign: TextAlign.center,
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget customerDetailsCard(CustomerDetails customer, String branchLabel) {
-    return DefaultTabController(
-      length: 5,
-      child: Container(
-        decoration: BoxDecoration(color: AppColors.background),
-        padding: EdgeInsets.all(30),
-        child: Column(
-          spacing: 20,
-          children: [
-            detailTopbar(customer, branchLabel),
-            actionsCustomer(customer),
-            tabBars(),
-            tabs(customer, branchLabel),
-          ],
-        ),
+    return Container(
+      decoration: BoxDecoration(color: AppColors.background),
+      padding: EdgeInsets.all(30),
+      child: Column(
+        spacing: 20,
+        children: [
+          detailTopbar(customer, branchLabel),
+          actionsCustomer(customer),
+          tabBars(),
+          tabs(customer, branchLabel),
+        ],
       ),
     );
   }
@@ -444,28 +541,24 @@ class _DetailPanelState extends State<DetailPanel> {
       runSpacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        squareButton(
-          "Позвонить",
-          Colors.white,
-          Colors.black,
-          AppColors.notActiveBorder,
-          100,
-          40,
-          null,
+        CustomerActionButton(
+          label: 'Позвонить',
+          onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Звонки пока не подключены')),
+          ),
         ),
-        squareButton(
-          "+ Задача",
-          AppColors.activeElement,
-          Colors.white,
-          Colors.transparent,
-          100,
-          40,
-          _openingTask ? null : _createCustomerTask,
+        CustomerActionButton(
+          label: '+ Задача',
+          primary: true,
+          onPressed: _openingTask ? null : _createCustomerTask,
         ),
-        IconButton(
-          tooltip: 'Обновить карточку клиента',
-          onPressed: _refreshCustomer,
-          icon: const Icon(Icons.refresh),
+        AnimatedBuilder(
+          animation: Listenable.merge(_tabRefresh),
+          builder: (_, _) => IconButton(
+            tooltip: 'Обновить карточку клиента',
+            onPressed: _busy ? null : _refreshCustomer,
+            icon: const Icon(Icons.refresh),
+          ),
         ),
       ],
     );

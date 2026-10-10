@@ -6,6 +6,8 @@ import 'package:crm_interface/modules/customers/models/customer.dart';
 import 'package:crm_interface/modules/customers/widgets/entity_panel.dart';
 import 'package:crm_interface/modules/customers/widgets/customer_identity.dart';
 import 'package:crm_interface/modules/customers/widgets/customer_details/detail_panel.dart';
+import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/modules/customers/widgets/customer_details/tabs/activity_preview.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -80,7 +82,10 @@ class CardApi {
             return;
           }
           final dynamic data;
-          if (request.path == '/customers') {
+          if (request.method == 'POST' &&
+              request.path == '/customers/1/notes') {
+            data = await pendingNote!.future;
+          } else if (request.path == '/customers') {
             data = {
               'items': [
                 {
@@ -125,7 +130,11 @@ class CardApi {
             throw StateError('Unexpected ${request.path}');
           }
           handler.resolve(
-            Response(requestOptions: request, statusCode: 200, data: data),
+            Response(
+              requestOptions: request,
+              statusCode: request.method == 'POST' ? 201 : 200,
+              data: data,
+            ),
           );
         },
       ),
@@ -138,6 +147,7 @@ class CardApi {
   bool emptyActivity = false;
   Completer<List<Map<String, dynamic>>>? branches;
   String responsible = 'Ирина Ответственная';
+  Completer<Map<String, dynamic>>? pendingNote;
 }
 
 Future<void> mountDetail(
@@ -168,6 +178,148 @@ Future<void> mountDetail(
 
 void main() {
   testWidgets(
+    'one tab refresh updates only the selected section and preserves the note draft',
+    (tester) async {
+      final api = CardApi();
+      await mountDetail(tester, api);
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Обновить вкладку'), findsOneWidget);
+      for (final label in [
+        'Обновить ближайшую задачу',
+        'Обновить последнюю активность',
+        'Обновить активность',
+        'Обновить заметки',
+        'Обновить задачи клиента',
+      ]) {
+        expect(find.byTooltip(label), findsNothing);
+      }
+      api.requests.clear();
+      api.responsible = 'После обновления';
+      await tester.tap(find.byTooltip('Обновить вкладку'));
+      await tester.pumpAndSettle();
+      expect(api.requests.where((path) => path == '/customers/1').length, 1);
+      expect(api.requests.where((path) => path == '/branches').length, 1);
+      expect(api.requests.where((path) => path == '/tasks').length, 1);
+      expect(
+        api.requests.where((path) => path.endsWith('/activity')).length,
+        1,
+      );
+      expect(find.text('После обновления'), findsOneWidget);
+      await tester.tap(find.text('Активность'));
+      await tester.pumpAndSettle();
+      api.requests.clear();
+      await tester.tap(find.byTooltip('Обновить вкладку'));
+      await tester.pumpAndSettle();
+      expect(api.requests, ['/customers/1/activity']);
+      await tester.tap(find.text('Заметки'));
+      await tester.pumpAndSettle();
+      final input = find.byKey(const ValueKey('customer-note-text'));
+      await tester.enterText(input, 'Несохранённый черновик');
+      api.requests.clear();
+      await tester.tap(find.byTooltip('Обновить вкладку'));
+      await tester.pumpAndSettle();
+      expect(api.requests, ['/customers/1']);
+      expect(find.text('Несохранённый черновик'), findsOneWidget);
+      await tester.tap(find.byTooltip('Обновить карточку клиента'));
+      await tester.pumpAndSettle();
+      expect(find.text('Несохранённый черновик'), findsOneWidget);
+      expect(input.hitTestable(), findsOneWidget);
+      await tester.tap(find.text('Задачи'));
+      await tester.pumpAndSettle();
+      api.requests.clear();
+      await tester.tap(find.byTooltip('Обновить вкладку'));
+      await tester.pumpAndSettle();
+      expect(api.requests, ['/tasks']);
+      await tester.tap(find.text('Заметки'));
+      await tester.pumpAndSettle();
+      expect(find.text('Несохранённый черновик'), findsOneWidget);
+      await tester.tap(find.text('История посещений'));
+      await tester.pumpAndSettle();
+      final disabled = tester.widget<IconButton>(
+        find.byWidgetPredicate(
+          (w) => w is IconButton && w.tooltip == 'Обновить вкладку',
+        ),
+      );
+      expect(disabled.onPressed, isNull);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('both refresh buttons are disabled while saving a note', (
+    tester,
+  ) async {
+    final api = CardApi()..pendingNote = Completer<Map<String, dynamic>>();
+    await mountDetail(tester, api);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Заметки'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('customer-note-text')),
+      'Заметка',
+    );
+    await tester.tap(find.text('Сохранить'));
+    await tester.pump();
+    for (final label in ['Обновить вкладку', 'Обновить карточку клиента']) {
+      final button = tester.widget<IconButton>(
+        find.byWidgetPredicate((w) => w is IconButton && w.tooltip == label),
+      );
+      expect(button.onPressed, isNull);
+    }
+    api.pendingNote!.complete({
+      'id': 3,
+      'author_employee_id': 9,
+      'author': {'id': 9, 'full_name': 'Автор'},
+      'text': 'Заметка',
+      'created_at': '2026-10-10T06:00:00Z',
+      'edited_at': null,
+      'version': 1,
+    });
+    await tester.pumpAndSettle();
+    expect(find.text('Заметка'), findsOneWidget);
+    expect(find.byKey(const ValueKey('customer-note-3')), findsOneWidget);
+    expect(
+      tester
+          .widget<IconButton>(
+            find.byWidgetPredicate(
+              (w) => w is IconButton && w.tooltip == 'Обновить вкладку',
+            ),
+          )
+          .onPressed,
+      isNotNull,
+    );
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets(
+    'visit history is explicit and does not fake an empty visit list',
+    (tester) async {
+      final api = CardApi();
+      await mountDetail(tester, api);
+      await tester.pumpAndSettle();
+      final preview = tester.widget<Container>(
+        find
+            .descendant(
+              of: find.byType(CustomerActivityPreview),
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+      expect(
+        ((preview.decoration! as BoxDecoration).border! as Border).top.color,
+        AppColors.notActiveBorder,
+      );
+      await tester.tap(find.text('История посещений'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'История посещений ещё не подключена: API посещений пока нет.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Нет визитов'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
     'recent activity failure is not reported as an empty history and can retry',
     (tester) async {
       final api = CardApi()..activityFailure = true;
@@ -177,7 +329,7 @@ void main() {
       expect(find.text('Событий пока нет'), findsNothing);
       api.activityFailure = false;
       api.emptyActivity = true;
-      await tester.tap(find.byTooltip('Обновить последнюю активность'));
+      await tester.tap(find.byTooltip('Обновить вкладку'));
       await tester.pumpAndSettle();
       expect(find.text('Событий пока нет'), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -216,7 +368,9 @@ void main() {
       expect(find.text('Нет визитов'), findsNothing);
       expect(api.requests, ['/customers']);
       api.responsible = 'Другой Ответственный';
-      await tester.tap(find.byTooltip('Обновить список клиентов'));
+      expect(find.byTooltip('Обновить список клиентов'), findsNothing);
+      await tester.tap(find.byKey(const Key('customer-list-search')));
+      await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
       expect(find.text('Другой Ответственный'), findsOneWidget);
       expect(find.text('Ирина Ответственная'), findsNothing);

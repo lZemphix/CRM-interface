@@ -144,6 +144,7 @@ class _ListPanelState extends State<EntityPanel> {
   Widget listPanelHead() {
     return Column(
       spacing: 10,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         titleArea(),
         TextField(
@@ -175,6 +176,7 @@ class _ListPanelState extends State<EntityPanel> {
           ),
         ),
         SingleChildScrollView(
+          key: const Key('customer-list-filters'),
           scrollDirection: Axis.horizontal,
           child: Row(
             spacing: 8,
@@ -290,16 +292,7 @@ class _ListPanelState extends State<EntityPanel> {
           widget.title,
           style: TextStyle(fontSize: 21, fontWeight: FontWeight(700)),
         ),
-        Row(
-          children: [
-            IconButton(
-              tooltip: 'Обновить список клиентов',
-              onPressed: _refreshCustomers,
-              icon: const Icon(Icons.refresh, size: 20),
-            ),
-            addCostumerButton(),
-          ],
-        ),
+        addCostumerButton(),
       ],
     );
   }

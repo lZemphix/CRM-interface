@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:crm_interface/core/widgets/section_refresh_controller.dart';
 
 import '../models/taskboard.dart';
 import '../models/tasks.dart';
@@ -16,18 +17,39 @@ class CustomerTasksPanel extends StatefulWidget {
     required this.repository,
     this.reloadToken = 0,
     this.onChanged,
+    this.refreshController,
   });
 
   final int customerId;
   final TasksRepository repository;
   final int reloadToken;
   final VoidCallback? onChanged;
+  final SectionRefreshController? refreshController;
 
   @override
   State<CustomerTasksPanel> createState() => _CustomerTasksPanelState();
 }
 
 class _CustomerTasksPanelState extends State<CustomerTasksPanel> {
+  bool _savingSubtask = false;
+  void _bindRefresh() => widget.refreshController?.attach(
+    this,
+    refresh: () => _load(offset: _page?.offset ?? 0),
+    busy: () => _loading || _openingAction || _savingSubtask,
+  );
+
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    widget.refreshController?.changed();
+  }
+
+  @override
+  void dispose() {
+    widget.refreshController?.detach(this);
+    super.dispose();
+  }
+
   TaskPage? _page;
   bool _loading = true;
   bool _openingAction = false;
@@ -37,12 +59,17 @@ class _CustomerTasksPanelState extends State<CustomerTasksPanel> {
   @override
   void initState() {
     super.initState();
+    _bindRefresh();
     _load();
   }
 
   @override
   void didUpdateWidget(covariant CustomerTasksPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.refreshController != widget.refreshController) {
+      oldWidget.refreshController?.detach(this);
+      _bindRefresh();
+    }
     if (oldWidget.customerId != widget.customerId ||
         oldWidget.reloadToken != widget.reloadToken) {
       _load();
@@ -99,14 +126,10 @@ class _CustomerTasksPanelState extends State<CustomerTasksPanel> {
     widget.onChanged?.call();
   }
 
-  Future<void> _refresh() async {
-    await _load(offset: _page?.offset ?? 0);
-    if (mounted) widget.onChanged?.call();
-  }
-
   Future<void> _openAction(TaskboardTask task, TaskCardAction action) async {
     if (_openingAction || action == TaskCardAction.delete) return;
     _openingAction = true;
+    widget.refreshController?.changed();
     try {
       if (action == TaskCardAction.history) {
         await showDialog<void>(
@@ -141,6 +164,7 @@ class _CustomerTasksPanelState extends State<CustomerTasksPanel> {
       }
     } finally {
       _openingAction = false;
+      widget.refreshController?.changed();
     }
   }
 
@@ -149,20 +173,6 @@ class _CustomerTasksPanelState extends State<CustomerTasksPanel> {
     final page = _page;
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                'Задачи клиента${page == null ? '' : ' · ${page.total}'}',
-              ),
-            ),
-            IconButton(
-              tooltip: 'Обновить задачи клиента',
-              onPressed: _loading ? null : _refresh,
-              icon: const Icon(Icons.refresh),
-            ),
-          ],
-        ),
         Expanded(child: _buildContent()),
         if (!_loading &&
             _error == null &&
@@ -230,12 +240,20 @@ class _CustomerTasksPanelState extends State<CustomerTasksPanel> {
           compact: true,
           onAction: (action) => _openAction(task, action),
           onSubtaskChanged: (subtask, done) async {
-            final updated = await widget.repository.markSubtask(
-              task.id,
-              subtask.id,
-              MarkSubtaskRequest(done: done, version: task.version),
-            );
-            await _apply(updated);
+            if (_savingSubtask) return;
+            _savingSubtask = true;
+            widget.refreshController?.changed();
+            try {
+              final updated = await widget.repository.markSubtask(
+                task.id,
+                subtask.id,
+                MarkSubtaskRequest(done: done, version: task.version),
+              );
+              await _apply(updated);
+            } finally {
+              _savingSubtask = false;
+              widget.refreshController?.changed();
+            }
           },
         );
       },

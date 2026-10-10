@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:crm_interface/core/api_client/client.dart';
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
 import 'package:crm_interface/modules/auth/auth_session.dart';
 import 'package:crm_interface/modules/tasks/models/taskboard.dart';
 import 'package:crm_interface/modules/tasks/repos/request_error.dart';
@@ -10,6 +9,9 @@ import 'package:crm_interface/modules/tasks/widgets/customer_next_task.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:crm_interface/core/widgets/section_refresh_controller.dart';
+
+import 'support/section_refresh.dart';
 
 TaskboardTask task({
   String id = '12',
@@ -32,7 +34,10 @@ TaskboardTask task({
 );
 
 class FakeRepository extends TasksRepository {
-  FakeRepository() : super(ApiClient(SessionStore()));
+  FakeRepository() : super(ApiClient(SessionStore())) {
+    addTearDown(refresh.dispose);
+  }
+  final refresh = SectionRefreshController();
   TaskboardTask? next;
   final ids = <int>[];
   final completed = <String>[];
@@ -82,7 +87,9 @@ Widget panel(
   VoidCallback? changed,
 }) => MaterialApp(
   home: Scaffold(
+    appBar: AppBar(actions: [sectionRefreshButton(repo.refresh)]),
     body: CustomerNextTask(
+      refreshController: repo.refresh,
       customerId: customerId,
       repository: repo,
       reloadToken: token,
@@ -121,7 +128,7 @@ void main() {
 
       // Like assignment in the task board: status does not change automatically.
       repo.next = task(status: status, employeeId: 4);
-      await tester.tap(find.byTooltip('Обновить ближайшую задачу'));
+      await tester.tap(find.byTooltip('Обновить вкладку'));
       await tester.pumpAndSettle();
       expect(
         tester.widget<ElevatedButton>(find.byType(ElevatedButton)).onPressed,
@@ -203,24 +210,14 @@ void main() {
     );
   });
 
-  testWidgets('empty state has disabled gray completion button', (
-    tester,
-  ) async {
+  testWidgets('empty state has no completion button', (tester) async {
     final repo = FakeRepository();
     addTearDown(() => repo.apiClient.dio.close(force: true));
     await tester.pumpWidget(panel(repo));
     await tester.pumpAndSettle();
     expect(find.text('У клиента нет незавершённых задач'), findsOneWidget);
-    final button = tester.widget<ElevatedButton>(find.byType(ElevatedButton));
-    expect(button.onPressed, isNull);
-    expect(
-      button.style!.backgroundColor!.resolve({WidgetState.disabled}),
-      AppColors.notActiveBorder,
-    );
-    expect(
-      button.style!.foregroundColor!.resolve({WidgetState.disabled}),
-      AppColors.textMutted,
-    );
+    expect(find.byType(ElevatedButton), findsNothing);
+    expect(find.text('Выполнено'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -306,7 +303,7 @@ void main() {
       await tester.pumpWidget(panel(repo, customerId: 8, token: 1));
       await tester.pumpAndSettle();
       expect(repo.ids, [7, 8, 8]);
-      await tester.tap(find.byTooltip('Обновить ближайшую задачу'));
+      await tester.tap(find.byTooltip('Обновить вкладку'));
       await tester.pumpAndSettle();
       expect(repo.ids.last, 8);
       expect(tester.takeException(), isNull);

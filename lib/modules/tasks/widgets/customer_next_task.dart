@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:crm_interface/core/widgets/section_refresh_controller.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/light/colorscheme.dart';
@@ -14,18 +15,38 @@ class CustomerNextTask extends StatefulWidget {
     required this.repository,
     this.reloadToken = 0,
     this.onChanged,
+    this.refreshController,
   });
 
   final int customerId;
   final TasksRepository repository;
   final int reloadToken;
   final VoidCallback? onChanged;
+  final SectionRefreshController? refreshController;
 
   @override
   State<CustomerNextTask> createState() => _CustomerNextTaskState();
 }
 
 class _CustomerNextTaskState extends State<CustomerNextTask> {
+  void _bindRefresh() => widget.refreshController?.attach(
+    this,
+    refresh: _load,
+    busy: () => _loading || _saving,
+  );
+
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    widget.refreshController?.changed();
+  }
+
+  @override
+  void dispose() {
+    widget.refreshController?.detach(this);
+    super.dispose();
+  }
+
   TaskboardTask? _task;
   bool _loading = true;
   bool _saving = false;
@@ -35,12 +56,17 @@ class _CustomerNextTaskState extends State<CustomerNextTask> {
   @override
   void initState() {
     super.initState();
+    _bindRefresh();
     _load();
   }
 
   @override
   void didUpdateWidget(covariant CustomerNextTask oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.refreshController != widget.refreshController) {
+      oldWidget.refreshController?.detach(this);
+      _bindRefresh();
+    }
     if (oldWidget.customerId != widget.customerId ||
         oldWidget.reloadToken != widget.reloadToken ||
         oldWidget.repository != widget.repository) {
@@ -157,11 +183,6 @@ class _CustomerNextTaskState extends State<CustomerNextTask> {
                   ),
                 ),
               ),
-              IconButton(
-                tooltip: 'Обновить ближайшую задачу',
-                onPressed: _loading || _saving ? null : _load,
-                icon: const Icon(Icons.refresh, size: 18),
-              ),
             ],
           ),
           if (_loading)
@@ -208,30 +229,32 @@ class _CustomerNextTaskState extends State<CustomerNextTask> {
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                Tooltip(
-                  message: _actionHint(task),
-                  child: ElevatedButton(
-                    onPressed:
-                        (_canStart(task) || task?.status == 'in_progress') &&
-                            !_saving
-                        ? _changeStatus
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      backgroundColor: AppColors.activeElement,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: AppColors.notActiveBorder,
-                      disabledForegroundColor: AppColors.textMutted,
-                      fixedSize: const Size(100, 37),
-                      minimumSize: Size.zero,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                if (task != null) ...[
+                  const SizedBox(width: 12),
+                  Tooltip(
+                    message: _actionHint(task),
+                    child: ElevatedButton(
+                      onPressed:
+                          (_canStart(task) || task.status == 'in_progress') &&
+                              !_saving
+                          ? _changeStatus
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        backgroundColor: AppColors.activeElement,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: AppColors.notActiveBorder,
+                        disabledForegroundColor: AppColors.textMutted,
+                        fixedSize: const Size(100, 37),
+                        minimumSize: Size.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
+                      child: Text(_saving ? 'Сохранение' : actionLabel),
                     ),
-                    child: Text(_saving ? 'Сохранение' : actionLabel),
                   ),
-                ),
+                ],
               ],
             ),
         ],

@@ -8,6 +8,9 @@ import 'package:crm_interface/modules/customers/widgets/customer_details/tabs/ac
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:crm_interface/core/widgets/section_refresh_controller.dart';
+
+import 'support/section_refresh.dart';
 
 Map<String, dynamic> activityJson({
   int id = 1,
@@ -36,7 +39,10 @@ ApiClient makeClient() {
 }
 
 class ActivityRepository extends CustomersRepository {
-  ActivityRepository() : super(makeClient());
+  ActivityRepository() : super(makeClient()) {
+    addTearDown(refresh.dispose);
+  }
+  final refresh = SectionRefreshController();
   final requests = <({int customer, int offset, CustomerActivityType? type})>[];
   CustomerRequestException? failure;
   Completer<CustomerActivityPage>? pending;
@@ -86,7 +92,9 @@ Future<void> mount(
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
+        appBar: AppBar(actions: [sectionRefreshButton(repository.refresh)]),
         body: CustomerActivityPanel(
+          refreshController: repository.refresh,
           customerId: customerId,
           repository: repository,
           reloadToken: reloadToken,
@@ -97,6 +105,50 @@ Future<void> mount(
 }
 
 void main() {
+  testWidgets(
+    'activity filter stays compact on the left and can reset to all',
+    (tester) async {
+      final repo = ActivityRepository();
+      await mount(tester, repo);
+      await tester.pumpAndSettle();
+      final filter = find.byType(DropdownButtonFormField<CustomerActivityType>);
+      expect(tester.getSize(filter).width, 250);
+      expect(tester.getTopLeft(filter).dx, 23); // Padding + panel border.
+      expect(tester.getSize(filter).height, lessThanOrEqualTo(48));
+      await tester.tap(filter);
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Ответственный задачи'),
+        100,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(find.text('Ответственный задачи').last);
+      await tester.pumpAndSettle();
+      expect(
+        repo.requests.last.type,
+        CustomerActivityType.taskResponsibleChanged,
+      );
+      await tester.tap(filter);
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Все события'),
+        -100,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(find.text('Все события').last);
+      await tester.pumpAndSettle();
+      expect(repo.requests.last.type, isNull);
+      expect(repo.requests.last.offset, 0);
+      tester.view.physicalSize = const Size(320, 600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpAndSettle();
+      expect(tester.getSize(filter).width, lessThanOrEqualTo(250));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   test('parses nullable actor and employee references and empty note data', () {
     final responsible = CustomerActivity.fromApi(
       activityJson(
@@ -226,9 +278,9 @@ void main() {
     await tester.tap(find.byTooltip('Следующие события'));
     await tester.pumpAndSettle();
     expect(repo.requests.last.offset, 20);
-    await tester.tap(find.byTooltip('Обновить активность'));
+    await tester.tap(find.byTooltip('Обновить вкладку'));
     await tester.pumpAndSettle();
-    expect(repo.requests.last.offset, 0);
+    expect(repo.requests.last.offset, 20);
     await tester.tap(
       find.byType(DropdownButtonFormField<CustomerActivityType>),
     );
@@ -288,7 +340,7 @@ void main() {
       expect(find.text('Клиент 8'), findsOneWidget);
       expect(find.text('Старый ответ'), findsNothing);
       repo.pending = Completer<CustomerActivityPage>();
-      await tester.tap(find.byTooltip('Обновить активность'));
+      await tester.tap(find.byTooltip('Обновить вкладку'));
       await tester.pump();
       await tester.pumpWidget(const SizedBox());
       repo.pending!.complete(

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:crm_interface/core/api_client/client.dart';
+import 'package:crm_interface/core/theme/light/colorscheme.dart';
 import 'package:crm_interface/modules/auth/auth_session.dart';
 import 'package:crm_interface/modules/customers/models/customer.dart';
 import 'package:crm_interface/modules/customers/models/customer_note.dart';
@@ -10,6 +11,9 @@ import 'package:crm_interface/modules/customers/widgets/customer_details/tabs/no
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:crm_interface/core/widgets/section_refresh_controller.dart';
+
+import 'support/section_refresh.dart';
 
 Map<String, dynamic> noteJson({
   int id = 1,
@@ -46,7 +50,10 @@ ApiClient makeClient() {
 }
 
 class NotesRepository extends CustomersRepository {
-  NotesRepository(super.client);
+  NotesRepository(super.client) {
+    addTearDown(refresh.dispose);
+  }
+  final refresh = SectionRefreshController();
   List<CustomerNote> notes = [];
   CustomerRequestException? failure;
   int creates = 0;
@@ -104,7 +111,9 @@ Future<void> mountNotes(
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
+        appBar: AppBar(actions: [sectionRefreshButton(repo.refresh)]),
         body: CustomerNotesPanel(
+          refreshController: repo.refresh,
           customerId: customerId,
           initialNotes: repo.notes,
           repository: repo,
@@ -116,11 +125,6 @@ Future<void> mountNotes(
   await tester.pumpAndSettle();
 }
 
-Future<void> openEditor(WidgetTester tester) async {
-  await tester.tap(find.text('Добавить заметку'));
-  await tester.pumpAndSettle();
-}
-
 Future<void> menu(WidgetTester tester, String action) async {
   await tester.tap(find.byTooltip('Действия с заметкой').first);
   await tester.pumpAndSettle();
@@ -129,6 +133,110 @@ Future<void> menu(WidgetTester tester, String action) async {
 }
 
 void main() {
+  testWidgets('inline composer uses accent and works on a narrow panel', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final repo = NotesRepository(makeClient());
+    await mountNotes(tester, repo);
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byKey(const ValueKey('customer-note-text')), findsOneWidget);
+    expect(find.text('Добавить заметку'), findsNothing);
+    expect(find.text('Отмена'), findsNothing);
+    expect(find.textContaining('Заметки ·'), findsNothing);
+    expect(find.text('Заметки'), findsNothing);
+    final fieldPosition = tester.getTopLeft(
+      find.byKey(const ValueKey('customer-note-text')),
+    );
+    final panelPosition = tester.getTopLeft(find.byType(CustomerNotesPanel));
+    expect(
+      fieldPosition.dy - panelPosition.dy,
+      fieldPosition.dx - panelPosition.dx,
+    );
+    final save = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Сохранить'),
+    );
+    expect(save.style!.backgroundColor!.resolve({}), AppColors.activeElement);
+    expect(
+      save.style!.backgroundColor!.resolve({WidgetState.hovered}),
+      AppColors.activeElementHover,
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('customer-note-text')),
+      'Новая заметка',
+    );
+    await tester.tap(find.text('Сохранить'));
+    await tester.pumpAndSettle();
+    expect(find.text('Новая заметка'), findsOneWidget);
+    final card = tester.widget<Container>(
+      find.byKey(const ValueKey('customer-note-2')),
+    );
+    expect(card.padding, const EdgeInsets.all(16));
+    final decoration = card.decoration! as BoxDecoration;
+    expect(decoration.borderRadius, BorderRadius.circular(12));
+    expect((decoration.border! as Border).top.color, AppColors.notActiveBorder);
+    expect(find.text('добавил(а) заметку'), findsNothing);
+    expect(
+      tester
+          .widget<TextFormField>(
+            find.byKey(const ValueKey('customer-note-text')),
+          )
+          .controller!
+          .text,
+      isEmpty,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'uncertain inline save retains draft and requires refresh before retry',
+    (tester) async {
+      final repo = NotesRepository(makeClient())
+        ..failure = const CustomerRequestException(
+          'Исход сохранения неизвестен',
+          refreshRequired: true,
+        );
+      await mountNotes(tester, repo);
+      await tester.enterText(
+        find.byKey(const ValueKey('customer-note-text')),
+        'Не терять черновик',
+      );
+      await tester.tap(find.text('Сохранить'));
+      await tester.pumpAndSettle();
+      expect(repo.creates, 1);
+      expect(find.text('Не терять черновик'), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Сохранить'),
+            )
+            .onPressed,
+        isNull,
+      );
+      repo.failure = null;
+      await tester.tap(find.byTooltip('Обновить вкладку'));
+      await tester.pumpAndSettle();
+      expect(repo.loads, 1);
+      expect(find.text('Не терять черновик'), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Сохранить'),
+            )
+            .onPressed,
+        isNotNull,
+      );
+      await tester.tap(find.text('Сохранить'));
+      await tester.pumpAndSettle();
+      expect(repo.creates, 2);
+      expect(find.text('Не терять черновик'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   test(
     'parses typed customer notes, author, UTC dates and nullable edit date',
     () {
@@ -289,7 +397,6 @@ void main() {
     await mountNotes(tester, repo, onChanged: (notes) => published = notes);
     expect(find.text('Пока нет заметок'), findsOneWidget);
     expect(repo.loads, 0);
-    await openEditor(tester);
     await tester.tap(find.text('Сохранить'));
     await tester.pumpAndSettle();
     expect(find.text('Введите текст заметки'), findsOneWidget);
@@ -382,12 +489,12 @@ void main() {
       expect(
         tester
             .widget<FilledButton>(
-              find.widgetWithText(FilledButton, 'Добавить заметку'),
+              find.widgetWithText(FilledButton, 'Сохранить'),
             )
             .onPressed,
         isNull,
       );
-      await tester.tap(find.byTooltip('Обновить заметки'));
+      await tester.tap(find.byTooltip('Обновить вкладку'));
       await tester.pumpAndSettle();
       await menu(tester, 'Редактировать');
       await tester.tap(find.text('Сохранить'));
@@ -426,7 +533,6 @@ void main() {
     final repo = NotesRepository(makeClient())
       ..pendingSave = Completer<CustomerNote>();
     await mountNotes(tester, repo);
-    await openEditor(tester);
     await tester.enterText(
       find.byKey(const ValueKey('customer-note-text')),
       'Ожидаем',
@@ -441,16 +547,22 @@ void main() {
           .onPressed,
       isNull,
     );
+    expect(find.text('Отмена'), findsNothing);
     expect(
       tester
-          .widget<TextButton>(find.widgetWithText(TextButton, 'Отмена'))
+          .widget<IconButton>(
+            find.byWidgetPredicate(
+              (widget) =>
+                  widget is IconButton && widget.tooltip == 'Обновить вкладку',
+            ),
+          )
           .onPressed,
       isNull,
     );
     expect(repo.creates, 1);
     await tester.binding.handlePopRoute();
     await tester.pump();
-    expect(find.text('Новая заметка'), findsOneWidget);
+    expect(find.byKey(const ValueKey('customer-note-text')), findsOneWidget);
     repo.pendingSave!.complete(
       CustomerNote.fromJson(noteJson(id: 2, text: 'Подтверждено')),
     );
@@ -464,7 +576,7 @@ void main() {
       final repo = NotesRepository(makeClient())
         ..failure = const CustomerRequestException('Сервер недоступен');
       await mountNotes(tester, repo);
-      await tester.tap(find.byTooltip('Обновить заметки'));
+      await tester.tap(find.byTooltip('Обновить вкладку'));
       await tester.pumpAndSettle();
       expect(find.text('Сервер недоступен'), findsOneWidget);
       repo.failure = null;
@@ -536,14 +648,13 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Заметки').first);
       await tester.pumpAndSettle();
-      await openEditor(tester);
       await tester.enterText(
         find.byKey(const ValueKey('customer-note-text')),
         'Сохранённая заметка',
       );
       await tester.tap(find.text('Сохранить'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('История').first);
+      await tester.tap(find.text('История посещений').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Обзор').first);
       await tester.pumpAndSettle();

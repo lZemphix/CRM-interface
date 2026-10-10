@@ -16,6 +16,9 @@ import 'package:crm_interface/modules/tasks/widgets/task_card.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:crm_interface/core/widgets/section_refresh_controller.dart';
+
+import 'support/section_refresh.dart';
 
 const customer = TaskCustomerOption(
   id: 7,
@@ -96,7 +99,10 @@ Future<void> chooseCustomer(WidgetTester tester) async {
 }
 
 class FakeCustomerTasksRepository extends TasksRepository {
-  FakeCustomerTasksRepository() : super(ApiClient(SessionStore()));
+  FakeCustomerTasksRepository() : super(ApiClient(SessionStore())) {
+    addTearDown(refresh.dispose);
+  }
+  final refresh = SectionRefreshController();
   final ids = <int>[];
   final offsets = <int>[];
   List<TaskboardTask> tasks = [];
@@ -130,7 +136,9 @@ void main() {
       addTearDown(() => repo.apiClient.dio.close(force: true));
       Widget panel(int token) => MaterialApp(
         home: Scaffold(
+          appBar: AppBar(actions: [sectionRefreshButton(repo.refresh)]),
           body: CustomerTasksPanel(
+            refreshController: repo.refresh,
             customerId: 7,
             repository: repo,
             reloadToken: token,
@@ -139,6 +147,9 @@ void main() {
       );
       await tester.pumpWidget(panel(0));
       await tester.pumpAndSettle();
+      expect(find.textContaining('Задачи клиента'), findsNothing);
+      expect(find.text('Задачи'), findsNothing);
+      expect(find.byTooltip('Обновить вкладку'), findsOneWidget);
       await tester.tap(find.byTooltip('Следующие задачи'));
       await tester.pumpAndSettle();
       expect(repo.offsets, [0, 20]);
@@ -456,7 +467,9 @@ void main() {
       addTearDown(() => repo.apiClient.dio.close(force: true));
       Widget panel(int id, int token) => MaterialApp(
         home: Scaffold(
+          appBar: AppBar(actions: [sectionRefreshButton(repo.refresh)]),
           body: CustomerTasksPanel(
+            refreshController: repo.refresh,
             customerId: id,
             repository: repo,
             reloadToken: token,
@@ -467,7 +480,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('У клиента пока нет задач'), findsOneWidget);
       repo.fail = true;
-      await tester.tap(find.byTooltip('Обновить задачи клиента'));
+      await tester.tap(find.byTooltip('Обновить вкладку'));
       await tester.pumpAndSettle();
       expect(find.text('Нет доступа к задачам'), findsOneWidget);
       repo.fail = false;

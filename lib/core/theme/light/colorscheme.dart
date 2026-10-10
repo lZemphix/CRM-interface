@@ -10,6 +10,9 @@ abstract final class AppColors {
   static const taskHighPriority = Color(0xFFB54708);
   static const taskUrgentPriority = Color(0xFFC43232);
   static const activeElement = Color(0xFF5B5BD6);
+  static const activeElementHover = Color(0xFF4949B8);
+  static const strongBorder = Color(0xFFD0D5DD);
+  static const textFaint = Color(0xFF98A2B3);
   static const hoveredElement = Color(0xFF232a39);
   static const sidebarElement = Color(0xFF8B93A0);
   static const notActiveBorder = Color(0xFFE4E7EC);

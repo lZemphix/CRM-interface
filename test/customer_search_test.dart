@@ -68,13 +68,14 @@ Future<void> openPanel(
   WidgetTester tester,
   SearchApi api, {
   ValueChanged<Customer>? onSelected,
+  double width = 320,
 }) async {
   addTearDown(() => api.client.dio.close(force: true));
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
         body: SizedBox(
-          width: 320,
+          width: width,
           child: EntityPanel(
             apiClient: api.client,
             onCustomerSelected: onSelected ?? (_) {},
@@ -87,6 +88,18 @@ Future<void> openPanel(
 }
 
 void main() {
+  testWidgets(
+    'filters stay left aligned and the manual list refresh is absent',
+    (tester) async {
+      final api = SearchApi((_) async => []);
+      await openPanel(tester, api, width: 500);
+      final all = find.widgetWithText(TextButton, 'Все');
+      final search = find.byKey(const Key('customer-list-search'));
+      expect(tester.getTopLeft(all).dx, tester.getTopLeft(search).dx);
+      expect(find.byTooltip('Обновить список клиентов'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets(
     'debounces input and obtains matches from API rather than the current page',
     (tester) async {

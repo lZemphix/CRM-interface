@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:crm_interface/core/widgets/section_refresh_controller.dart';
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
 
 import '../../../models/customer_note.dart';
@@ -14,36 +15,71 @@ class CustomerNotesPanel extends StatefulWidget {
     required this.initialNotes,
     required this.repository,
     required this.onChanged,
+    this.onReloaded,
+    this.refreshController,
   });
   final int customerId;
   final List<CustomerNote> initialNotes;
   final CustomersRepository repository;
   final ValueChanged<List<CustomerNote>> onChanged;
+  final ValueChanged<List<CustomerNote>>? onReloaded;
+  final SectionRefreshController? refreshController;
 
   @override
   State<CustomerNotesPanel> createState() => _CustomerNotesPanelState();
 }
 
-class _CustomerNotesPanelState extends State<CustomerNotesPanel> {
+class _CustomerNotesPanelState extends State<CustomerNotesPanel>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  bool get _busy => _loading || _dialogOpen || _creating;
+
+  void _bindRefresh() => widget.refreshController?.attach(
+    this,
+    refresh: _reload,
+    busy: () => _busy,
+  );
+
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    widget.refreshController?.changed();
+  }
+
+  @override
+  void dispose() {
+    widget.refreshController?.detach(this);
+    super.dispose();
+  }
+
   late List<CustomerNote> _notes;
   bool _loading = false;
   bool _dialogOpen = false;
   bool _refreshRequired = false;
   String? _error;
   int _requestId = 0;
+  bool _creating = false;
 
   @override
   void initState() {
     super.initState();
     _notes = List.of(widget.initialNotes);
+    _bindRefresh();
   }
 
   @override
   void didUpdateWidget(covariant CustomerNotesPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.refreshController != widget.refreshController) {
+      oldWidget.refreshController?.detach(this);
+      _bindRefresh();
+    }
     if (oldWidget.customerId != widget.customerId) {
       _requestId++;
       _loading = false;
+      _creating = false;
       _error = null;
       _refreshRequired = false;
       _notes = List.of(widget.initialNotes);
@@ -52,7 +88,7 @@ class _CustomerNotesPanelState extends State<CustomerNotesPanel> {
     }
   }
 
-  void _publish(List<CustomerNote> notes) {
+  void _publish(List<CustomerNote> notes, {bool reloaded = false}) {
     notes.sort((a, b) {
       final date = b.createdAt.compareTo(a.createdAt);
       return date == 0 ? b.id.compareTo(a.id) : date;
@@ -62,11 +98,13 @@ class _CustomerNotesPanelState extends State<CustomerNotesPanel> {
       _error = null;
       _refreshRequired = false;
     });
-    widget.onChanged(List.unmodifiable(notes));
+    (reloaded ? widget.onReloaded ?? widget.onChanged : widget.onChanged)(
+      List.unmodifiable(notes),
+    );
   }
 
   Future<void> _reload() async {
-    if (_loading || _dialogOpen) return;
+    if (_loading || _dialogOpen || _creating) return;
     final request = ++_requestId;
     setState(() {
       _loading = true;
@@ -74,7 +112,9 @@ class _CustomerNotesPanelState extends State<CustomerNotesPanel> {
     });
     try {
       final notes = await widget.repository.getCustomerNotes(widget.customerId);
-      if (mounted && request == _requestId) _publish(List.of(notes));
+      if (mounted && request == _requestId) {
+        _publish(List.of(notes), reloaded: true);
+      }
     } on CustomerRequestException catch (error) {
       if (mounted && request == _requestId) {
         setState(() => _error = error.message);
@@ -84,8 +124,8 @@ class _CustomerNotesPanelState extends State<CustomerNotesPanel> {
     }
   }
 
-  Future<void> _edit([CustomerNote? note]) async {
-    if (_loading || _dialogOpen || _refreshRequired) return;
+  Future<void> _edit(CustomerNote note) async {
+    if (_loading || _dialogOpen || _creating || _refreshRequired) return;
     final customerId = widget.customerId;
     setState(() => _dialogOpen = true);
     final repository = widget.repository;
@@ -96,19 +136,11 @@ class _CustomerNotesPanelState extends State<CustomerNotesPanel> {
         note: note,
         onSave: (text) async {
           try {
-            return note == null
-                ? await repository.createNote(
-                    customerId,
-                    CreateCustomerNoteRequest(text: text),
-                  )
-                : await repository.updateNote(
-                    customerId,
-                    note.id,
-                    UpdateCustomerNoteRequest(
-                      text: text,
-                      version: note.version,
-                    ),
-                  );
+            return await repository.updateNote(
+              customerId,
+              note.id,
+              UpdateCustomerNoteRequest(text: text, version: note.version),
+            );
           } on CustomerRequestException catch (error) {
             _requireRefresh(error, customerId);
             rethrow;
@@ -124,7 +156,7 @@ class _CustomerNotesPanelState extends State<CustomerNotesPanel> {
   }
 
   Future<void> _archive(CustomerNote note) async {
-    if (_loading || _dialogOpen || _refreshRequired) return;
+    if (_loading || _dialogOpen || _creating || _refreshRequired) return;
     final customerId = widget.customerId;
     final repository = widget.repository;
     setState(() => _dialogOpen = true);
@@ -186,7 +218,8 @@ class _CustomerNotesPanelState extends State<CustomerNotesPanel> {
             ),
             PopupMenuButton<_NoteAction>(
               tooltip: 'Действия с заметкой',
-              enabled: !_loading && !_dialogOpen && !_refreshRequired,
+              enabled:
+                  !_loading && !_dialogOpen && !_creating && !_refreshRequired,
               onSelected: (action) {
                 if (action == _NoteAction.edit) {
                   _edit(note);
@@ -232,64 +265,83 @@ class _CustomerNotesPanelState extends State<CustomerNotesPanel> {
   );
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                'Заметки · ${_notes.length}',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-            IconButton(
-              tooltip: 'Обновить заметки',
-              onPressed: _loading || _dialogOpen ? null : _reload,
-              icon: const Icon(Icons.refresh),
-            ),
-            const SizedBox(width: 8),
-            FilledButton.icon(
-              onPressed: _loading || _dialogOpen || _refreshRequired
-                  ? null
-                  : () => _edit(),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Добавить заметку'),
-            ),
-          ],
-        ),
+  Widget build(BuildContext context) {
+    super.build(context);
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppColors.notActiveBorder),
+        borderRadius: BorderRadius.circular(16),
       ),
-      if (_loading) const LinearProgressIndicator(),
-      if (_error != null)
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  _error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-              ),
-              TextButton(
-                onPressed: _loading || _dialogOpen ? null : _reload,
-                child: const Text('Повторить'),
-              ),
-            ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Visibility(
+            visible: !_dialogOpen,
+            maintainState: true,
+            child: CustomerNoteEditor(
+              key: ValueKey('note-composer-${widget.customerId}'),
+              inline: true,
+              enabled: !_loading,
+              refreshRequired: _refreshRequired,
+              onSavingChanged: (saving) {
+                if (mounted) setState(() => _creating = saving);
+              },
+              onSave: (text) async {
+                final customerId = widget.customerId;
+                try {
+                  return await widget.repository.createNote(
+                    customerId,
+                    CreateCustomerNoteRequest(text: text),
+                  );
+                } on CustomerRequestException catch (error) {
+                  _requireRefresh(error, customerId);
+                  rethrow;
+                }
+              },
+              onSaved: (note) => _publish([
+                note,
+                ..._notes.where((item) => item.id != note.id),
+              ]),
+            ),
           ),
-        ),
-      Expanded(
-        child: _notes.isEmpty
-            ? const Center(child: Text('Пока нет заметок'))
-            : ListView.separated(
-                padding: const EdgeInsets.only(bottom: 16),
-                itemCount: _notes.length,
-                itemBuilder: (_, index) => _card(_notes[index]),
-                separatorBuilder: (_, _) => const SizedBox(height: 12),
+          const SizedBox(height: 22),
+          if (_loading) const LinearProgressIndicator(),
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _loading || _dialogOpen || _creating
+                        ? null
+                        : _reload,
+                    child: const Text('Повторить'),
+                  ),
+                ],
               ),
+            ),
+          Expanded(
+            child: _notes.isEmpty
+                ? const Center(child: Text('Пока нет заметок'))
+                : ListView.separated(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    itemCount: _notes.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    itemBuilder: (_, index) => _card(_notes[index]),
+                  ),
+          ),
+        ],
       ),
-    ],
-  );
+    );
+  }
 }

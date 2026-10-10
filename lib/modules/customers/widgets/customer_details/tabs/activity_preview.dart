@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:crm_interface/core/widgets/section_refresh_controller.dart';
+
+import '../../../../../core/theme/light/colorscheme.dart';
 
 import '../../../models/customer_activity.dart';
 import '../../../repos/customers_repository.dart';
@@ -11,10 +14,12 @@ class CustomerActivityPreview extends StatefulWidget {
     required this.customerId,
     required this.repository,
     this.reloadToken = 0,
+    this.refreshController,
   });
   final int customerId;
   final CustomersRepository repository;
   final int reloadToken;
+  final SectionRefreshController? refreshController;
 
   @override
   State<CustomerActivityPreview> createState() =>
@@ -23,19 +28,49 @@ class CustomerActivityPreview extends StatefulWidget {
 
 class _CustomerActivityPreviewState extends State<CustomerActivityPreview> {
   late Future<CustomerActivityPage> _future;
+  bool _loading = false;
+
+  void _bindRefresh() => widget.refreshController?.attach(
+    this,
+    refresh: _refresh,
+    busy: () => _loading,
+  );
+
+  @override
+  void dispose() {
+    widget.refreshController?.detach(this);
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
+    _bindRefresh();
     _future = _load();
   }
 
-  Future<CustomerActivityPage> _load() =>
-      widget.repository.getActivity(widget.customerId, limit: 3);
+  int _requestId = 0;
+  Future<CustomerActivityPage> _load() async {
+    final id = ++_requestId;
+    _loading = true;
+    widget.refreshController?.changed();
+    try {
+      return await widget.repository.getActivity(widget.customerId, limit: 3);
+    } finally {
+      if (mounted && id == _requestId) {
+        _loading = false;
+        widget.refreshController?.changed();
+      }
+    }
+  }
 
   @override
   void didUpdateWidget(covariant CustomerActivityPreview oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.refreshController != widget.refreshController) {
+      oldWidget.refreshController?.detach(this);
+      _bindRefresh();
+    }
     if (oldWidget.customerId != widget.customerId ||
         oldWidget.reloadToken != widget.reloadToken ||
         oldWidget.repository != widget.repository) {
@@ -43,12 +78,20 @@ class _CustomerActivityPreviewState extends State<CustomerActivityPreview> {
     }
   }
 
-  void _refresh() {
+  Future<void> _refresh() async {
     final future = _load();
     future.ignore();
     setState(() {
       _future = future;
     });
+    // FutureBuilder renders the error; the shared button only waits for completion.
+    try {
+      await future;
+    } on CustomerRequestException {
+      return;
+    } on FormatException {
+      return;
+    }
   }
 
   @override
@@ -56,7 +99,7 @@ class _CustomerActivityPreviewState extends State<CustomerActivityPreview> {
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
       color: Colors.white,
-      border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      border: Border.all(color: AppColors.notActiveBorder),
       borderRadius: BorderRadius.circular(12),
     ),
     child: FutureBuilder<CustomerActivityPage>(
@@ -64,6 +107,7 @@ class _CustomerActivityPreviewState extends State<CustomerActivityPreview> {
       builder: (context, snapshot) {
         final loading = snapshot.connectionState == ConnectionState.waiting;
         final error = snapshot.error;
+        final events = snapshot.data?.items.take(3).toList() ?? [];
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
@@ -75,11 +119,6 @@ class _CustomerActivityPreviewState extends State<CustomerActivityPreview> {
                     'Последняя активность',
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
-                ),
-                IconButton(
-                  tooltip: 'Обновить последнюю активность',
-                  onPressed: loading ? null : _refresh,
-                  icon: const Icon(Icons.refresh, size: 18),
                 ),
               ],
             ),
@@ -101,10 +140,13 @@ class _CustomerActivityPreviewState extends State<CustomerActivityPreview> {
             ] else if (snapshot.data == null || snapshot.data!.items.isEmpty)
               const Text('Событий пока нет')
             else
-              for (final event in snapshot.data!.items.take(3))
+              for (var index = 0; index < events.length; index++)
                 Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: CustomerActivityTile(event: event),
+                  padding: EdgeInsets.only(top: index == 0 ? 8 : 0),
+                  child: CustomerActivityTile(
+                    event: events[index],
+                    isLast: index == events.length - 1,
+                  ),
                 ),
           ],
         );

@@ -9,6 +9,7 @@ import 'package:crm_interface/modules/tasks/repos/request_error.dart';
 import 'package:crm_interface/modules/tasks/repos/tasks.dart';
 import 'package:crm_interface/modules/tasks/screens/tasks.dart';
 import 'package:crm_interface/modules/tasks/widgets/customer_next_task.dart';
+import 'package:crm_interface/modules/tasks/widgets/column_decoration.dart';
 import 'package:crm_interface/modules/tasks/widgets/task_card.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -181,6 +182,73 @@ void expectCard(
 }
 
 void main() {
+  testWidgets('returning a drag preview home does not save a move', (
+    tester,
+  ) async {
+    // Interior columns have equal widths; the package gives edge columns
+    // different margins, which can independently resize the phantom's content.
+    final repo = MoveRepository()
+      ..saved = task(columnId: '2', status: 'in_progress');
+    await openBoard(tester, repo);
+    final controller = tester
+        .widget<AppFlowyBoard>(find.byType(AppFlowyBoard))
+        .controller;
+    final origin = tester.getCenter(find.byType(TaskCard));
+    final gesture = await tester.startGesture(origin);
+    await gesture.moveBy(const Offset(20, 0));
+    await tester.pump();
+    await gesture.moveTo(origin + const Offset(TaskColumnFrames.slotWidth, 0));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(
+      controller.getGroupController('3')!.items.any((item) => item.isPhantom),
+      isTrue,
+      reason: 'The drag must enter another column before returning home.',
+    );
+    await gesture.moveTo(origin);
+    await tester.pump(const Duration(milliseconds: 400));
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(repo.moves, isEmpty);
+    expect(repo.reads, 1);
+    expectCard(tester, '2', 'in_progress', 4);
+    expect(
+      controller.groupDatas
+          .expand((group) => group.items)
+          .any((item) => item.isPhantom),
+      isFalse,
+    );
+    expect(
+      tester
+          .widget<AbsorbPointer>(find.byKey(const Key('tasks-move-guard')))
+          .absorbing,
+      isFalse,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('drop uses saved column rather than phantom origin or index', (
+    tester,
+  ) async {
+    final repo = MoveRepository();
+    await openBoard(tester, repo);
+    final controller = tester
+        .widget<AppFlowyBoard>(find.byType(AppFlowyBoard))
+        .controller;
+    // A phantom's callback coordinates need not match the saved task's origin.
+    controller.onMoveGroupItemToGroup!('2', 1, '1', 0);
+    await tester.pumpAndSettle();
+    expect(repo.moves, isEmpty);
+    expectCard(tester, '1', 'new', 4);
+
+    drop(tester, '1', '2');
+    await tester.pumpAndSettle();
+    expect(repo.moves.single.toApi(), {'column_id': 2, 'version': 4});
+    expectCard(tester, '2', 'in_progress', 5);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'neutral move preserves status/version and does not ask for reason',
     (tester) async {

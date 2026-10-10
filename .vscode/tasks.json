@@ -1,0 +1,13 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Generate module registry",
+      "type": "shell",
+      "command": "dart",
+      "args": ["run", "tool/generate_modules.dart"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    }
+  ]
+}

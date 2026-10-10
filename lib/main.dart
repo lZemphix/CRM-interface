@@ -57,8 +57,11 @@ class MyApp extends StatelessWidget {
       ),
       home: SessionGate(
         authRepository: authRepository,
-        authenticatedBuilder: (context) =>
-            AppShell(apiClient: apiClient, tasksRepository: tasksRepository),
+        authenticatedBuilder: (context) => AppShell(
+          apiClient: apiClient,
+          tasksRepository: tasksRepository,
+          authRepository: authRepository,
+        ),
       ),
     );
   }

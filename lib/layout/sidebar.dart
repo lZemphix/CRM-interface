@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:crm_interface/core/modules/module_definition.dart';
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/layout/navigation/module_navigation.dart';
 import 'package:crm_interface/modules/auth/models/profile.dart';
 import 'package:flutter/material.dart';
 
@@ -20,6 +21,8 @@ class SideBar extends StatelessWidget {
     required this.modules,
     required this.activeModuleId,
     required this.onModuleSelected,
+    required this.pinnedModuleIds,
+    required this.onModulePinChanged,
     this.accountProfile,
     this.accountLoading = false,
     this.accountError = false,
@@ -31,6 +34,8 @@ class SideBar extends StatelessWidget {
   final List<ModuleDefinition> modules;
   final String? activeModuleId;
   final ValueChanged<String> onModuleSelected;
+  final Set<String> pinnedModuleIds;
+  final void Function(String id, bool pinned) onModulePinChanged;
   final AuthProfile? accountProfile;
   final bool accountLoading;
   final bool accountError;
@@ -49,29 +54,6 @@ class SideBar extends StatelessWidget {
     );
   }
 
-  Widget sideBarButton(ModuleDefinition module) {
-    final bool isActive = activeModuleId == module.id;
-
-    return Tooltip(
-      message: module.title,
-      child: InkWell(
-        key: ValueKey('sidebar-module-${module.id}'),
-        onTap: () => onModuleSelected(module.id),
-        hoverColor: AppColors.hoveredElement,
-        borderRadius: BorderRadius.all(Radius.circular(10)),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isActive ? AppColors.activeElement : Colors.transparent,
-            borderRadius: BorderRadius.all(Radius.circular(12)),
-          ),
-          width: 44,
-          height: 44,
-          child: Icon(module.icon, color: AppColors.sidebarElement),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -83,13 +65,12 @@ class SideBar extends StatelessWidget {
           children: [
             logo(),
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  spacing: 10,
-                  children: [
-                    for (final module in modules) sideBarButton(module),
-                  ],
-                ),
+              child: ModuleNavigation(
+                modules: modules,
+                activeModuleId: activeModuleId,
+                pinnedModuleIds: pinnedModuleIds,
+                onModuleSelected: onModuleSelected,
+                onModulePinChanged: onModulePinChanged,
               ),
             ),
             Padding(

@@ -86,10 +86,12 @@ void main() {
       'catalog',
     ]);
     expect(registry['customers']!.title, 'Клиенты');
+    expect(registry['customers']!.pinnedByDefault, isTrue);
+    expect(registry['catalog']!.pinnedByDefault, isFalse);
     expect(registry['missing'], isNull);
     final context = _UnusedContext();
-    final first = registry['tasks']!.screenBuilder(context) as TasksScreen;
-    final second = registry['tasks']!.screenBuilder(context) as TasksScreen;
+    final first = registry['tasks']!.screenBuilder!(context) as TasksScreen;
+    final second = registry['tasks']!.screenBuilder!(context) as TasksScreen;
     expect(identical(first.tasksRepository, second.tasksRepository), isTrue);
   });
 

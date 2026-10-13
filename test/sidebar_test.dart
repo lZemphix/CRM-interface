@@ -169,6 +169,11 @@ void main() {
                 modules: modules.modules,
                 activeModuleId: 'customers',
                 onModuleSelected: (id) => selected = id,
+                pinnedModuleIds: {
+                  for (final module in modules.modules)
+                    if (module.pinnedByDefault) module.id,
+                },
+                onModulePinChanged: (_, _) {},
                 accountProfile: profile,
                 onLogout: () => taps++,
               ),
@@ -310,6 +315,8 @@ void main() {
     await tester.tap(find.byIcon(Icons.analytics_outlined));
     await tester.pumpAndSettle();
     expect(find.text('analytics'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('sidebar-more-modules')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.shopping_cart_outlined));
     await tester.pumpAndSettle();
     expect(find.text('catalog'), findsOneWidget);

@@ -22,6 +22,7 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   String? _activeModuleId;
+  final _pinOverrides = <String, bool>{};
   late Future<AuthProfile> _profile;
   bool _isLoggingOut = false;
 
@@ -35,7 +36,8 @@ class _AppShellState extends State<AppShell> {
   @override
   void didUpdateWidget(covariant AppShell oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.modules[_activeModuleId] == null) {
+    _pinOverrides.removeWhere((id, _) => widget.modules[id] == null);
+    if (widget.modules[_activeModuleId]?.screenBuilder == null) {
       _activeModuleId = widget.modules.first?.id;
     }
     if (oldWidget.authRepository != widget.authRepository) {
@@ -83,28 +85,39 @@ class _AppShellState extends State<AppShell> {
   }
 
   void selectModule(String id) {
-    if (widget.modules[id] == null || _activeModuleId == id) return;
+    if (widget.modules[id]?.screenBuilder == null || _activeModuleId == id) {
+      return;
+    }
     setState(() {
       _activeModuleId = id;
     });
   }
 
+  void _setModulePinned(String id, bool pinned) {
+    if (widget.modules[id] == null || _pinOverrides[id] == pinned) return;
+    setState(() => _pinOverrides[id] = pinned);
+  }
+
+  Set<String> get _pinnedModuleIds => {
+    for (final module in widget.modules.modules)
+      if (_pinOverrides[module.id] ?? module.pinnedByDefault) module.id,
+  };
+
   Widget currentScreen() {
     final module = widget.modules[_activeModuleId];
-    if (module == null) {
+    final builder = module?.screenBuilder;
+    if (builder == null) {
       return const Center(child: Text('Нет доступных разделов'));
     }
     // Different sections can return the same widget type, but not share State.
-    return KeyedSubtree(
-      key: ValueKey(module.id),
-      child: module.screenBuilder(context),
-    );
+    return KeyedSubtree(key: ValueKey(module!.id), child: builder(context));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           FutureBuilder<AuthProfile>(
             future: _profile,
@@ -114,6 +127,8 @@ class _AppShellState extends State<AppShell> {
                 modules: widget.modules.modules,
                 activeModuleId: _activeModuleId,
                 onModuleSelected: selectModule,
+                pinnedModuleIds: _pinnedModuleIds,
+                onModulePinChanged: _setModulePinned,
                 accountProfile: profile,
                 accountLoading:
                     snapshot.connectionState != ConnectionState.done,

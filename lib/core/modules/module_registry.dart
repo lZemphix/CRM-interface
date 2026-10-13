@@ -19,6 +19,17 @@ class ModuleRegistry {
       if (byId.containsKey(module.id)) {
         throw ArgumentError('Duplicate module identifier: ${module.id}');
       }
+      if (module.screenBuilder == null && module.actions.isEmpty) {
+        throw ArgumentError('Action module ${module.id} must have actions');
+      }
+      final actionIds = <String>{};
+      for (final action in module.actions) {
+        if (!RegExp(r'^[a-z][a-z0-9_]*$').hasMatch(action.id) ||
+            !actionIds.add(action.id) ||
+            action.title.trim().isEmpty) {
+          throw ArgumentError('Invalid action in module ${module.id}');
+        }
+      }
       byId[module.id] = module;
     }
     return ModuleRegistry._(List.unmodifiable(modules), Map.unmodifiable(byId));
@@ -31,5 +42,7 @@ class ModuleRegistry {
 
   ModuleDefinition? operator [](String? id) => _byId[id];
 
-  ModuleDefinition? get first => modules.isEmpty ? null : modules.first;
+  // Dialog-only modules do not occupy the main screen, including at startup.
+  ModuleDefinition? get first =>
+      modules.where((module) => module.screenBuilder != null).firstOrNull;
 }

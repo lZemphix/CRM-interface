@@ -9,6 +9,7 @@ ModuleDefinition createModule(ApiClient apiClient) {
     description: 'Товары и услуги — раздел пока не реализован',
     icon: Icons.shopping_cart_outlined,
     order: 40,
+    pinnedByDefault: false,
     screenBuilder: (_) => const Center(child: Text('catalog')),
   );
 }

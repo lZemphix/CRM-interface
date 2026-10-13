@@ -4,6 +4,7 @@ import 'package:crm_interface/core/api_client/client.dart';
 import 'package:crm_interface/bootstrap/modules.g.dart';
 import 'package:crm_interface/layout/app_shell.dart';
 import 'package:crm_interface/layout/sidebar.dart';
+import 'package:crm_interface/modules/catalog/screens/catalog.dart';
 import 'package:crm_interface/modules/auth/auth_session.dart';
 import 'package:crm_interface/modules/auth/models/profile.dart';
 import 'package:crm_interface/modules/auth/repos/auth.dart';
@@ -69,6 +70,23 @@ ApiClient makeClient({
               requestOptions: options,
               statusCode: 200,
               data: {'items': [], 'total': 0, 'limit': 50, 'offset': 0},
+            ),
+          );
+        } else if (options.path == '/catalog/items' ||
+            options.path == '/catalog/categories') {
+          handler.resolve(
+            Response<dynamic>(
+              requestOptions: options,
+              statusCode: 200,
+              data: options.path == '/catalog/categories'
+                  ? <String>[]
+                  : {
+                      'items': [],
+                      'total': 0,
+                      'limit': 50,
+                      'offset': 0,
+                      'counts': {'total': 0, 'services': 0, 'products': 0},
+                    },
             ),
           );
         } else if (options.path == '/auth/logout') {
@@ -319,8 +337,35 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.shopping_cart_outlined));
     await tester.pumpAndSettle();
-    expect(find.text('catalog'), findsOneWidget);
+    expect(find.byType(CatalogScreen), findsOneWidget);
     expect(repo.reads, 1);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('catalog fills the shell height and starts at the top', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final api = makeClient();
+    addTearDown(() => api.dio.close(force: true));
+    await openShell(tester, ProfileRepository(api, api.sessionStore));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('sidebar-more-modules')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.shopping_cart_outlined));
+    await tester.pumpAndSettle();
+
+    final shell = tester.getRect(find.byType(Scaffold).first);
+    final catalog = tester.getRect(find.byType(CatalogScreen));
+    expect(catalog.top, shell.top);
+    expect(catalog.bottom, shell.bottom);
+    final header = find
+        .ancestor(of: find.text('Каталог'), matching: find.byType(Wrap))
+        .first;
+    expect(tester.getTopLeft(header).dy, shell.top + 28);
     expect(tester.takeException(), isNull);
   });
 

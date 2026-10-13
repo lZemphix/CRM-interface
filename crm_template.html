@@ -573,6 +573,92 @@
   .analytics-draft-tag{font-size:10px;border-radius:20px;background:#FFF4E5;color:#9A6700;padding:3px 7px;white-space:nowrap;}
   .analytics-custom-card button{border:0;background:none;color:#B42318;cursor:pointer;padding:8px 0 0;font-size:11px;}
   .analytics-empty{border:1px dashed #CDD3DE;border-radius:12px;padding:23px;background:#fff;color:var(--text-muted);font-size:12px;grid-column:1/-1;}
+  /* ---------- BASIC EMPLOYEE ACTIONS (LOCAL PROTOTYPE) ---------- */
+  .staff-more{position:relative;}
+  .staff-menu,.staff-submenu{position:absolute;z-index:80;width:242px;padding:5px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px #10182824;color:var(--text);}
+  .staff-menu{left:calc(100% + 12px);top:0;}
+  .staff-submenu{left:calc(100% + 8px);top:-1px;width:264px;}
+  .staff-submenu::before{content:'';position:absolute;right:100%;top:0;bottom:0;width:9px;}
+  .staff-menu[hidden],.staff-submenu[hidden],.staff-dialog [hidden]{display:none!important;}
+  .staff-menu-item{position:relative;}
+  .staff-menu button{display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;border:0;border-radius:7px;background:none;color:var(--text);font:inherit;font-size:13px;text-align:left;cursor:pointer;}
+  .staff-menu button:hover,.staff-menu button:focus-visible{background:var(--accent-soft);outline:0;}
+  .staff-menu svg,.staff-dialog svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.7;fill:none;flex:none;}
+  .staff-menu .staff-chevron{margin-left:auto;width:15px;height:15px;color:var(--text-faint);}
+  .staff-menu .staff-danger{color:#B42318;}
+  .staff-menu .staff-danger:hover,.staff-menu .staff-danger:focus-visible{background:#FFF1EE;}
+  .staff-dialog{width:min(548px,calc(100vw - 28px));border:1px solid #E4E7EC;border-radius:18px;padding:0;max-height:calc(100dvh - 32px);background:#fff;color:#20242B;box-shadow:0 24px 80px #10182840;}
+  .staff-dialog::backdrop{background:#10182875;backdrop-filter:blur(2px);}
+  .staff-dialog form{padding:28px;max-height:calc(100dvh - 34px);overflow-y:auto;}
+  .staff-heading{display:flex;align-items:flex-start;gap:12px;margin-bottom:20px;}
+  .staff-heading-copy{min-width:0;flex:1;}
+  .staff-heading h2{font-size:21px;line-height:1.3;letter-spacing:-.4px;margin:2px 0 6px;}
+  .staff-heading p{font-size:12px;line-height:1.6;color:#667085;margin:0;}
+  .staff-icon{display:grid;place-items:center;width:42px;height:42px;flex:none;border-radius:12px;background:var(--accent-soft);color:var(--accent);}
+  .staff-icon.danger{background:#FFF1EE;color:#B42318;}
+  .staff-icon.success{background:#EAF6EF;color:#21865D;}
+  .staff-close{border:0;background:transparent;border-radius:7px;width:28px;height:28px;padding:3px;color:#98A2B3;font-size:23px;line-height:1;cursor:pointer;flex:none;}
+  .staff-close:hover{background:#F2F4F7;color:#20242B;}
+  .staff-demo-badge{display:inline-block;font-size:10px;letter-spacing:.7px;font-weight:700;text-transform:uppercase;color:var(--accent);margin-bottom:3px;}
+  .staff-dialog .task-field{margin-bottom:16px;}
+  .staff-dialog .task-field>span{font-size:12px;}
+  .staff-dialog input,.staff-dialog select,.staff-dialog button{font-family:inherit;}
+  .staff-dialog .task-field input,.staff-dialog .task-field select{font-size:13px;border-color:#D8DDE5;padding:11px 12px;}
+  .staff-hint{display:block;margin-top:5px;color:#98A2B3;font-size:11px;line-height:1.5;}
+  .staff-role-preview{padding:12px 14px;border:1px solid #E4E7EC;border-radius:10px;margin:-4px 0 18px;background:#F9FAFB;}
+  .staff-role-preview strong{font-size:12px;display:block;margin-bottom:3px;}
+  .staff-role-preview p{font-size:12px;color:#667085;line-height:1.55;margin:0;}
+  .staff-branches{border:1px solid #E4E7EC;border-radius:10px;margin:0 0 18px;}
+  .staff-branches summary{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;font-size:12px;cursor:pointer;list-style:none;}
+  .staff-branches summary::-webkit-details-marker{display:none;}
+  .staff-branches summary small{color:#98A2B3;font-size:11px;}
+  .staff-branches[open] summary{border-bottom:1px solid #E4E7EC;}
+  .staff-branch-options{padding:12px 14px;display:flex;flex-wrap:wrap;gap:8px;}
+  .staff-branch-options label{display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid #E4E7EC;border-radius:7px;font-size:12px;cursor:pointer;}
+  .staff-branch-options label:has(input:checked){background:var(--accent-soft);border-color:var(--accent);color:var(--accent-dark);}
+  .staff-branch-options input{accent-color:var(--accent);margin:0;}
+  .staff-primary{margin:0 14px 14px!important;}
+  .staff-note{display:flex;align-items:flex-start;gap:9px;padding:12px 14px;background:#F7F9FB;border-radius:10px;font-size:12px;line-height:1.6;color:#667085;}
+  .staff-note svg{width:16px;height:16px;margin-top:2px;color:#98A2B3;}
+  .staff-note p{margin:0;}
+  .staff-note.warning{background:#FFFAEB;color:#8B5B13;}
+  .staff-note.warning svg{color:#B88720;}
+  .staff-footer{display:flex;justify-content:flex-end;gap:9px;padding-top:20px;margin-top:20px;border-top:1px solid #EAECF0;}
+  .staff-footer button{border:1px solid #D8DDE5;border-radius:9px;padding:10px 16px;background:white;font-size:12px;font-weight:600;color:#475467;cursor:pointer;}
+  .staff-footer .primary{border-color:var(--accent);background:var(--accent);color:#fff;}
+  .staff-footer .primary:hover{background:var(--accent-dark);}
+  .staff-footer .danger{background:#B42318;border-color:#B42318;color:white;}
+  .staff-footer .danger:hover{background:#912018;}
+  .staff-footer button:not(.primary):not(.danger):hover{background:#F2F4F7;}
+  .staff-footer button:disabled{cursor:not-allowed;opacity:.5;}
+  .staff-dialog button:focus-visible,.staff-branches summary:focus-visible{outline:3px solid #2E7D6B55;outline-offset:2px;}
+  .staff-error{border:1px solid #FECDCA;background:#FFF4F2;color:#B42318;padding:10px 12px;font-size:12px;line-height:1.5;border-radius:9px;margin-top:12px;}
+  .staff-identity{display:flex;align-items:center;gap:11px;padding:14px;border:1px solid #E4E7EC;border-radius:11px;margin:17px 0 12px;}
+  .staff-avatar{display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-dark);width:40px;height:40px;border-radius:10px;font-size:13px;font-weight:700;flex:none;}
+  .staff-identity-copy{min-width:0;flex:1;}
+  .staff-identity-copy strong{display:block;font-size:13px;overflow-wrap:anywhere;}
+  .staff-identity-copy small{display:block;color:#667085;font-size:11px;margin-top:3px;overflow-wrap:anywhere;}
+  .staff-active-label{font-size:10px;font-weight:600;color:#21865D;background:#EAF6EF;border-radius:20px;padding:4px 8px;}
+  .staff-impact{list-style:none;margin:0 0 17px;padding:0;}
+  .staff-impact li{display:flex;align-items:flex-start;gap:8px;margin:10px 0;font-size:12px;color:#667085;}
+  .staff-impact svg{width:16px;height:16px;margin-top:1px;color:var(--accent);}
+  .staff-credentials{border:1px solid #E4E7EC;border-radius:11px;padding:16px;margin:20px 0;}
+  .staff-credentials>label{display:block;color:#667085;font-size:11px;margin-bottom:5px;}
+  .staff-login-value{font-size:14px;overflow-wrap:anywhere;margin-bottom:16px;}
+  .staff-password-row{display:flex;align-items:center;gap:6px;}
+  .staff-password-row input{width:100%;min-width:0;border:1px solid #D8DDE5;border-radius:8px;padding:10px 11px;font-size:14px;color:#20242B;background:#F9FAFB;}
+  .staff-password-row button{display:grid;place-items:center;flex:none;width:36px;height:36px;border:0;border-radius:8px;background:#F2F4F7;color:#667085;cursor:pointer;}
+  .staff-dialog-footer-note{font-size:10px;color:#98A2B3;line-height:1.5;margin:14px 0 0;}
+  @media(max-width:600px){
+    .staff-menu{position:fixed;left:72px;top:220px;width:calc(100vw - 88px);max-width:242px;}
+    .staff-submenu{position:static;width:100%;box-shadow:none;border:0;border-radius:0;padding:2px 0 2px 12px;}
+    .staff-dialog form{padding:20px;}
+    .staff-heading{gap:9px;}
+    .staff-heading h2{font-size:19px;}
+    .staff-icon{width:36px;height:36px;}
+    .staff-footer{flex-wrap:wrap;}
+  }
+
   /* ---------- CATALOG PROTOTYPE ---------- */
   .catalog-page{height:100%;overflow-y:auto;padding:28px 32px 60px;background:#F8FAFC;}
   .catalog-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px;}
@@ -692,6 +778,24 @@
       <button class="rail-btn" data-target="catalog" title="Каталог" aria-label="Каталог">
         <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v16M8 10h13M12 14h5"/></svg>
       </button>
+      <div class="staff-more" id="staff-more">
+        <button class="rail-btn" id="staff-more-button" type="button" title="Другие разделы" aria-label="Другие разделы" aria-haspopup="menu" aria-expanded="false" aria-controls="staff-more-menu">
+          <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+        </button>
+        <div class="staff-menu" id="staff-more-menu" role="menu" aria-label="Другие разделы" hidden>
+          <div class="staff-menu-item" id="staff-menu-item">
+            <button id="staff-menu-parent" type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-controls="staff-submenu">
+              <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0112 0v2M17 4a3 3 0 010 6M21 20v-2a6 6 0 00-3-5"/></svg>
+              Сотрудники
+              <svg class="staff-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg>
+            </button>
+            <div class="staff-submenu" id="staff-submenu" role="menu" aria-label="Сотрудники" hidden>
+              <button id="staff-add-action" type="button" role="menuitem"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 20v-2a6 6 0 0112 0v2M19 7v8M15 11h8"/></svg>Добавить сотрудника</button>
+              <button class="staff-danger" id="staff-archive-action" type="button" role="menuitem"><svg viewBox="0 0 24 24"><path d="M4 8h16v12H4zM3 4h18v4H3zM9 12h6"/></svg>Архивировать сотрудника</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="rail-divider"></div>
     <div class="rail-group">
@@ -937,6 +1041,58 @@
       <button type="button" id="catalog-cancel">Отмена</button>
       <button type="submit" id="catalog-save">Добавить</button>
     </div>
+  </form>
+</dialog>
+
+<dialog class="staff-dialog" id="staff-create-dialog" aria-labelledby="staff-create-title" aria-describedby="staff-create-description">
+  <form id="staff-create-form">
+    <div class="staff-heading">
+      <div class="staff-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 20v-2a6 6 0 0112 0v2M19 7v8M15 11h8"/></svg></div>
+      <div class="staff-heading-copy"><span class="staff-demo-badge">Доступ к CRM · макет</span><h2 id="staff-create-title">Новый сотрудник</h2><p id="staff-create-description">Создайте аккаунт и задайте уровень доступа.</p></div>
+      <button class="staff-close" type="button" data-staff-close aria-label="Закрыть">×</button>
+    </div>
+    <label class="task-field"><span>ФИО <span aria-hidden="true">*</span></span><input id="staff-name" name="full_name" maxlength="255" required autocomplete="off" placeholder="Например, Мария Белова"><small class="staff-hint">Так сотрудник будет отображаться в задачах и истории.</small></label>
+    <label class="task-field"><span>Логин <span aria-hidden="true">*</span></span><input id="staff-login" name="login" minlength="3" maxlength="128" pattern="[a-zA-Z0-9][a-zA-Z0-9._\-]{2,127}" required autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="maria.b"><small class="staff-hint">Латиница, цифры, точка, дефис и подчёркивание. От 3 символов.</small></label>
+    <label class="task-field"><span>Роль <span aria-hidden="true">*</span></span><select id="staff-role" name="role" required><option value="">Выберите роль</option><option value="specialist">Специалист</option><option value="manager">Менеджер</option><option value="admin">Администратор</option></select></label>
+    <div class="staff-role-preview" id="staff-role-preview" hidden><strong id="staff-role-label"></strong><p id="staff-role-description"></p></div>
+    <details class="staff-branches" id="staff-branches"><summary>Филиалы <small id="staff-branch-count">Необязательно · ⌄</small></summary><div class="staff-branch-options" id="staff-branch-options"></div><label class="task-field staff-primary" id="staff-primary-field" hidden><span>Основной филиал</span><select id="staff-primary"><option value="">Без предпочтения</option></select></label></details>
+    <div class="staff-note"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg><p>Временный пароль появится после создания. При первом входе сотрудник должен будет его сменить.</p></div>
+    <div class="staff-error" id="staff-create-error" role="alert" hidden></div>
+    <div class="staff-footer"><button type="button" data-staff-close>Отмена</button><button class="primary" type="submit">Создать сотрудника</button></div>
+    <p class="staff-dialog-footer-note">Интерактивный макет без API. Изменения сбрасываются при перезагрузке страницы.</p>
+  </form>
+</dialog>
+
+<dialog class="staff-dialog" id="staff-created-dialog" aria-labelledby="staff-created-title">
+  <form method="dialog" id="staff-created-form">
+    <div class="staff-heading">
+      <div class="staff-icon success"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg></div>
+      <div class="staff-heading-copy"><span class="staff-demo-badge">Демонстрация результата</span><h2 id="staff-created-title">Сотрудник создан</h2><p id="staff-created-name"></p></div>
+      <button class="staff-close" type="button" data-staff-close aria-label="Закрыть">×</button>
+    </div>
+    <div class="staff-credentials"><label>Логин</label><div class="staff-login-value mono" id="staff-created-login"></div><label for="staff-created-password">Временный пароль · только для демонстрации</label><div class="staff-password-row"><input class="mono" id="staff-created-password" type="password" readonly autocomplete="off"><button id="staff-password-toggle" type="button" aria-label="Показать пароль" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+    <div class="staff-note warning"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16v1"/></svg><p>Передайте данные сотруднику лично. После закрытия этого окна пароль больше не показывается и нигде не сохраняется.</p></div>
+    <p class="staff-hint" id="staff-copy-status" role="status" aria-live="polite"></p>
+    <div class="staff-footer"><button type="button" id="staff-copy">Скопировать данные</button><button class="primary" type="submit">Готово</button></div>
+  </form>
+</dialog>
+
+<dialog class="staff-dialog" id="staff-archive-dialog" aria-labelledby="staff-archive-title" aria-describedby="staff-archive-description">
+  <form id="staff-archive-form">
+    <div class="staff-heading">
+      <div class="staff-icon danger"><svg viewBox="0 0 24 24"><path d="M4 8h16v12H4zM3 4h18v4H3zM9 12h6"/></svg></div>
+      <div class="staff-heading-copy"><span class="staff-demo-badge">Управление доступом · макет</span><h2 id="staff-archive-title">Архивировать сотрудника</h2><p id="staff-archive-description">Отключение доступа, а не удаление истории.</p></div>
+      <button class="staff-close" type="button" data-staff-close aria-label="Закрыть">×</button>
+    </div>
+    <label class="task-field"><span>Введите логин сотрудника <span aria-hidden="true">*</span></span><input class="mono" id="staff-archive-login" name="login" minlength="3" maxlength="128" required autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="irina.k"><small class="staff-hint">Без поиска и подсказок. Для проверки макета: irina.k или damir.y; svetlana.o — ваш аккаунт.</small></label>
+    <div class="staff-error" id="staff-archive-error" role="alert" hidden></div>
+    <div id="staff-archive-preview" hidden>
+      <div class="staff-identity"><div class="staff-avatar" id="staff-archive-avatar"></div><div class="staff-identity-copy"><strong id="staff-archive-name"></strong><small id="staff-archive-meta"></small></div><span class="staff-active-label">Активен</span></div>
+      <ul class="staff-impact"><li><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg><span>Доступ к CRM прекратится, активные сессии завершатся.</span></li><li><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg><span>История действий и завершённые задачи сохранятся.</span></li></ul>
+      <div class="staff-note warning"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16v1"/></svg><p id="staff-archive-impact"></p></div>
+    </div>
+    <div class="staff-footer"><button type="button" data-staff-close>Отмена</button><button class="primary" type="submit" id="staff-archive-submit">Продолжить</button></div>
+    <p class="staff-dialog-footer-note">Аккаунты и задачи в этой демонстрации локальные, независимы от сервера и старого HR-макета.</p>
   </form>
 </dialog>
 
@@ -1934,6 +2090,245 @@ catalogForm.addEventListener('submit', event => {
   saveCatalog(); renderCatalog(); catalogDialog.close();
 });
 renderCatalog();
+
+// ---------- BASIC EMPLOYEES (SESSION-ONLY DESIGN PROTOTYPE, NOT API) ----------
+// Independent from the legacy HR view and kanban: no production contract implied.
+const staffDemo = {
+  actorId: 3,
+  members: [
+    {id:1, name:'Ирина Ковалёва', login:'irina.k', role:'specialist', branches:['Центр','Северный'], active:true, version:1},
+    {id:2, name:'Дамир Юсупов', login:'damir.y', role:'specialist', branches:['Правый берег'], active:true, version:1},
+    {id:3, name:'Светлана Орлова', login:'svetlana.o', role:'admin', branches:['Центр'], active:true, version:1}
+  ],
+  tasks: [
+    {id:1, title:'Подтвердить запись', responsibleId:1, status:'new', version:1, history:[]},
+    {id:2, title:'Подготовить материалы', responsibleId:1, status:'in_progress', version:1, history:[]},
+    {id:3, title:'Уточнить удобное время', responsibleId:2, status:'new', version:1, history:[]},
+    {id:4, title:'Закрытая задача', responsibleId:1, status:'completed', version:1, history:[]}
+  ],
+  history: []
+};
+{
+  const roleInfo = {
+    specialist: {name:'Специалист', description:'Работа с клиентами и своими задачами. Без управления сотрудниками и настройками.'},
+    manager: {name:'Менеджер', description:'Работа с клиентами, задачами команды и каталогом. Без управления сотрудниками.'},
+    admin: {name:'Администратор', description:'Полный доступ к настройкам, сотрудникам и данным CRM. Выдавайте только доверенным людям.'}
+  };
+  const more = document.getElementById('staff-more');
+  const moreButton = document.getElementById('staff-more-button');
+  const menu = document.getElementById('staff-more-menu');
+  const menuItem = document.getElementById('staff-menu-item');
+  const parent = document.getElementById('staff-menu-parent');
+  const submenu = document.getElementById('staff-submenu');
+  let closeTimer;
+  let pointerNavigation = false;
+  const setSubmenu = open => {
+    submenu.hidden = !open;
+    parent.setAttribute('aria-expanded', String(open));
+  };
+  const closeMenu = (restoreFocus = false) => {
+    clearTimeout(closeTimer);
+    menu.hidden = true;
+    moreButton.setAttribute('aria-expanded', 'false');
+    setSubmenu(false);
+    if(restoreFocus) moreButton.focus();
+  };
+  moreButton.addEventListener('click', () => {
+    if(!menu.hidden) return closeMenu(true);
+    menu.hidden = false;
+    moreButton.setAttribute('aria-expanded', 'true');
+    parent.focus();
+  });
+  parent.addEventListener('click', () => setSubmenu(submenu.hidden));
+  menuItem.addEventListener('pointerenter', event => {
+    if(event.pointerType === 'mouse') setSubmenu(true);
+  });
+  more.addEventListener('pointerenter', event => {
+    pointerNavigation = event.pointerType === 'mouse';
+    clearTimeout(closeTimer);
+  });
+  more.addEventListener('pointerleave', () => {
+    if(pointerNavigation) closeTimer = setTimeout(() => closeMenu(), 250);
+  });
+  more.addEventListener('keydown', event => {
+    pointerNavigation = false;
+    clearTimeout(closeTimer);
+    if(event.key === 'Tab') { closeMenu(); return; }
+    if(event.key === 'Escape') { event.preventDefault(); closeMenu(true); return; }
+    if(event.key === 'ArrowRight' && event.target === parent) {
+      event.preventDefault(); setSubmenu(true); submenu.querySelector('button').focus();
+    } else if(event.key === 'ArrowLeft' && submenu.contains(event.target)) {
+      event.preventDefault(); setSubmenu(false); parent.focus();
+    } else if(['ArrowDown','ArrowUp'].includes(event.key) && !menu.hidden) {
+      event.preventDefault();
+      const buttons = submenu.contains(event.target) ? [...submenu.querySelectorAll('button')] : [parent];
+      const index = buttons.indexOf(document.activeElement);
+      buttons[(index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length].focus();
+    }
+  });
+  document.addEventListener('pointerdown', event => {
+    if(!more.contains(event.target)) closeMenu();
+  });
+
+  const createDialog = document.getElementById('staff-create-dialog');
+  const createdDialog = document.getElementById('staff-created-dialog');
+  const archiveDialog = document.getElementById('staff-archive-dialog');
+  const createForm = document.getElementById('staff-create-form');
+  const archiveForm = document.getElementById('staff-archive-form');
+  const createError = document.getElementById('staff-create-error');
+  const archiveError = document.getElementById('staff-archive-error');
+  const archiveInput = document.getElementById('staff-archive-login');
+  const archivePreview = document.getElementById('staff-archive-preview');
+  const archiveSubmit = document.getElementById('staff-archive-submit');
+  const password = document.getElementById('staff-created-password');
+  const passwordToggle = document.getElementById('staff-password-toggle');
+  let archiveCandidate = null;
+  const normalize = value => value.trim().toLowerCase();
+  const showError = (element, message) => {
+    element.textContent = message;
+    element.hidden = !message;
+  };
+  const resetArchivePreview = () => {
+    archiveCandidate = null;
+    archivePreview.hidden = true;
+    archiveSubmit.textContent = 'Продолжить';
+    archiveSubmit.className = 'primary';
+    showError(archiveError, '');
+  };
+  document.querySelectorAll('.staff-dialog [data-staff-close]').forEach(button => {
+    button.addEventListener('click', () => button.closest('dialog').close());
+  });
+  [createDialog, createdDialog, archiveDialog].forEach(dialog => {
+    dialog.addEventListener('close', () => {
+      moreButton.focus();
+      if(dialog === createdDialog) {
+        password.value = '';
+        document.getElementById('staff-created-login').textContent = '';
+      }
+    });
+  });
+  document.getElementById('staff-add-action').addEventListener('click', () => {
+    closeMenu(); createForm.reset(); showError(createError, '');
+    document.getElementById('staff-role-preview').hidden = true;
+    document.getElementById('staff-branches').open = false;
+    document.getElementById('staff-branch-count').textContent = 'Необязательно · ⌄';
+    document.getElementById('staff-primary-field').hidden = true;
+    createDialog.showModal(); document.getElementById('staff-name').focus();
+  });
+  document.getElementById('staff-archive-action').addEventListener('click', () => {
+    closeMenu(); archiveForm.reset(); resetArchivePreview();
+    archiveDialog.showModal(); archiveInput.focus();
+  });
+  document.getElementById('staff-role').addEventListener('change', event => {
+    const role = roleInfo[event.target.value];
+    document.getElementById('staff-role-preview').hidden = !role;
+    document.getElementById('staff-role-label').textContent = role ? `Доступ: ${role.name.toLowerCase()}` : '';
+    document.getElementById('staff-role-description').textContent = role?.description || '';
+  });
+  const branchOptions = document.getElementById('staff-branch-options');
+  branches.forEach(branch => {
+    const label = document.createElement('label');
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox'; checkbox.value = branch.name;
+    label.append(checkbox, document.createTextNode(branch.name)); branchOptions.append(label);
+  });
+  branchOptions.addEventListener('change', () => {
+    const selected = [...branchOptions.querySelectorAll('input:checked')].map(input => input.value);
+    const primary = document.getElementById('staff-primary');
+    const previous = primary.value;
+    primary.replaceChildren(new Option('Без предпочтения', ''));
+    selected.forEach(name => primary.add(new Option(name, name)));
+    primary.value = selected.includes(previous) ? previous : '';
+    document.getElementById('staff-primary-field').hidden = !selected.length;
+    document.getElementById('staff-branch-count').textContent = selected.length ? `${selected.length} выбрано · ⌄` : 'Необязательно · ⌄';
+  });
+  createForm.addEventListener('input', () => showError(createError, ''));
+  createForm.addEventListener('submit', event => {
+    event.preventDefault();
+    if(!createForm.reportValidity()) return;
+    const name = document.getElementById('staff-name').value.trim();
+    const login = normalize(document.getElementById('staff-login').value);
+    if(!name) return showError(createError, 'Укажите ФИО сотрудника, а не только пробелы.');
+    if(staffDemo.members.some(member => member.login === login)) return showError(createError, 'Этот логин уже занят, в том числе архивным аккаунтом. Укажите другой.');
+    // A fresh ephemeral example, never persisted or attached to the member.
+    if(!globalThis.crypto?.getRandomValues) return showError(createError, 'Браузер не поддерживает генерацию демонстрационного пароля.');
+    const secret = [...crypto.getRandomValues(new Uint8Array(10))].map(value => value.toString(16).padStart(2,'0')).join('');
+    const member = {
+      id:Math.max(...staffDemo.members.map(item => item.id)) + 1,
+      name, login, role:document.getElementById('staff-role').value,
+      branches:[...branchOptions.querySelectorAll('input:checked')].map(input => input.value),
+      primary:document.getElementById('staff-primary').value || null,
+      active:true, version:1
+    };
+    staffDemo.members.push(member);
+    staffDemo.history.push({type:'employee.create', employeeId:member.id, actorId:staffDemo.actorId});
+    document.getElementById('staff-created-name').textContent = `${name} · ${roleInfo[member.role].name}`;
+    document.getElementById('staff-created-login').textContent = login;
+    password.type = 'password'; password.value = secret;
+    passwordToggle.setAttribute('aria-pressed', 'false');
+    passwordToggle.setAttribute('aria-label', 'Показать пароль');
+    document.getElementById('staff-copy-status').textContent = '';
+    createDialog.close(); createdDialog.showModal();
+  });
+  passwordToggle.addEventListener('click', () => {
+    const show = password.type === 'password';
+    password.type = show ? 'text' : 'password';
+    passwordToggle.setAttribute('aria-pressed', String(show));
+    passwordToggle.setAttribute('aria-label', show ? 'Скрыть пароль' : 'Показать пароль');
+  });
+  document.getElementById('staff-copy').addEventListener('click', async () => {
+    const status = document.getElementById('staff-copy-status');
+    try {
+      if(!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(`Логин: ${document.getElementById('staff-created-login').textContent}\nВременный пароль: ${password.value}`);
+      status.textContent = 'Данные скопированы. Передайте их сотруднику безопасным способом.';
+    } catch(error) {
+      status.textContent = 'Копирование недоступно. Нажмите на значок глаза и скопируйте пароль вручную.';
+    }
+  });
+
+  archiveInput.addEventListener('input', resetArchivePreview);
+  const openTasks = member => staffDemo.tasks.filter(task => task.responsibleId === member.id && !['completed','closed'].includes(task.status));
+  const denyArchive = member => {
+    if(!member) return 'Сотрудник с таким точным логином не найден. Проверьте написание.';
+    if(!member.active) return 'Сотрудник уже архивирован. Повторное отключение не требуется.';
+    if(member.id === staffDemo.actorId) return 'Нельзя архивировать свой аккаунт. Обратитесь к другому администратору.';
+    if(member.role === 'admin' && staffDemo.members.filter(item => item.active && item.role === 'admin').length <= 1) return 'Нельзя отключить последнего активного администратора.';
+    return null;
+  };
+  archiveForm.addEventListener('submit', event => {
+    event.preventDefault();
+    if(!archiveForm.reportValidity()) return;
+    const member = staffDemo.members.find(item => item.login === normalize(archiveInput.value));
+    const denial = denyArchive(member);
+    if(denial) { resetArchivePreview(); return showError(archiveError, denial); }
+    if(archiveCandidate && (archiveCandidate.id !== member.id || archiveCandidate.version !== member.version)) {
+      resetArchivePreview(); return showError(archiveError, 'Данные сотрудника изменились. Нажмите «Продолжить» и проверьте их заново.');
+    }
+    const tasks = openTasks(member);
+    if(!archiveCandidate) {
+      archiveCandidate = {id:member.id, version:member.version};
+      document.getElementById('staff-archive-avatar').textContent = member.name.trim().split(/\s+/).slice(0,2).map(word => word[0]).join('').toUpperCase();
+      document.getElementById('staff-archive-name').textContent = member.name;
+      document.getElementById('staff-archive-meta').textContent = `${member.login} · ${roleInfo[member.role].name}`;
+      document.getElementById('staff-archive-impact').textContent = tasks.length
+        ? `Открытых задач: ${tasks.length}. Они останутся без ответственного. Статусы и колонки не изменятся — команда сможет назначить другого исполнителя.`
+        : 'Открытых задач нет. Меняется только доступ сотрудника; история работы сохраняется.';
+      archivePreview.hidden = false;
+      archiveSubmit.textContent = 'Архивировать'; archiveSubmit.className = 'danger';
+      return;
+    }
+    member.active = false; member.version++; member.sessionsRevoked = true;
+    tasks.forEach(task => {
+      task.history.push({type:'task.unassign', previousId:member.id, responsibleId:null, actorId:staffDemo.actorId});
+      task.responsibleId = null; task.version++;
+    });
+    staffDemo.history.push({type:'employee.archive', employeeId:member.id, actorId:staffDemo.actorId, taskIds:tasks.map(task => task.id)});
+    archiveDialog.close(); resetArchivePreview();
+    showToast(`${member.name}: аккаунт архивирован в макете. Задач без ответственного: ${tasks.length}.`);
+    document.getElementById('toast').setAttribute('role','status');
+  });
+}
 
 // ---------- RAIL NAV ----------
 const views = {

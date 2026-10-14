@@ -14,6 +14,7 @@ class ApiClient {
         receiveTimeout: Duration(seconds: 10),
         sendTimeout: Duration(seconds: 10),
         baseUrl: endpoint,
+        followRedirects: false,
         headers: {"Accept": "application/json"},
       ),
     );
@@ -29,19 +30,20 @@ class ApiClient {
         ),
       );
     }
-    final refreshDio = Dio(
+    _refreshDio = Dio(
       BaseOptions(
         connectTimeout: Duration(seconds: 5),
         receiveTimeout: Duration(seconds: 10),
         sendTimeout: Duration(seconds: 10),
         baseUrl: endpoint,
+        followRedirects: false,
         headers: {"Accept": "application/json"},
       ),
     );
 
     fresh = Fresh.oAuth2<OAuth2Token>(
       tokenStorage: sessionStore,
-      httpClient: refreshDio,
+      httpClient: _refreshDio,
 
       // На запрос входа access-токен добавлять не нужно.
       isTokenRequired: (options) => options.path != '/auth/login',
@@ -69,5 +71,16 @@ class ApiClient {
   }
   late final Dio dio;
   late final Fresh<OAuth2Token> fresh;
+  late final Dio _refreshDio;
   final SessionStore sessionStore;
+
+  void cancelRequests() {
+    dio.close(force: true);
+    _refreshDio.close(force: true);
+  }
+
+  Future<void> close() async {
+    cancelRequests();
+    await fresh.close();
+  }
 }

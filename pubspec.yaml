@@ -17,6 +17,7 @@ dependencies:
   intl: ^0.20.3
   font_awesome_flutter: ^11.0.0
   flutter_secure_storage: ^11.2.0
+  shared_preferences: ^2.5.6
   fresh_dio: ^0.6.0
   appflowy_board: ^0.1.2
 
@@ -27,6 +28,7 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^6.0.0
+  shared_preferences_platform_interface: ^2.4.2
 
 
 flutter:

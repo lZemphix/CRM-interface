@@ -11,10 +11,14 @@ class SessionGate extends StatefulWidget {
     super.key,
     required this.authRepository,
     required this.authenticatedBuilder,
+    this.serverUrl,
+    this.onConfigureServer,
   });
 
   final AuthRepository authRepository;
   final WidgetBuilder authenticatedBuilder;
+  final String? serverUrl;
+  final Future<void> Function(BuildContext)? onConfigureServer;
 
   @override
   State<SessionGate> createState() => _SessionGateState();
@@ -58,6 +62,8 @@ class _SessionGateState extends State<SessionGate> {
     return AuthScreen(
       authRepository: widget.authRepository,
       onAuthenticated: _openCrm,
+      serverUrl: widget.serverUrl,
+      onConfigureServer: widget.onConfigureServer,
     );
   }
 }

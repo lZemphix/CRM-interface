@@ -1,0 +1,130 @@
+name: Desktop checks and release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    name: Analyze and test once
+    runs-on: windows-2022
+    timeout-minutes: 25
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Validate release version
+        id: metadata
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: python scripts/release.py metadata --tag "$RELEASE_TAG" --github-output "$GITHUB_OUTPUT"
+      - uses: ./.github/actions/setup-flutter
+      - run: dart run tool/generate_modules.dart --check
+      - run: dart analyze lib test tool
+      - name: Test release tools
+        run: python -m unittest discover -s scripts/tests -v
+      - name: Test application
+        run: dart run tool/flutter.dart test
+
+  windows:
+    name: Windows 10/11 x64
+    needs: checks
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter
+      - name: Build release bundle
+        run: dart run tool/flutter.dart build windows --release
+      - name: Package application and Visual C++ runtime
+        shell: pwsh
+        run: ./scripts/package_windows.ps1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: desktop-windows-x64
+          path: dist/release/*-windows-x64.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  macos:
+    name: macOS Apple Silicon (ad-hoc signed)
+    needs: checks
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Require Apple Silicon runner
+        run: test "$(uname -m)" = arm64
+      - uses: ./.github/actions/setup-flutter
+        with:
+          architecture: arm64
+      - name: Build and verify local signature
+        env:
+          FLUTTER_MACOS_ARM64_ONLY: 'true'
+        run: |
+          test ! -e macos/Runner/Configs/Signing.local.xcconfig
+          bash scripts/build_macos_release.sh
+          app=build/macos/Build/Products/Release/CRM-interface.app
+          test "$(lipo -archs "$app/Contents/MacOS/CRM-interface")" = arm64
+          codesign --display --entitlements :- "$app" > "$RUNNER_TEMP/crm-entitlements.plist"
+          python3 scripts/release.py verify-entitlements "$RUNNER_TEMP/crm-entitlements.plist"
+      - name: Version the macOS archive
+        run: python3 scripts/release.py macos
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: desktop-macos-arm64
+          path: dist/release/*-macos-arm64.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Attach verified packages to the existing release
+    needs: [checks, windows, macos]
+    if: github.event_name == 'release'
+    runs-on: windows-2022
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: desktop-*
+          path: dist/release
+          merge-multiple: true
+      - name: Verify complete package set and calculate checksums
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: python scripts/release.py checksums --tag "$RELEASE_TAG"
+      - name: Upload without overwriting existing release files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$RELEASE_TAG" dist/release/* --repo "$GITHUB_REPOSITORY"

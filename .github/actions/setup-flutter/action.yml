@@ -1,0 +1,30 @@
+name: Project Flutter SDK
+description: Install the exact SDK recorded in .flutter-version.
+inputs:
+  architecture:
+    description: SDK host architecture
+    default: x64
+outputs:
+  version:
+    description: Pinned Flutter version
+    value: ${{ steps.version.outputs.value }}
+runs:
+  using: composite
+  steps:
+    - name: Read pinned SDK
+      id: version
+      shell: bash
+      run: |
+        version="$(tr -d '\r\n' < .flutter-version)"
+        [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
+        echo "value=$version" >> "$GITHUB_OUTPUT"
+    - name: Install Flutter
+      uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+      with:
+        flutter-version: ${{ steps.version.outputs.value }}
+        channel: stable
+        architecture: ${{ inputs.architecture }}
+        cache: false
+    - name: Resolve locked dependencies
+      shell: bash
+      run: flutter pub get --enforce-lockfile

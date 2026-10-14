@@ -85,6 +85,7 @@ void main() {
       'analytics',
       'catalog',
       'employees',
+      'roles',
     ]);
     expect(registry['customers']!.title, 'Клиенты');
     expect(registry['customers']!.pinnedByDefault, isTrue);

@@ -7,7 +7,8 @@ import '../modules/analytics/module.dart' as module0;
 import '../modules/catalog/module.dart' as module1;
 import '../modules/customers/module.dart' as module2;
 import '../modules/employees/module.dart' as module3;
-import '../modules/tasks/module.dart' as module4;
+import '../modules/roles/module.dart' as module4;
+import '../modules/tasks/module.dart' as module5;
 
 ModuleRegistry createModuleRegistry(ApiClient apiClient) {
   return ModuleRegistry([
@@ -16,5 +17,6 @@ ModuleRegistry createModuleRegistry(ApiClient apiClient) {
     module2.createModule(apiClient),
     module3.createModule(apiClient),
     module4.createModule(apiClient),
+    module5.createModule(apiClient),
   ]);
 }

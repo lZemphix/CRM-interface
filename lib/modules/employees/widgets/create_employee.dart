@@ -11,11 +11,13 @@ class CreateEmployeeDialog extends StatefulWidget {
     this.roles = const [],
     this.branches = const [],
     this.onCreate,
+    this.onCreateRole,
   });
 
   final List<EmployeeRoleChoice> roles;
   final List<EmployeeBranchChoice> branches;
   final Future<EmployeeCreatedView> Function(EmployeeCreateDraft)? onCreate;
+  final Future<EmployeeRoleChoice?> Function()? onCreateRole;
 
   @override
   State<CreateEmployeeDialog> createState() => _CreateEmployeeDialogState();
@@ -23,6 +25,8 @@ class CreateEmployeeDialog extends StatefulWidget {
 
 class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
   final _form = GlobalKey<FormState>();
+  final _roleFieldState = GlobalKey<FormFieldState<int>>();
+  late final List<EmployeeRoleChoice> _roles = [...widget.roles];
   final _name = TextEditingController();
   final _login = TextEditingController();
   final _password = TextEditingController();
@@ -30,6 +34,8 @@ class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
   int? _role;
   int? _primary;
   bool _saving = false;
+  bool _creatingRole = false;
+  bool get _busy => _saving || _creatingRole;
   bool _blocked = false;
   bool _showPassword = false;
   String? _error;
@@ -48,7 +54,7 @@ class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
 
   Future<void> _submit() async {
     final create = widget.onCreate;
-    if (_saving ||
+    if (_busy ||
         _blocked ||
         create == null ||
         !_form.currentState!.validate()) {
@@ -85,34 +91,87 @@ class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
     }
   }
 
+  Future<void> _createRole() async {
+    if (_busy || widget.onCreateRole == null) return;
+    setState(() {
+      _creatingRole = true;
+      _error = null;
+    });
+    try {
+      final role = await widget.onCreateRole!();
+      if (!mounted) return;
+      if (role != null) {
+        setState(() {
+          _roles.removeWhere((existing) => existing.id == role.id);
+          _roles.add(role);
+          _role = role.id;
+        });
+      }
+    } on EmployeeFormFailure catch (error) {
+      if (mounted) setState(() => _error = error.message);
+    } finally {
+      if (mounted) {
+        // The last dropdown item is an action, never a role_id.
+        _roleFieldState.currentState?.didChange(_role);
+        setState(() => _creatingRole = false);
+      }
+    }
+  }
+
   Widget _roleField() {
-    final selected = widget.roles.where((role) => role.id == _role).firstOrNull;
+    final selected = _roles.where((role) => role.id == _role).firstOrNull;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 10,
       children: [
-        DropdownButtonFormField<int>(
+        SizedBox(
           key: const Key('employee-role'),
-          initialValue: _role,
-          isExpanded: true,
-          decoration: const InputDecoration(labelText: 'Роль *'),
-          hint: Text(
-            widget.roles.isEmpty
-                ? 'Справочник пока не подключён'
-                : 'Выберите роль',
-            overflow: TextOverflow.ellipsis,
+          child: DropdownButtonFormField<int>(
+            key: _roleFieldState,
+            initialValue: _role,
+            isExpanded: true,
+            decoration: const InputDecoration(labelText: 'Роль *'),
+            hint: Text(
+              _roles.isEmpty
+                  ? widget.onCreate == null
+                        ? 'Справочник пока не подключён'
+                        : 'Доступных ролей нет'
+                  : 'Выберите роль',
+              overflow: TextOverflow.ellipsis,
+            ),
+            items: [
+              for (final role in _roles)
+                DropdownMenuItem(
+                  value: role.id,
+                  child: Text(role.name, overflow: TextOverflow.ellipsis),
+                ),
+              if (widget.onCreateRole != null)
+                const DropdownMenuItem(
+                  value: -1,
+                  child: Row(
+                    spacing: 8,
+                    children: [
+                      Icon(Icons.add, size: 18, color: AppColors.activeElement),
+                      Text(
+                        'Создать роль…',
+                        style: TextStyle(color: AppColors.activeElement),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+            onChanged: _busy || (_roles.isEmpty && widget.onCreateRole == null)
+                ? null
+                : (value) {
+                    if (value == -1) {
+                      _createRole();
+                    } else {
+                      setState(() => _role = value);
+                    }
+                  },
+            validator: (value) =>
+                value == null || value < 1 ? 'Выберите роль' : null,
           ),
-          items: [
-            for (final role in widget.roles)
-              DropdownMenuItem(
-                value: role.id,
-                child: Text(role.name, overflow: TextOverflow.ellipsis),
-              ),
-          ],
-          onChanged: _saving || widget.roles.isEmpty
-              ? null
-              : (value) => setState(() => _role = value),
-          validator: (value) => value == null ? 'Выберите роль' : null,
         ),
         if (selected != null && selected.description.isNotEmpty)
           EmployeeInfoBox(selected.description),
@@ -137,9 +196,11 @@ class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
       childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
       children: [
         if (widget.branches.isEmpty)
-          const Text(
-            'Филиалы появятся после подключения API.',
-            style: TextStyle(fontSize: 12, color: AppColors.textMutted),
+          Text(
+            widget.onCreate == null
+                ? 'Филиалы появятся после подключения API.'
+                : 'Активных филиалов нет. Сотрудника можно создать без филиала.',
+            style: const TextStyle(fontSize: 12, color: AppColors.textMutted),
           ),
         Wrap(
           spacing: 7,
@@ -149,7 +210,7 @@ class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
               FilterChip(
                 label: Text(branch.name, style: const TextStyle(fontSize: 12)),
                 selected: _branches.contains(branch.id),
-                onSelected: _saving
+                onSelected: _busy
                     ? null
                     : (selected) => setState(() {
                         selected
@@ -180,7 +241,7 @@ class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
                       child: Text(branch.name, overflow: TextOverflow.ellipsis),
                     ),
               ],
-              onChanged: _saving
+              onChanged: _busy
                   ? null
                   : (value) => setState(() => _primary = value),
             ),
@@ -199,7 +260,7 @@ class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
         TextFormField(
           key: const Key('employee-name'),
           controller: _name,
-          enabled: !_saving,
+          enabled: !_busy,
           autofocus: true,
           maxLength: 255,
           decoration: const InputDecoration(
@@ -213,7 +274,7 @@ class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
         TextFormField(
           key: const Key('employee-login'),
           controller: _login,
-          enabled: !_saving,
+          enabled: !_busy,
           maxLength: 128,
           autocorrect: false,
           enableSuggestions: false,
@@ -226,6 +287,11 @@ class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
           validator: validateEmployeeLogin,
         ),
         _roleField(),
+        if (_roles.isEmpty && widget.onCreate != null)
+          const EmployeeInfoBox(
+            'Для создания сотрудника нужна роль. Обратитесь к администратору, чтобы добавить доступные роли.',
+            warning: true,
+          ),
         _branchFields(),
         const EmployeeInfoBox(
           'Временный пароль выдаст сервер после создания. При первом входе сотрудник должен будет его сменить.',
@@ -316,14 +382,14 @@ class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
       title: 'Новый сотрудник',
       description: 'Создайте аккаунт и задайте уровень доступа.',
       icon: Icons.person_add_alt_outlined,
-      busy: _saving,
+      busy: _busy,
       body: _fields(),
       note: widget.onCreate == null
           ? 'Предпросмотр формы. API не подключён: реальные сотрудники не создаются, роли и филиалы не загружаются.'
           : null,
       actions: [
         TextButton(
-          onPressed: _saving ? null : () => Navigator.of(context).pop(),
+          onPressed: _busy ? null : () => Navigator.of(context).pop(),
           child: const Text('Отмена'),
         ),
         FilledButton(
@@ -332,10 +398,7 @@ class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
             backgroundColor: AppColors.activeElement,
           ),
           onPressed:
-              widget.onCreate == null ||
-                  _saving ||
-                  _blocked ||
-                  widget.roles.isEmpty
+              widget.onCreate == null || _busy || _blocked || _roles.isEmpty
               ? null
               : _submit,
           child: Text(_saving ? 'Создаём…' : 'Создать сотрудника'),

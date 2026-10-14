@@ -42,6 +42,12 @@ class _ArchiveEmployeeDialogState extends State<ArchiveEmployeeDialog> {
     try {
       if (employee == null) {
         final result = await widget.onLookup!(_login.text.trim().toLowerCase());
+        if (result.login.trim().toLowerCase() !=
+            _login.text.trim().toLowerCase()) {
+          throw const EmployeeFormFailure(
+            'Получены данные другого логина. Проверьте сотрудника заново.',
+          );
+        }
         if (mounted) setState(() => _employee = result);
       } else {
         await widget.onArchive!(employee);
@@ -52,6 +58,7 @@ class _ArchiveEmployeeDialogState extends State<ArchiveEmployeeDialog> {
         setState(() {
           _error = error.message;
           _blocked = !error.retryAllowed;
+          if (error.refreshRequired) _employee = null;
         });
       }
     } finally {
@@ -84,16 +91,19 @@ class _ArchiveEmployeeDialogState extends State<ArchiveEmployeeDialog> {
           ],
         ),
       ),
-      const Text(
-        'Доступ к CRM прекратится, активные сессии завершатся. История действий и завершённые задачи сохранятся.',
-        style: TextStyle(
-          fontSize: 12,
-          height: 1.6,
-          color: AppColors.textMutted,
+      if (employee.isActive)
+        const Text(
+          'Доступ к CRM прекратится, активные сессии завершатся. История действий и завершённые задачи сохранятся.',
+          style: TextStyle(
+            fontSize: 12,
+            height: 1.6,
+            color: AppColors.textMutted,
+          ),
         ),
-      ),
       EmployeeInfoBox(
-        employee.openTasks == 0
+        !employee.isActive
+            ? 'Сотрудник уже архивирован. Повторное отключение не требуется.'
+            : employee.openTasks == 0
             ? 'Открытых задач нет. Меняется только доступ сотрудника.'
             : 'Открытых задач: ${employee.openTasks}. Они останутся без ответственного. Статусы и колонки не изменятся.',
         warning: true,
@@ -160,7 +170,10 @@ class _ArchiveEmployeeDialogState extends State<ArchiveEmployeeDialog> {
                 ? AppColors.activeElement
                 : const Color(0xFFB42318),
           ),
-          onPressed: !connected || _busy || _blocked ? null : _submit,
+          onPressed:
+              !connected || _busy || _blocked || employee?.isActive == false
+              ? null
+              : _submit,
           child: Text(
             _busy
                 ? 'Подождите…'

@@ -367,6 +367,117 @@ void main() {
     },
   );
 
+  testWidgets(
+    'archive conflict removes stale confirmation and rereads before another command',
+    (tester) async {
+      var reads = 0;
+      var writes = 0;
+      await open(
+        tester,
+        ArchiveEmployeeDialog(
+          onLookup: (_) async {
+            reads++;
+            return EmployeeArchiveView(
+              id: 7,
+              fullName: 'Тест',
+              login: 'test.user',
+              roleName: 'Роль',
+              openTasks: 1,
+              version: 11 + reads,
+            );
+          },
+          onArchive: (value) async {
+            writes++;
+            if (writes == 1) {
+              throw const EmployeeFormFailure(
+                'Изменилось. Проверьте заново.',
+                refreshRequired: true,
+              );
+            }
+            expect(value.version, 13);
+          },
+        ),
+      );
+      await enter(tester, 'employee-archive-login', 'test.user');
+      await press(tester, 'employee-archive-submit');
+      await tester.pumpAndSettle();
+      await press(tester, 'employee-archive-submit');
+      await tester.pumpAndSettle();
+      expect(find.text('Продолжить'), findsOneWidget);
+      expect(find.text('Тест'), findsNothing);
+      expect(writes, 1);
+      await press(tester, 'employee-archive-submit');
+      await tester.pumpAndSettle();
+      expect(reads, 2);
+      expect(writes, 1);
+      await press(tester, 'employee-archive-submit');
+      await tester.pumpAndSettle();
+      expect(writes, 2);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('inactive lookup never offers another deactivation', (
+    tester,
+  ) async {
+    var writes = 0;
+    await open(
+      tester,
+      ArchiveEmployeeDialog(
+        onLookup: (_) async => const EmployeeArchiveView(
+          id: 7,
+          fullName: 'Тест',
+          login: 'test.user',
+          roleName: 'Роль',
+          openTasks: 0,
+          version: 13,
+          isActive: false,
+        ),
+        onArchive: (_) async {
+          writes++;
+        },
+      ),
+    );
+    await enter(tester, 'employee-archive-login', 'test.user');
+    await press(tester, 'employee-archive-submit');
+    await tester.pumpAndSettle();
+    expect(find.textContaining('уже архивирован'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.byKey(const Key('employee-archive-submit')),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(writes, 0);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('lookup returning another login cannot be confirmed', (
+    tester,
+  ) async {
+    await open(
+      tester,
+      ArchiveEmployeeDialog(
+        onLookup: (_) async => const EmployeeArchiveView(
+          id: 7,
+          fullName: 'Другой',
+          login: 'other.user',
+          roleName: 'Роль',
+          openTasks: 0,
+          version: 1,
+        ),
+      ),
+    );
+    await enter(tester, 'employee-archive-login', 'test.user');
+    await press(tester, 'employee-archive-submit');
+    await tester.pumpAndSettle();
+    expect(find.textContaining('другого логина'), findsOneWidget);
+    expect(find.text('Другой'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final width in [360.0, 800.0]) {
     testWidgets('employee forms fit width $width and a short window', (
       tester,

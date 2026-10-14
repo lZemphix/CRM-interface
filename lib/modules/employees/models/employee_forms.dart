@@ -51,6 +51,7 @@ class EmployeeArchiveView {
     required this.roleName,
     required this.openTasks,
     required this.version,
+    this.isActive = true,
   });
 
   final int id;
@@ -59,13 +60,29 @@ class EmployeeArchiveView {
   final String roleName;
   final int openTasks;
   final int version;
+  final bool isActive;
 }
 
-/// The future API adapter may map recoverable failures without coupling UI to Dio.
+class EmployeeFormOptions {
+  EmployeeFormOptions({
+    required Iterable<EmployeeRoleChoice> roles,
+    required Iterable<EmployeeBranchChoice> branches,
+  }) : roles = List.unmodifiable(roles),
+       branches = List.unmodifiable(branches);
+  final List<EmployeeRoleChoice> roles;
+  final List<EmployeeBranchChoice> branches;
+}
+
+/// API failures without coupling the form widgets to Dio.
 class EmployeeFormFailure implements Exception {
-  const EmployeeFormFailure(this.message, {this.retryAllowed = true});
+  const EmployeeFormFailure(
+    this.message, {
+    this.retryAllowed = true,
+    this.refreshRequired = false,
+  });
   final String message;
   final bool retryAllowed;
+  final bool refreshRequired;
 }
 
 String? validateEmployeeLogin(String? value) {

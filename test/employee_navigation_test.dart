@@ -1,6 +1,7 @@
 import 'package:crm_interface/core/api_client/client.dart';
 import 'package:crm_interface/core/modules/module_definition.dart';
 import 'package:crm_interface/core/modules/module_registry.dart';
+import 'package:crm_interface/core/modules/module_data_changes.dart';
 import 'package:crm_interface/layout/app_shell.dart';
 import 'package:crm_interface/modules/auth/auth_session.dart';
 import 'package:crm_interface/modules/auth/models/profile.dart';
@@ -30,14 +31,79 @@ void main() {
   late ModuleDefinition module;
   late ModuleRegistry registry;
   var requests = 0;
+  final seen = <RequestOptions>[];
   setUp(() {
     requests = 0;
+    seen.clear();
     api = ApiClient(SessionStore());
     api.dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
           requests++;
-          handler.reject(DioException(requestOptions: options));
+          seen.add(options);
+          if (options.path == '/roles' || options.path == '/branches') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: options.path == '/roles'
+                    ? [
+                        {
+                          'id': 9,
+                          'name': 'Тестовая роль',
+                          'description': null,
+                          'permissions': <String>[],
+                        },
+                      ]
+                    : <Map<String, dynamic>>[],
+              ),
+            );
+          } else if (options.path == '/employees' && options.method == 'POST') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 201,
+                data: {
+                  'employee': {
+                    'id': 7,
+                    'full_name': 'Тестовый Сотрудник',
+                    'login': 'test.user',
+                    'is_active': true,
+                  },
+                  'temporary_password': 'test-only-result',
+                },
+              ),
+            );
+          } else if (options.path == '/employees/lookup') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: {
+                  'id': 7,
+                  'full_name': 'Тестовый Сотрудник',
+                  'login': 'test.user',
+                  'role': {'name': 'Роль'},
+                  'is_active': true,
+                  'version': 12,
+                  'open_tasks': 2,
+                },
+              ),
+            );
+          } else if (options.path == '/employees/7/deactivate') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: {
+                  'employee': {'id': 7, 'is_active': false, 'version': 13},
+                  'unassigned_task_ids': [10, 11],
+                },
+              ),
+            );
+          } else {
+            handler.reject(DioException(requestOptions: options));
+          }
         },
       ),
     );
@@ -48,7 +114,15 @@ void main() {
         title: 'Первый',
         description: 'Тест',
         icon: Icons.apps,
-        screenBuilder: (_) => const TextField(key: Key('existing-draft')),
+        screenBuilder: (_) => Column(
+          children: [
+            Builder(
+              builder: (context) =>
+                  Text('Revision ${ModuleDataScope.revisionOf(context)}'),
+            ),
+            const TextField(key: Key('existing-draft')),
+          ],
+        ),
       ),
       module,
     ]);
@@ -95,36 +169,32 @@ void main() {
     },
   );
 
-  testWidgets(
-    'submenu opens both forms without API requests or losing screen state',
-    (tester) async {
-      await open(tester);
-      await tester.enterText(
-        find.byKey(const Key('existing-draft')),
-        'Черновик',
-      );
-      await tester.tap(more);
-      await tester.pumpAndSettle();
-      await tester.tap(entry);
-      await tester.pumpAndSettle();
-      await tester.tap(action('create'));
-      await tester.pumpAndSettle();
-      expect(find.byType(CreateEmployeeDialog), findsOneWidget);
-      expect(find.text('Черновик'), findsOneWidget);
-      await tester.tap(find.byKey(const Key('employee-dialog-close')));
-      await tester.pumpAndSettle();
-      await tester.tap(more);
-      await tester.pumpAndSettle();
-      await tester.tap(entry);
-      await tester.pumpAndSettle();
-      await tester.tap(action('archive'));
-      await tester.pumpAndSettle();
-      expect(find.byType(ArchiveEmployeeDialog), findsOneWidget);
-      expect(find.text('Черновик'), findsOneWidget);
-      expect(requests, 0);
-      expect(tester.takeException(), isNull);
-    },
-  );
+  testWidgets('submenu loads creation catalogs and preserves screen state', (
+    tester,
+  ) async {
+    await open(tester);
+    await tester.enterText(find.byKey(const Key('existing-draft')), 'Черновик');
+    await tester.tap(more);
+    await tester.pumpAndSettle();
+    await tester.tap(entry);
+    await tester.pumpAndSettle();
+    await tester.tap(action('create'));
+    await tester.pumpAndSettle();
+    expect(find.byType(CreateEmployeeDialog), findsOneWidget);
+    expect(find.text('Черновик'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('employee-dialog-close')));
+    await tester.pumpAndSettle();
+    await tester.tap(more);
+    await tester.pumpAndSettle();
+    await tester.tap(entry);
+    await tester.pumpAndSettle();
+    await tester.tap(action('archive'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ArchiveEmployeeDialog), findsOneWidget);
+    expect(find.text('Черновик'), findsOneWidget);
+    expect(requests, 2);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'submenu hover crossing does not prematurely close the root menu',
@@ -145,6 +215,84 @@ void main() {
       await tester.pump(const Duration(milliseconds: 350));
       await tester.pumpAndSettle();
       expect(entry, findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'registered creation loads catalogs, saves through API and invalidates readers without losing draft',
+    (tester) async {
+      await open(tester);
+      await tester.enterText(
+        find.byKey(const Key('existing-draft')),
+        'Черновик',
+      );
+      await tester.tap(more);
+      await tester.pumpAndSettle();
+      await tester.tap(entry);
+      await tester.pumpAndSettle();
+      await tester.tap(action('create'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('employee-name')),
+        'Тестовый Сотрудник',
+      );
+      await tester.enterText(
+        find.byKey(const Key('employee-login')),
+        'test.user',
+      );
+      final role = find.byKey(const Key('employee-role'));
+      await tester.ensureVisible(role);
+      await tester.tap(role);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Тестовая роль').last);
+      await tester.pumpAndSettle();
+      final submit = find.byKey(const Key('employee-create-submit'));
+      await tester.ensureVisible(submit);
+      await tester.tap(submit);
+      await tester.pumpAndSettle();
+      expect(find.text('Сотрудник создан'), findsOneWidget);
+      expect(find.text('Черновик'), findsOneWidget);
+      expect(find.text('Revision 1'), findsOneWidget);
+      expect(
+        seen.map((r) => r.path),
+        containsAll(['/roles', '/branches', '/employees']),
+      );
+      expect(
+        seen.singleWhere((r) => r.path == '/employees').data['branches'],
+        isEmpty,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'registered deactivation sends the confirmed version and invalidates readers',
+    (tester) async {
+      await open(tester);
+      await tester.tap(more);
+      await tester.pumpAndSettle();
+      await tester.tap(entry);
+      await tester.pumpAndSettle();
+      await tester.tap(action('archive'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('employee-archive-login')),
+        'test.user',
+      );
+      await tester.tap(find.byKey(const Key('employee-archive-submit')));
+      await tester.pumpAndSettle();
+      expect(find.text('Тестовый Сотрудник'), findsOneWidget);
+      expect(seen.where((r) => r.method == 'POST'), isEmpty);
+      await tester.ensureVisible(
+        find.byKey(const Key('employee-archive-submit')),
+      );
+      await tester.tap(find.byKey(const Key('employee-archive-submit')));
+      await tester.pumpAndSettle();
+      expect(seen.last.path, '/employees/7/deactivate');
+      expect(seen.last.data, {'version': 12});
+      expect(find.text('Revision 1'), findsOneWidget);
+      expect(find.textContaining('Сотрудник архивирован'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );

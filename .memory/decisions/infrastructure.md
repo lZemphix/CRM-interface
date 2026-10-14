@@ -66,3 +66,50 @@ docker-compose.yml; core/settings.py; alembic/; README.md; Flutter windows/
 
 Notes:
 Запись в журнале о запущенном процессе не доказывает его работу в следующей сессии. Redis планируется, но в текущем Compose только PostgreSQL. Demo seed и HTML-референс не запускать из production main.
+
+## INFRA-04 — Desktop CI и релизные архивы Windows / Apple Silicon
+
+date: 2026-10-14
+status: active
+tags: ci, github-actions, release, windows, apple-silicon, sdk-pin, packaging
+
+Decision:
+По поручению пользователя автоматизировать проверки и сборки Flutter через GitHub
+Actions. Окончательный объём: Windows 10/11 x64 и macOS Apple Silicon, без Intel Mac,
+Linux .deb/.rpm, установщиков и Apple Developer ID/notarization. Ранее обсуждённый
+Linux пользователь явно отложил до реализации; его pipeline не создаётся.
+Push main/PR запускает анализ, проверку реестра и тесты один раз; published release
+и workflow_dispatch после проверок собирают оба ZIP. Публикация только для release
+после успеха обоих build jobs, с контрольными суммами и build-info. Ручной запуск
+не создаёт и не изменяет release. Тег vVERSION совпадает с pubspec без +build.
+Flutter закреплён в .flutter-version (3.47.2, текущая проверенная Windows-среда),
+зависимости из lockfile. Windows ZIP включает resources/plugins/AOT и release x64
+Visual C++ runtime. macOS собирается с arm64-only, ad-hoc подписью без Apple-секретов;
+архитектура/целостность подписи/sandbox/network entitlements проверяются до упаковки.
+Не отключать Gatekeeper; ad-hoc не обещает доверие системы или доступ к старому Keychain.
+Внешние actions закреплены SHA, write-доступ токена только у publish для release;
+credentials не сохраняются checkout. Нет молчаливой замены опубликованных файлов.
+
+Reason:
+Получать готовые клиенты для тестировщиков, не требуя установленного Flutter,
+и не усложнять текущую поставку Linux/сертификатами. Проверенная версия SDK и
+изолированная публикация уменьшают риск случайного сломанного/несогласованного релиза.
+
+Alternatives considered:
+Четыре платформы (включая Intel) и отдельные Linux DEB/RPM сборки обсуждались;
+пользователь оставил только Windows и Mac. Developer ID/notarization, автоустановщик,
+автообновление и production deploy не входят в запрос. Один Windows exe без DLL/data
+не является достаточной поставкой; глобальное отключение защиты macOS не применяется.
+
+Affected areas:
+.github; .flutter-version; scripts/release.py; scripts/package_windows.ps1;
+scripts/tests; packaging/windows; docs/releases.md; docs/macos.md; README.md.
+
+Notes:
+Дополняет INFRA-02: автоматическая подготовка архивов не меняет ручную процедуру
+обновления заказчиков и требования backup/recovery. Backend не изменяется.
+Создание workflow не означает успешный запуск GitHub Actions: он проверяется после
+коммита/пуша. Нативная сборка Mac и smoke test входа/Keychain на другом Mac обязательны
+для подтверждения macOS-поставки; Windows runner не заменяет проверку чистых Windows 10/11.
+Суммы не заменяют цифровую подпись. Загрузка нескольких assets не атомарна, повтор
+после частичной публикации требует проверки релиза, не слепого --clobber.

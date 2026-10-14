@@ -1,5 +1,6 @@
 import hashlib
-import json
+import contextlib
+import io
 import plistlib
 import struct
 import sys
@@ -7,6 +8,7 @@ import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import release
@@ -179,15 +181,54 @@ class ReleaseToolsTests(unittest.TestCase):
             release.checksums(self.root, "v1.2.3")
         self.make_macos()
         macos = release.package_macos(self.root)
-        sums = release.checksums(self.root, "v1.2.3")
+        report = release.checksums(self.root, "v1.2.3")
         for archive in (windows, macos):
             digest = hashlib.sha256(archive.read_bytes()).hexdigest()
-            self.assertIn(f"{digest}  {archive.name}", sums.read_text(encoding="utf-8"))
-        info = json.loads((sums.parent / "build-info.json").read_text(encoding="utf-8"))
-        self.assertEqual(info["targets"], ["windows-x64", "macos-arm64"])
-        self.assertFalse(info["apple_notarization"])
-        with self.assertRaises(ValueError):
-            release.checksums(self.root, "v1.2.3")
+            self.assertIn(f"{digest}  {archive.name}", report)
+        self.assertIn('"apple_notarization": false', report)
+        self.assertIn('"flutter_version": "3.47.2"', report)
+        self.assertEqual(
+            {path.name for path in windows.parent.iterdir()},
+            {windows.name, macos.name},
+        )
+        self.assertEqual(release.checksums(self.root, "v1.2.3"), report)
+
+    def test_cli_writes_summary_outside_assets_and_preserves_existing_summary(self):
+        _, runtime = self.make_bundle()
+        release.package_windows(self.root, runtime)
+        self.make_macos()
+        release.package_macos(self.root)
+        summary = self.root / "job-summary.md"
+        summary.write_text("Existing job report\n", encoding="utf-8")
+        args = ["release.py", "checksums", "--tag", "v1.2.3", "--summary", str(summary)]
+        with (
+            patch.object(release, "ROOT", self.root),
+            patch.object(sys, "argv", args),
+            contextlib.redirect_stdout(io.StringIO()),
+        ):
+            self.assertEqual(release.main(), 0)
+        content = summary.read_text(encoding="utf-8")
+        self.assertTrue(content.startswith("Existing job report\n"))
+        self.assertIn("Desktop release verification", content)
+        self.assertEqual(len(list((self.root / "dist/release").iterdir())), 2)
+        args[-1] = str(self.root / "dist/release/extra.md")
+        with (
+            patch.object(release, "ROOT", self.root),
+            patch.object(sys, "argv", args),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            self.assertEqual(release.main(), 1)
+        self.assertFalse((self.root / "dist/release/extra.md").exists())
+
+    def test_crc_corruption_still_blocks_publication(self):
+        _, runtime = self.make_bundle()
+        release.package_windows(self.root, runtime)
+        self.make_macos()
+        archive = release.package_macos(self.root)
+        data = archive.read_bytes().replace(b"fixture", b"fiXture", 1)
+        archive.write_bytes(data)
+        with self.assertRaisesRegex(ValueError, "Corrupted archive"):
+            release.checksums(self.root)
 
     def test_unexpected_files_block_release_upload(self):
         _, runtime = self.make_bundle()
@@ -232,6 +273,8 @@ class ReleaseToolsTests(unittest.TestCase):
         self.assertNotIn("--clobber", workflow)
         self.assertIn("needs: [checks, windows, macos]", workflow)
         self.assertIn("types: [published]", workflow)
+        self.assertIn('--summary "$GITHUB_STEP_SUMMARY"', workflow)
+        self.assertIn('dist/release/*.zip --repo "$GITHUB_REPOSITORY"', workflow)
 
 
 if __name__ == "__main__":

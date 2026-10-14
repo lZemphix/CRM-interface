@@ -119,12 +119,12 @@ jobs:
           pattern: desktop-*
           path: dist/release
           merge-multiple: true
-      - name: Verify complete package set and calculate checksums
+      - name: Verify archives and write technical report to Actions
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: python scripts/release.py checksums --tag "$RELEASE_TAG"
+        run: python scripts/release.py checksums --tag "$RELEASE_TAG" --summary "$GITHUB_STEP_SUMMARY"
       - name: Upload without overwriting existing release files
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "$RELEASE_TAG" dist/release/* --repo "$GITHUB_REPOSITORY"
+        run: gh release upload "$RELEASE_TAG" dist/release/*.zip --repo "$GITHUB_REPOSITORY"

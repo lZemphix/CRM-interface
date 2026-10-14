@@ -135,7 +135,7 @@ def verify_entitlements(path: Path) -> None:
         raise ValueError("Release application must not grant debugger access")
 
 
-def checksums(root: Path, tag: str = "") -> Path:
+def checksums(root: Path, tag: str = "") -> str:
     info = metadata(root, tag)
     directory = root / "dist/release"
     expected = {
@@ -159,23 +159,21 @@ def checksums(root: Path, tag: str = "") -> Path:
             for block in iter(lambda: stream.read(1024 * 1024), b""):
                 digest.update(block)
         entries.append(f"{digest.hexdigest()}  {name}\n")
-    (directory / "build-info.json").write_text(
-        json.dumps(
-            {
-                **info,
-                "commit": os.environ.get("GITHUB_SHA", "unknown"),
-                "targets": ["windows-x64", "macos-arm64"],
-                "apple_notarization": False,
-            },
-            indent=2,
-        )
-        + "\n",
-        encoding="utf-8",
+    build_info = json.dumps(
+        {
+            **info,
+            "commit": os.environ.get("GITHUB_SHA", "unknown"),
+            "targets": ["windows-x64", "macos-arm64"],
+            "apple_notarization": False,
+        },
+        indent=2,
     )
-    output = directory / "SHA256SUMS.txt"
-    with output.open("w", encoding="utf-8", newline="\n") as stream:
-        stream.write("".join(entries))
-    return output
+    # Keep diagnostics in the job report, never alongside downloadable packages.
+    return (
+        "## Desktop release verification\n\n"
+        f"```json\n{build_info}\n```\n\n"
+        "### SHA-256\n\n```text\n" + "".join(entries) + "```\n"
+    )
 
 
 def main() -> int:
@@ -191,6 +189,7 @@ def main() -> int:
     verify.add_argument("path", type=Path)
     sums = commands.add_parser("checksums")
     sums.add_argument("--tag", default="")
+    sums.add_argument("--summary", type=Path)
     args = parser.parse_args()
     try:
         if args.command == "metadata":
@@ -209,7 +208,20 @@ def main() -> int:
         elif args.command == "verify-entitlements":
             verify_entitlements(args.path)
         else:
-            print(checksums(ROOT, args.tag))
+            report = checksums(ROOT, args.tag)
+            if args.summary:
+                public_directory = (ROOT / "dist/release").resolve()
+                destination = args.summary.resolve()
+                if (
+                    destination == public_directory
+                    or public_directory in destination.parents
+                ):
+                    raise ValueError(
+                        "Job summary must be outside the release assets directory"
+                    )
+                with args.summary.open("a", encoding="utf-8", newline="\n") as stream:
+                    stream.write(report)
+            print(report)
     except (
         ValueError,
         OSError,

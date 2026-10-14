@@ -8,6 +8,12 @@ Flutter-клиент модульной CRM для Windows и macOS.
 CI использует точный Flutter SDK из [.flutter-version](.flutter-version).
 Linux и Intel Mac сейчас в релизный pipeline не входят.
 
+Версии перед релизом повышаются через Cider: например,
+`dart run cider bump patch --bump-build` после `flutter pub get`.
+Это dev-инструмент с закреплённой версией, глобальная установка не нужна.
+Подробнее: [версионирование и выпуск](docs/releases.md#повышение-версии),
+[изменения для пользователей](CHANGELOG.md).
+
 ## Локальный запуск
 
 В Windows-терминале из корня проекта:

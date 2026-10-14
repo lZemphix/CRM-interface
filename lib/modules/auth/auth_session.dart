@@ -2,13 +2,22 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fresh_dio/fresh_dio.dart';
 
 class SessionStore implements TokenStorage<OAuth2Token> {
-  final FlutterSecureStorage _storage = FlutterSecureStorage();
+  SessionStore({FlutterSecureStorage? storage})
+    : _storage =
+          storage ??
+          const FlutterSecureStorage(
+            // App-private macOS Keychain; no machine-bound provisioning profile.
+            // Other platforms retain their existing secure-storage implementation.
+            mOptions: MacOsOptions(usesDataProtectionKeychain: false),
+          );
 
-    OAuth2Token? token;
+  final FlutterSecureStorage _storage;
+
+  OAuth2Token? token;
 
   Future<String?> loadRefreshToken() {
-      return _storage.read(key: 'refresh_token');
-    }
+    return _storage.read(key: 'refresh_token');
+  }
 
   OAuth2Token tokenFromApi(Map<String, dynamic> data) {
     final now = DateTime.now().toUtc();
@@ -25,9 +34,9 @@ class SessionStore implements TokenStorage<OAuth2Token> {
 
   @override
   Future<void> delete() async {
-      token = null;
-      await _storage.delete(key: 'refresh_token');
-    }
+    token = null;
+    await _storage.delete(key: 'refresh_token');
+  }
 
   @override
   Future<OAuth2Token?> read() async {

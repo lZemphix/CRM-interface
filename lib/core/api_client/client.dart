@@ -3,14 +3,17 @@ import 'package:flutter/foundation.dart';
 import 'package:crm_interface/modules/auth/auth_session.dart';
 import 'package:fresh_dio/fresh_dio.dart';
 
+import 'endpoint.dart';
+
 class ApiClient {
-  ApiClient(this.sessionStore) {
+  ApiClient(this.sessionStore, {String baseUrl = ApiEndpoint.defaultUrl}) {
+    final endpoint = ApiEndpoint.validate(baseUrl);
     dio = Dio(
       BaseOptions(
         connectTimeout: Duration(seconds: 5),
         receiveTimeout: Duration(seconds: 10),
         sendTimeout: Duration(seconds: 10),
-        baseUrl: 'http://127.0.0.1:8000',
+        baseUrl: endpoint,
         headers: {"Accept": "application/json"},
       ),
     );
@@ -28,7 +31,10 @@ class ApiClient {
     }
     final refreshDio = Dio(
       BaseOptions(
-        baseUrl: 'http://127.0.0.1:8000',
+        connectTimeout: Duration(seconds: 5),
+        receiveTimeout: Duration(seconds: 10),
+        sendTimeout: Duration(seconds: 10),
+        baseUrl: endpoint,
         headers: {"Accept": "application/json"},
       ),
     );
@@ -64,5 +70,4 @@ class ApiClient {
   late final Dio dio;
   late final Fresh<OAuth2Token> fresh;
   final SessionStore sessionStore;
-
 }

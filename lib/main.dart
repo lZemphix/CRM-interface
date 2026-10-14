@@ -1,4 +1,5 @@
 import 'package:crm_interface/core/api_client/client.dart';
+import 'package:crm_interface/core/api_client/endpoint.dart';
 import 'package:crm_interface/bootstrap/modules.g.dart';
 import 'package:crm_interface/core/modules/module_registry.dart';
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
@@ -8,9 +9,21 @@ import 'package:crm_interface/modules/auth/repos/auth.dart';
 import 'package:crm_interface/modules/auth/screens/session_gate.dart';
 import 'package:flutter/material.dart';
 
-void main() {
+void main(List<String> arguments) {
+  WidgetsFlutterBinding.ensureInitialized();
+  final String endpoint;
+  try {
+    endpoint = ApiEndpoint.fromArguments(arguments);
+  } on FormatException catch (error) {
+    runApp(
+      MaterialApp(
+        home: Scaffold(body: Center(child: Text(error.message))),
+      ),
+    );
+    return;
+  }
   final sessionStore = SessionStore();
-  final apiClient = ApiClient(sessionStore);
+  final apiClient = ApiClient(sessionStore, baseUrl: endpoint);
   final authRepository = AuthRepository(apiClient, sessionStore);
   final modules = createModuleRegistry(apiClient);
 

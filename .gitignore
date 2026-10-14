@@ -51,3 +51,15 @@ app.*.map.json
 /aswers.txt
 /our_crm.txt
 /image.png
+
+# Local configuration and signing material
+.env
+.env.*
+!.env.example
+macos/Runner/Configs/Signing.local.xcconfig
+*.p12
+*.p8
+*.key
+*.mobileprovision
+*.provisionprofile
+/dist/

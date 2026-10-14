@@ -1,6 +1,8 @@
 # crm_interface
 
-Flutter-клиент модульной CRM для Windows.
+Flutter-клиент модульной CRM для Windows и macOS.
+
+[Сборка macOS, ZIP и запуск всей CRM с нуля](docs/macos.md).
 
 ## Локальный запуск
 
@@ -11,7 +13,10 @@ flutter pub get
 dart run tool/flutter.dart run -d windows
 ```
 
-API-клиент использует `http://127.0.0.1:8000`. Реальный backend запускается в
+По умолчанию API-клиент использует `http://127.0.0.1:8000`. При сборке адрес задаётся
+через `--dart-define=CRM_API_URL=https://crm.example.org`; готовый macOS-клиент
+принимает `--api-url=https://crm.example.org` при запуске. Основной и refresh-клиенты
+используют один адрес. Реальный backend запускается в
 своём репозитории; его PostgreSQL и миграции должны быть подготовлены отдельно.
 Проверка доступности — `GET /health`; для бизнес-ручек требуется вход сотрудника.
 Для независимой разработки интерфейса есть [mock_backend](mock_backend/README.md).

@@ -2,6 +2,7 @@ import 'package:crm_interface/core/theme/light/colorscheme.dart';
 import 'package:crm_interface/modules/auth/repos/auth.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ChangeFormScreen extends StatefulWidget {
   const ChangeFormScreen({
@@ -57,7 +58,8 @@ class _ChangeFormScreenState extends State<ChangeFormScreen> {
         422 => 'Новый пароль не прошёл проверку сервера',
         _ => 'Не удалось сменить пароль. Проверьте подключение',
       };
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     } on FormatException catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -67,6 +69,16 @@ class _ChangeFormScreenState extends State<ChangeFormScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Сессия не найдена. Вернитесь ко входу')),
+      );
+    } on PlatformException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Не удалось сохранить сессию в защищённом хранилище. '
+            'Проверьте доступ к хранилищу и повторите вход',
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -112,7 +124,9 @@ class _ChangeFormScreenState extends State<ChangeFormScreen> {
                         border: OutlineInputBorder(),
                       ),
                       validator: (value) {
-                        if (value == null || value.length < 15 || value.length > 128) {
+                        if (value == null ||
+                            value.length < 15 ||
+                            value.length > 128) {
                           return 'От 15 до 128 символов';
                         }
                         if (value == _currentPasswordController.text) {
@@ -137,10 +151,14 @@ class _ChangeFormScreenState extends State<ChangeFormScreen> {
                       children: [
                         ElevatedButton(
                           onPressed: _isSubmitting ? null : _submit,
-                          child: Text(_isSubmitting ? 'Сохраняем…' : 'Сменить пароль'),
+                          child: Text(
+                            _isSubmitting ? 'Сохраняем…' : 'Сменить пароль',
+                          ),
                         ),
                         TextButton(
-                          onPressed: _isSubmitting ? null : widget.onReturnToLogin,
+                          onPressed: _isSubmitting
+                              ? null
+                              : widget.onReturnToLogin,
                           child: const Text('Назад'),
                         ),
                       ],

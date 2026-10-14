@@ -3,6 +3,7 @@ import 'package:crm_interface/modules/auth/repos/auth.dart';
 import 'package:crm_interface/modules/auth/screens/password_change.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({
@@ -60,6 +61,16 @@ class _AuthScreenState extends State<AuthScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Некорректный ответ сервера')),
+      );
+    } on PlatformException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Не удалось сохранить сессию в защищённом хранилище. '
+            'Проверьте доступ к хранилищу и повторите вход',
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);

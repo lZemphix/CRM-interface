@@ -1,4 +1,5 @@
 // import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/modules/module_data_changes.dart';
 import 'package:crm_interface/core/api_client/client.dart';
 import 'package:crm_interface/core/widgets/section_refresh_controller.dart';
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
@@ -58,10 +59,40 @@ class _DetailPanelState extends State<DetailPanel>
   int _overviewReloadToken = 0;
   int _activityReloadToken = 0;
   List<CustomerNote>? _notes;
+  int? _dataRevision;
+  bool _externalRefreshPending = false;
+  bool _externalRefreshScheduled = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final revision = ModuleDataScope.revisionOf(context);
+    if (_dataRevision != null && _dataRevision != revision) {
+      _externalRefreshPending = true;
+      _scheduleExternalRefresh();
+    }
+    _dataRevision = revision;
+  }
+
+  void _scheduleExternalRefresh() {
+    if (!mounted || !_externalRefreshPending || _externalRefreshScheduled) {
+      return;
+    }
+    _externalRefreshScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _externalRefreshScheduled = false;
+      if (!mounted || !_externalRefreshPending || _busy) return;
+      _externalRefreshPending = false;
+      _refreshCustomer();
+    });
+  }
 
   @override
   void initState() {
     super.initState();
+    for (final controller in _tabRefresh) {
+      controller.addListener(_scheduleExternalRefresh);
+    }
     _tabController = TabController(length: 5, vsync: this);
     _tabRefresh[0].attach(
       this,
@@ -83,6 +114,7 @@ class _DetailPanelState extends State<DetailPanel>
   void dispose() {
     _tabController.dispose();
     for (final controller in _tabRefresh) {
+      controller.removeListener(_scheduleExternalRefresh);
       controller.dispose();
     }
     super.dispose();

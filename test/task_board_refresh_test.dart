@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:appflowy_board/appflowy_board.dart';
 import 'package:crm_interface/core/api_client/client.dart';
+import 'package:crm_interface/core/modules/module_data_changes.dart';
 import 'package:crm_interface/modules/auth/auth_session.dart';
 import 'package:crm_interface/modules/tasks/models/taskboard.dart';
 import 'package:crm_interface/modules/tasks/models/tasks.dart';
@@ -79,7 +80,11 @@ class RefreshRepository extends TasksRepository {
   }
 }
 
-Future<void> openBoard(WidgetTester tester, RefreshRepository repo) async {
+Future<void> openBoard(
+  WidgetTester tester,
+  RefreshRepository repo, {
+  ValueNotifier<int>? revision,
+}) async {
   tester.view.physicalSize = const Size(1600, 900);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
@@ -87,7 +92,14 @@ Future<void> openBoard(WidgetTester tester, RefreshRepository repo) async {
   addTearDown(() => repo.apiClient.dio.close(force: true));
   await tester.pumpWidget(
     MaterialApp(
-      home: Scaffold(body: TasksScreen(tasksRepository: repo)),
+      home: Scaffold(
+        body: revision == null
+            ? TasksScreen(tasksRepository: repo)
+            : ModuleDataScope(
+                revision: revision,
+                child: TasksScreen(tasksRepository: repo),
+              ),
+      ),
     ),
   );
   await tester.pumpAndSettle();
@@ -100,6 +112,40 @@ TaskboardTask displayedTask(WidgetTester tester) =>
     tester.widget<TaskCard>(find.byType(TaskCard).first).task;
 
 void main() {
+  testWidgets(
+    'module mutation invalidates an old GET and rereads board without losing controller',
+    (tester) async {
+      final repo = RefreshRepository();
+      final revision = ValueNotifier(0);
+      addTearDown(revision.dispose);
+      repo.board = Taskboard(
+        columns: [column('1')],
+        tasks: [task(responsibleName: 'Бывший исполнитель')],
+      );
+      await openBoard(tester, repo, revision: revision);
+      final original = controller(tester);
+      final stale = Completer<Taskboard>();
+      repo.nextRead = stale;
+      await tester.tap(find.text('Обновить'));
+      await tester.pump();
+      repo.board = Taskboard(columns: [column('1')], tasks: [task(version: 2)]);
+      revision.value++;
+      await tester.pump();
+      stale.complete(
+        Taskboard(
+          columns: [column('1')],
+          tasks: [task(responsibleName: 'Бывший исполнитель')],
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(repo.reads, 3);
+      expect(controller(tester), same(original));
+      expect(displayedTask(tester).responsibleEmployeeName, isNull);
+      expect(displayedTask(tester).version, 2);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   test(
     'snapshot reconciles columns, order, moves, removals and nested names',
     () {

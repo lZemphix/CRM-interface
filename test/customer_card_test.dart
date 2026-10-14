@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:crm_interface/core/api_client/client.dart';
+import 'package:crm_interface/core/modules/module_data_changes.dart';
 import 'package:crm_interface/modules/auth/auth_session.dart';
 import 'package:crm_interface/modules/customers/models/customer.dart';
 import 'package:crm_interface/modules/customers/widgets/entity_panel.dart';
@@ -154,22 +155,28 @@ Future<void> mountDetail(
   WidgetTester tester,
   CardApi api, {
   double width = 1400,
+  ValueNotifier<int>? revision,
 }) async {
   tester.view.physicalSize = Size(width, 1200);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
+  final dataRevision = revision ?? ValueNotifier(0);
+  if (revision == null) addTearDown(dataRevision.dispose);
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
-        body: DetailPanel(
-          customer: const Customer(
-            id: 1,
-            fullName: 'Анна',
-            status: 'active',
-            acquisitionSourceName: 'Сайт',
+        body: ModuleDataScope(
+          revision: dataRevision,
+          child: DetailPanel(
+            customer: const Customer(
+              id: 1,
+              fullName: 'Анна',
+              status: 'active',
+              acquisitionSourceName: 'Сайт',
+            ),
+            apiClient: api.client,
           ),
-          apiClient: api.client,
         ),
       ),
     ),
@@ -177,6 +184,25 @@ Future<void> mountDetail(
 }
 
 void main() {
+  testWidgets(
+    'module mutation refreshes customer task readers without changing selected tab',
+    (tester) async {
+      final api = CardApi();
+      final revision = ValueNotifier(0);
+      addTearDown(revision.dispose);
+      await mountDetail(tester, api, revision: revision);
+      await tester.pumpAndSettle();
+      api.requests.clear();
+      revision.value++;
+      await tester.pumpAndSettle();
+      expect(api.requests.where((p) => p == '/customers/1'), hasLength(1));
+      expect(api.requests.where((p) => p == '/tasks'), hasLength(1));
+      expect(api.requests.where((p) => p.endsWith('/activity')), isNotEmpty);
+      expect(find.text('Обзор'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets(
     'one tab refresh updates only the selected section and preserves the note draft',
     (tester) async {

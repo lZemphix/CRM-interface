@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:crm_interface/core/modules/module_data_changes.dart';
+
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
 import 'package:crm_interface/core/widgets/material_button.dart';
 import 'package:appflowy_board/appflowy_board.dart';
@@ -56,6 +58,27 @@ class _TasksScreenState extends State<TasksScreen> with WidgetsBindingObserver {
   int _pendingSubtasks = 0;
   final Set<int> _boardPointers = {};
   String? _refreshError;
+  int? _dataRevision;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final revision = ModuleDataScope.revisionOf(context);
+    if (_dataRevision != null && _dataRevision != revision) {
+      _boardRequestId++;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_reloadAfterModuleChange());
+      });
+    }
+    _dataRevision = revision;
+  }
+
+  Future<void> _reloadAfterModuleChange() async {
+    final pending = _boardLoad;
+    if (pending != null) await pending;
+    if (mounted) await _loadBoard(_controller, automatic: true);
+    // An active drag/mutation still wins; the normal polling retries later.
+  }
 
   bool get _refreshBlocked =>
       !_appActive ||

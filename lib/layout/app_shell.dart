@@ -1,4 +1,5 @@
 import 'package:crm_interface/core/modules/module_registry.dart';
+import 'package:crm_interface/core/modules/module_data_changes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
@@ -25,6 +26,13 @@ class _AppShellState extends State<AppShell> {
   final _pinOverrides = <String, bool>{};
   late Future<AuthProfile> _profile;
   bool _isLoggingOut = false;
+  final _dataRevision = ValueNotifier(0);
+
+  @override
+  void dispose() {
+    _dataRevision.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -116,31 +124,40 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          FutureBuilder<AuthProfile>(
-            future: _profile,
-            builder: (context, snapshot) {
-              final profile = snapshot.hasError ? null : snapshot.data;
-              return SideBar(
-                modules: widget.modules.modules,
-                activeModuleId: _activeModuleId,
-                onModuleSelected: selectModule,
-                pinnedModuleIds: _pinnedModuleIds,
-                onModulePinChanged: _setModulePinned,
-                accountProfile: profile,
-                accountLoading:
-                    snapshot.connectionState != ConnectionState.done,
-                accountError: snapshot.hasError,
-                loggingOut: _isLoggingOut,
-                onReloadProfile: _reloadProfile,
-                onLogout: _logout,
-              );
-            },
+      body: NotificationListener<ModuleDataChanged>(
+        onNotification: (_) {
+          _dataRevision.value++;
+          return true;
+        },
+        child: ModuleDataScope(
+          revision: _dataRevision,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              FutureBuilder<AuthProfile>(
+                future: _profile,
+                builder: (context, snapshot) {
+                  final profile = snapshot.hasError ? null : snapshot.data;
+                  return SideBar(
+                    modules: widget.modules.modules,
+                    activeModuleId: _activeModuleId,
+                    onModuleSelected: selectModule,
+                    pinnedModuleIds: _pinnedModuleIds,
+                    onModulePinChanged: _setModulePinned,
+                    accountProfile: profile,
+                    accountLoading:
+                        snapshot.connectionState != ConnectionState.done,
+                    accountError: snapshot.hasError,
+                    loggingOut: _isLoggingOut,
+                    onReloadProfile: _reloadProfile,
+                    onLogout: _logout,
+                  );
+                },
+              ),
+              Expanded(child: currentScreen()),
+            ],
           ),
-          Expanded(child: currentScreen()),
-        ],
+        ),
       ),
     );
   }

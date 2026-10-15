@@ -5,6 +5,9 @@ import 'package:crm_interface/core/widgets/section_refresh_controller.dart';
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
 
 import 'customer_action_button.dart';
+import 'edit_customer.dart';
+import 'contact_dialogs.dart';
+import '../../models/update_customer.dart';
 
 import 'package:crm_interface/modules/customers/models/customer.dart';
 import 'package:crm_interface/modules/customers/models/customer_note.dart';
@@ -32,10 +35,12 @@ class DetailPanel extends StatefulWidget {
     super.key,
     required this.customer,
     required this.apiClient,
+    this.onCustomerChanged,
   });
 
   final Customer customer;
   final ApiClient apiClient;
+  final VoidCallback? onCustomerChanged;
 
   @override
   State<StatefulWidget> createState() => _DetailPanelState();
@@ -46,8 +51,12 @@ class _DetailPanelState extends State<DetailPanel>
   late final TabController _tabController;
   final _tabRefresh = List.generate(4, (_) => SectionRefreshController());
   bool _refreshingCustomer = false;
+  bool _editingCustomer = false;
+  int _customerEpoch = 0;
+  String? _detailsStaleError;
   bool get _busy =>
       _openingTask ||
+      _editingCustomer ||
       _refreshingCustomer ||
       _tabRefresh.any((controller) => controller.isBusy);
   late Future<CustomerDetails> customerDetailsFuture;
@@ -97,7 +106,7 @@ class _DetailPanelState extends State<DetailPanel>
     _tabRefresh[0].attach(
       this,
       refresh: _reloadCustomerData,
-      busy: () => _openingTask,
+      busy: () => _openingTask || _editingCustomer,
     );
 
     repository = CustomersRepository(widget.apiClient);
@@ -122,21 +131,97 @@ class _DetailPanelState extends State<DetailPanel>
 
   Future<void> _reloadCustomerData() async {
     final customerId = widget.customer.id;
+    final epoch = _customerEpoch;
     final details = repository.getCustomerDetails(id: widget.customer.id);
     final branches = repository.getBranches();
     branches.ignore();
     final fresh = await details;
-    if (!mounted || widget.customer.id != customerId) return;
+    if (!mounted ||
+        _customerEpoch != epoch ||
+        widget.customer.id != customerId) {
+      return;
+    }
     setState(() {
       customerDetailsFuture = Future.value(fresh);
       _branchesFuture = branches;
       _notes = fresh.notes;
+      _detailsStaleError = null;
     });
     // Branch failures remain a local ID fallback, not a failed customer refresh.
     try {
       await branches;
     } on CustomerRequestException {
       return;
+    }
+  }
+
+  Future<void> _editCustomer({required bool contactsOnly}) async {
+    if (_busy) return;
+    final id = widget.customer.id;
+    final epoch = _customerEpoch;
+    var changed = false;
+    setState(() => _editingCustomer = true);
+    try {
+      // Always edit a fresh version, not the snapshot shown before another edit.
+      final fresh = await repository.getCustomerDetails(id: id);
+      if (!mounted || _customerEpoch != epoch) return;
+      if (contactsOnly) {
+        await showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => CustomerContactsWindow(
+            customer: fresh,
+            repository: repository,
+            onChanged: () => changed = true,
+          ),
+        );
+      } else {
+        final options = await repository.getEditOptions();
+        if (!mounted || _customerEpoch != epoch) return;
+        await showDialog<UpdatedCustomerResponse>(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => EditCustomerWindow(
+            customer: fresh,
+            options: options,
+            onRefreshRequired: () => changed = true,
+            onSave: (request) async {
+              final result = await repository.updateCustomer(id, request);
+              changed = true;
+              return result;
+            },
+          ),
+        );
+      }
+    } on CustomerRequestException catch (error) {
+      if (mounted && _customerEpoch == epoch) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } finally {
+      if (mounted && _customerEpoch == epoch) {
+        if (changed) {
+          widget.onCustomerChanged?.call();
+          try {
+            await _reloadCustomerData();
+            if (mounted && _customerEpoch == epoch) {
+              setState(() => _activityReloadToken++);
+            }
+          } on CustomerRequestException catch (error) {
+            if (mounted && _customerEpoch == epoch) {
+              // Keep tabs/drafts mounted, but clearly mark the snapshot stale.
+              setState(
+                () => _detailsStaleError =
+                    '${error.message} Актуальные данные не получены. Обновите карточку.',
+              );
+            }
+          }
+        }
+      }
+      if (mounted) {
+        setState(() => _editingCustomer = false);
+        _scheduleExternalRefresh();
+      }
     }
   }
 
@@ -172,13 +257,13 @@ class _DetailPanelState extends State<DetailPanel>
     }
   }
 
-  Future<void> _createCustomerTask() async {
-    if (_openingTask) return;
+  Future<void> _createCustomerTask(CustomerDetails details) async {
+    if (_busy) return;
     setState(() => _openingTask = true);
     // Сохраняем клиентскую привязку на момент открытия формы.
     final customer = TaskCustomerOption(
       id: widget.customer.id,
-      fullName: widget.customer.fullName,
+      fullName: details.fullName,
     );
     try {
       final columns = await _tasksRepository.getColumns();
@@ -241,6 +326,8 @@ class _DetailPanelState extends State<DetailPanel>
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.customer.id != widget.customer.id) {
+      _customerEpoch++;
+      _detailsStaleError = null;
       _notes = null;
       customerDetailsFuture = repository.getCustomerDetails(
         id: widget.customer.id,
@@ -342,26 +429,35 @@ class _DetailPanelState extends State<DetailPanel>
       child: TabBarView(
         controller: _tabController,
         children: [
-          overviewTab(
-            customer,
-            branchLabel: branchLabel,
-            recentActivity: CustomerActivityPreview(
-              key: ValueKey('activity-preview-${customer.id}'),
-              customerId: customer.id,
-              repository: repository,
-              reloadToken: _activityReloadToken,
-              refreshController: _tabRefresh[0],
-            ),
-            nextTask: CustomerNextTask(
-              key: ValueKey(customer.id),
-              customerId: customer.id,
-              repository: _tasksRepository,
-              reloadToken: _overviewReloadToken,
-              refreshController: _tabRefresh[0],
-              onChanged: () => setState(() {
-                _taskReloadToken++;
-                _activityReloadToken++;
-              }),
+          AnimatedBuilder(
+            animation: Listenable.merge(_tabRefresh),
+            builder: (_, _) => overviewTab(
+              customer,
+              branchLabel: branchLabel,
+              onEditCustomer: _busy || _detailsStaleError != null
+                  ? null
+                  : () => _editCustomer(contactsOnly: false),
+              onEditContacts: _busy || _detailsStaleError != null
+                  ? null
+                  : () => _editCustomer(contactsOnly: true),
+              recentActivity: CustomerActivityPreview(
+                key: ValueKey('activity-preview-${customer.id}'),
+                customerId: customer.id,
+                repository: repository,
+                reloadToken: _activityReloadToken,
+                refreshController: _tabRefresh[0],
+              ),
+              nextTask: CustomerNextTask(
+                key: ValueKey(customer.id),
+                customerId: customer.id,
+                repository: _tasksRepository,
+                reloadToken: _overviewReloadToken,
+                refreshController: _tabRefresh[0],
+                onChanged: () => setState(() {
+                  _taskReloadToken++;
+                  _activityReloadToken++;
+                }),
+              ),
             ),
           ),
           CustomerActivityPanel(
@@ -420,6 +516,11 @@ class _DetailPanelState extends State<DetailPanel>
       child: Column(
         spacing: 20,
         children: [
+          if (_detailsStaleError != null)
+            Text(
+              _detailsStaleError!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
           detailTopbar(customer, branchLabel),
           actionsCustomer(customer),
           tabBars(),
@@ -550,7 +651,11 @@ class _DetailPanelState extends State<DetailPanel>
           if (constraints.maxWidth < 760) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [summary, const SizedBox(height: 14), quickActions()],
+              children: [
+                summary,
+                const SizedBox(height: 14),
+                quickActions(customer),
+              ],
             );
           }
           return Row(
@@ -559,7 +664,7 @@ class _DetailPanelState extends State<DetailPanel>
             children: [
               Expanded(child: summary),
               const SizedBox(width: 16),
-              quickActions(),
+              quickActions(customer),
             ],
           );
         },
@@ -567,7 +672,7 @@ class _DetailPanelState extends State<DetailPanel>
     );
   }
 
-  Widget quickActions() {
+  Widget quickActions(CustomerDetails customer) {
     return Wrap(
       spacing: 10,
       runSpacing: 8,
@@ -582,7 +687,9 @@ class _DetailPanelState extends State<DetailPanel>
         CustomerActionButton(
           label: '+ Задача',
           primary: true,
-          onPressed: _openingTask ? null : _createCustomerTask,
+          onPressed: _busy || _detailsStaleError != null
+              ? null
+              : () => _createCustomerTask(customer),
         ),
         AnimatedBuilder(
           animation: Listenable.merge(_tabRefresh),

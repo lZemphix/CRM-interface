@@ -6,11 +6,153 @@ import 'package:crm_interface/modules/customers/models/create_customer.dart';
 import 'package:crm_interface/modules/customers/models/customer_note.dart';
 
 import '../models/customer_activity.dart';
+import '../models/update_customer.dart';
 
 class CustomersRepository {
   const CustomersRepository(this.apiClient);
 
   final ApiClient apiClient;
+
+  Future<CustomerEditOptions> getEditOptions() async {
+    final options = await Future.wait([
+      getBranches(),
+      _getOptions('/employees', nameKey: 'full_name'),
+    ]);
+    return CustomerEditOptions(branches: options[0], employees: options[1]);
+  }
+
+  Future<UpdatedCustomerResponse> updateCustomer(
+    int customerId,
+    UpdateCustomerRequest request,
+  ) async {
+    try {
+      final response = await apiClient.dio.patch<Map<String, dynamic>>(
+        '/customers/$customerId',
+        data: request.toApi(),
+      );
+      final result = _mutationResponse(
+        response,
+        200,
+        UpdatedCustomerResponse.fromJson,
+      );
+      if (result.id != customerId || result.version < request.version) {
+        throw _unconfirmedMutation;
+      }
+      return result;
+    } on DioException catch (error) {
+      throw _customerMutationError(error);
+    }
+  }
+
+  Future<CustomerContact> addContact(
+    int customerId,
+    WriteCustomerContactRequest request,
+  ) async {
+    if (request.type == ContactType.unknown) {
+      throw const CustomerRequestException(
+        'Выберите поддерживаемый тип контакта',
+      );
+    }
+    try {
+      final response = await apiClient.dio.post<Map<String, dynamic>>(
+        '/customers/$customerId/contacts',
+        data: request.toCreateApi(),
+      );
+      return _contactResponse(response, 201);
+    } on DioException catch (error) {
+      throw _customerMutationError(error);
+    }
+  }
+
+  Future<CustomerContact> updateContact(
+    int customerId,
+    int contactId,
+    WriteCustomerContactRequest request, {
+    required int version,
+  }) async {
+    try {
+      final response = await apiClient.dio.patch<Map<String, dynamic>>(
+        '/customers/$customerId/contacts/$contactId',
+        data: request.toUpdateApi(version: version),
+      );
+      final contact = _contactResponse(response, 200);
+      if (contact.id != contactId || contact.version! < version) {
+        throw _unconfirmedMutation;
+      }
+      return contact;
+    } on DioException catch (error) {
+      throw _customerMutationError(error);
+    }
+  }
+
+  Future<void> archiveContact(int customerId, int contactId) async {
+    try {
+      final response = await apiClient.dio.delete<void>(
+        '/customers/$customerId/contacts/$contactId',
+      );
+      if (response.statusCode != 204) throw _unconfirmedMutation;
+    } on DioException catch (error) {
+      throw _customerMutationError(error);
+    }
+  }
+
+  static const _unconfirmedMutation = CustomerRequestException(
+    'Результат сохранения не подтверждён. Закройте форму и обновите карточку '
+    'перед повторной попыткой.',
+    refreshRequired: true,
+  );
+
+  T _mutationResponse<T>(
+    Response<Map<String, dynamic>> response,
+    int expectedStatus,
+    T Function(Map<String, dynamic>) parse,
+  ) {
+    try {
+      if (response.statusCode != expectedStatus || response.data == null) {
+        throw const FormatException('Invalid mutation response');
+      }
+      return parse(response.data!);
+    } on FormatException {
+      throw _unconfirmedMutation;
+    } on TypeError {
+      throw _unconfirmedMutation;
+    }
+  }
+
+  CustomerContact _contactResponse(
+    Response<Map<String, dynamic>> response,
+    int expectedStatus,
+  ) {
+    final contact = _mutationResponse(
+      response,
+      expectedStatus,
+      CustomerContact.fromJson,
+    );
+    if (contact.version == null || contact.version! < 1) {
+      throw _unconfirmedMutation;
+    }
+    return contact;
+  }
+
+  CustomerRequestException _customerMutationError(DioException error) {
+    final status = error.response?.statusCode;
+    final data = error.response?.data;
+    final detail = data is Map ? data['detail'] : null;
+    final code = detail is Map ? detail['code'] : null;
+    final refreshRequired =
+        status == null ||
+        status == 404 ||
+        status >= 500 ||
+        code == 'version_conflict' ||
+        code == 'contact_conflict';
+    final safe = CustomerRequestException.fromDio(error);
+    return CustomerRequestException(
+      refreshRequired
+          ? '${safe.message}\nЗакройте форму и обновите карточку перед повтором.'
+          : safe.message,
+      refreshRequired: refreshRequired,
+    );
+  }
 
   Future<List<CustomerFormOption>> getBranches() => _getOptions('/branches');
 
@@ -242,6 +384,10 @@ class CustomersRepository {
       return CustomerDetails.fromJson(json);
     } on DioException catch (error) {
       throw CustomerRequestException.fromDio(error);
+    } on FormatException {
+      throw const CustomerRequestException('Некорректная карточка клиента');
+    } on TypeError {
+      throw const CustomerRequestException('Некорректная карточка клиента');
     }
   }
 }

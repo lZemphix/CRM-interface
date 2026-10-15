@@ -60,6 +60,7 @@ class CustomerDetails {
     required this.updatedAt,
     required this.contacts,
     required this.notes,
+    this.version,
   });
 
   final int id;
@@ -81,6 +82,7 @@ class CustomerDetails {
   final DateTime updatedAt;
   final List<CustomerContact> contacts;
   final List<CustomerNote> notes;
+  final int? version;
 
   factory CustomerDetails.fromJson(Map<String, dynamic> json) {
     final rawDateOfBirth = json['date_of_birth'] as String?;
@@ -88,6 +90,7 @@ class CustomerDetails {
 
     return CustomerDetails(
       id: json['id'],
+      version: json['version'] as int?,
       fullName: json['full_name'] as String,
       gender: json['gender'] as String?,
       dateOfBirth: rawDateOfBirth == null
@@ -149,6 +152,7 @@ class CustomerContact {
     this.label,
     required this.isPrimary,
     required this.createdAt,
+    this.version,
   });
 
   final int id;
@@ -157,11 +161,13 @@ class CustomerContact {
   final String? label;
   final bool isPrimary;
   final DateTime createdAt;
+  final int? version;
 
   factory CustomerContact.fromJson(Map<String, dynamic> json) {
     return CustomerContact(
       id: json['id'] as int,
       type: ContactType.fromApi(json['type'] as String),
+      version: json['version'] as int?,
       value: json['value'] as String,
       label: json['label'] as String?,
       isPrimary: json['is_primary'] as bool,

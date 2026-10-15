@@ -42,6 +42,8 @@ String getGenderTranslate(String gender) {
       return 'мужской';
     case 'female':
       return 'женский';
+    case 'other':
+      return 'другой';
     case _:
       return 'не указан';
   }
@@ -67,6 +69,8 @@ Widget overviewTab(
   required Widget nextTask,
   required Widget recentActivity,
   required String branchLabel,
+  VoidCallback? onEditCustomer,
+  VoidCallback? onEditContacts,
 }) {
   return LayoutBuilder(
     builder: (context, constraints) {
@@ -78,7 +82,10 @@ Widget overviewTab(
       final info = Column(
         spacing: 20,
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [aboutCustomer(customer, branchLabel), contacts(customer)],
+        children: [
+          aboutCustomer(customer, branchLabel, onEdit: onEditCustomer),
+          contacts(customer, onEdit: onEditContacts),
+        ],
       );
       return SingleChildScrollView(
         child: constraints.maxWidth < 820
@@ -114,7 +121,11 @@ Widget aboutCustomerElement(String key, String value) {
   );
 }
 
-Widget aboutCustomer(CustomerDetails customer, String branchLabel) {
+Widget aboutCustomer(
+  CustomerDetails customer,
+  String branchLabel, {
+  VoidCallback? onEdit,
+}) {
   return Container(
     padding: EdgeInsets.all(20),
     decoration: BoxDecoration(
@@ -135,7 +146,8 @@ Widget aboutCustomer(CustomerDetails customer, String branchLabel) {
               ),
             ),
             TextButton(
-              onPressed: null,
+              key: const Key('edit-customer-about'),
+              onPressed: onEdit,
               child: Text(
                 'Изменить',
                 style: TextStyle(color: AppColors.activeElement),
@@ -182,16 +194,26 @@ Widget aboutCustomer(CustomerDetails customer, String branchLabel) {
   );
 }
 
-Widget contactElement(Icon icon, String key, String value) {
+Widget contactElement(Icon icon, String key, String value, {String? label}) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
       icon,
       const SizedBox(width: 10),
       Expanded(
-        child: SelectableText(
-          value,
-          style: TextStyle(fontWeight: FontWeight(400)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SelectableText(
+              value,
+              style: TextStyle(fontWeight: FontWeight(400)),
+            ),
+            if (label != null)
+              Text(
+                label,
+                style: TextStyle(color: AppColors.textMutted, fontSize: 12),
+              ),
+          ],
         ),
       ),
       const SizedBox(width: 10),
@@ -200,7 +222,7 @@ Widget contactElement(Icon icon, String key, String value) {
   );
 }
 
-Widget contacts(CustomerDetails customer) {
+Widget contacts(CustomerDetails customer, {VoidCallback? onEdit}) {
   return Container(
     padding: EdgeInsets.all(20),
     decoration: BoxDecoration(
@@ -221,9 +243,10 @@ Widget contacts(CustomerDetails customer) {
               ),
             ),
             TextButton(
-              onPressed: null,
+              key: const Key('edit-customer-contacts'),
+              onPressed: onEdit,
               child: Text(
-                '+ добавить',
+                'Изменить',
                 style: TextStyle(color: AppColors.activeElement),
               ),
             ),
@@ -235,6 +258,7 @@ Widget contacts(CustomerDetails customer) {
             getContactIcon(contact),
             contact.isPrimary ? 'Основной' : 'Запасной',
             contact.value.trim(),
+            label: contact.label,
           ),
       ],
     ),

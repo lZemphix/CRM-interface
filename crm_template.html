@@ -482,6 +482,9 @@
   .kanban-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(16,24,40,.04);cursor:grab;}
   .kanban-card:active{cursor:grabbing;}
   .kanban-card.dragging{opacity:.45;}
+  .kanban-card.is-mine{background:#EFF7FF;border-color:#A9CBEA;box-shadow:inset 3px 0 0 #76A9D6,0 2px 8px rgba(16,24,40,.04);}
+  .kanban-card.is-mine:hover{background:#E8F3FE;border-color:#83B3DE;}
+  .kanban-card.is-mine .kanban-assignee{background:#DCECFB;color:#32699B;font-weight:600;}
   .kanban-card-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:6px;}
   .kanban-card-title{font-size:13.5px;font-weight:700;line-height:1.4;min-width:0;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
   .kanban-card-description{font-size:12px;color:var(--text-muted);line-height:1.45;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;margin:0 0 12px;}
@@ -756,6 +759,80 @@
   @media(min-width:761px) and (max-width:980px){
     .analytics-overview{grid-template-columns:1fr;}
   }
+  /* ---------- BOOKINGS / SHIFTS: LOCAL DESIGN PROTOTYPE ---------- */
+  #view-booking{grid-column:2 / -1;min-width:0;min-height:0;overflow:hidden;}
+  .booking-page{height:100%;padding:28px 32px 22px;display:flex;flex-direction:column;gap:18px;background:var(--paper);overflow:auto;}
+  .booking-heading,.booking-tools,.booking-date-nav{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .booking-heading{justify-content:space-between;flex:none;}
+  .booking-heading h1{font-size:25px;line-height:1.2;letter-spacing:-.5px;margin:0;}
+  .booking-heading-actions{display:flex;align-items:center;gap:14px;}
+  .booking-demo{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);}
+  .booking-primary{background:var(--accent);border:0;border-radius:6px;padding:10px 16px;color:#fff;font-family:inherit;font-weight:600;font-size:12px;cursor:pointer;}
+  .booking-primary:hover{background:var(--accent-dark);}
+  .booking-tools{justify-content:space-between;flex:none;}
+  .booking-tabs{display:flex;padding:3px;background:var(--paper-dim);border:1px solid var(--line);border-radius:7px;gap:3px;}
+  .booking-tabs button{border:0;background:transparent;border-radius:4px;padding:8px 13px;font:inherit;font-size:12px;color:var(--text-muted);cursor:pointer;}
+  .booking-tabs button.active{background:#fff;color:var(--accent);box-shadow:0 1px 4px #20242b12;font-weight:600;}
+  .booking-date-nav button{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:5px;padding:6px 10px;cursor:pointer;min-height:32px;font:inherit;font-size:12px;}
+  .booking-date-nav button:hover{background:var(--accent-soft);}
+  .booking-date-nav strong{font-size:14px;min-width:200px;text-align:center;}
+  .booking-filter{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--text-muted);}
+  .booking-filter select{border:1px solid var(--line);border-radius:5px;background:#fff;padding:7px;max-width:180px;color:var(--text);}
+  .booking-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;flex:none;}
+  .booking-day{display:flex;align-items:center;justify-content:space-between;gap:5px;border:1px solid var(--line);border-radius:6px;background:transparent;padding:9px 12px;cursor:pointer;color:var(--text-muted);font:inherit;font-size:11px;}
+  .booking-day strong{font-size:16px;font-weight:600;color:var(--text);}
+  .booking-day.active{background:var(--accent);border-color:var(--accent);color:#e7f2ee;}
+  .booking-day.active strong{color:#fff;}
+  .booking-day:not(.active):hover{background:#fff;}
+  .booking-calendar{flex:1;min-height:300px;border:1px solid var(--line);border-radius:8px;overflow:auto;background:#fff;position:relative;}
+  .booking-calendar-head,.booking-grid{display:grid;grid-template-columns:64px repeat(var(--people,4),minmax(190px,1fr));min-width:var(--board-min,824px);}
+  .booking-calendar-head{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line);}
+  .booking-zone{font-size:10px;color:var(--text-faint);padding:17px 8px;}
+  .booking-person{display:flex;align-items:center;gap:10px;padding:14px;border-left:1px solid var(--line);}
+  .booking-avatar{display:grid;place-items:center;width:32px;height:32px;flex:none;border-radius:7px;background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:700;}
+  .booking-person strong{display:block;font-size:12px;font-weight:600;}
+  .booking-person small{display:block;font-size:10px;color:var(--text-faint);margin-top:2px;}
+  .booking-time-axis{position:relative;height:704px;background:var(--paper);}
+  .booking-time-axis span{position:absolute;left:14px;font-size:10px;color:var(--text-faint);font-variant-numeric:tabular-nums;}
+  .booking-lane{height:704px;position:relative;border-left:1px solid var(--line);background:repeating-linear-gradient(to bottom,transparent 0,transparent 31px,#f2f0eb 31px,#f2f0eb 32px),repeating-linear-gradient(to bottom,transparent 0,transparent 63px,var(--line) 63px,var(--line) 64px);}
+  .booking-slot{position:absolute;left:0;width:100%;height:32px;border:0;background:transparent;text-align:left;padding-left:10px;color:transparent;font-size:11px;cursor:pointer;}
+  .booking-slot:enabled:hover,.booking-slot:focus-visible{background:var(--accent-soft);color:var(--accent);outline:1px dashed var(--accent);outline-offset:-2px;}
+  .booking-slot:disabled{cursor:default;}
+  .booking-unavailable{position:absolute;left:0;right:0;pointer-events:none;background:repeating-linear-gradient(135deg,#f4f2ed,#f4f2ed 5px,#eeece6 5px,#eeece6 6px);display:grid;place-items:center;font-size:10px;color:var(--text-faint);overflow:hidden;}
+  .booking-break{background:#f6f4ef;border-block:1px dashed var(--line);}
+  .booking-event{position:absolute;left:6px;right:6px;z-index:2;border:1px solid #bcd6cd;border-left:3px solid var(--accent);border-radius:5px;background:#edf5f0;color:#265e50;padding:5px 9px;text-align:left;cursor:pointer;overflow:hidden;font:inherit;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;transition:box-shadow .15s,transform .15s;}
+  .booking-event:hover{box-shadow:0 3px 12px #20242b20;transform:translateY(-1px);}
+  .booking-event strong{display:block;font-size:12px;line-height:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .booking-event small{display:block;font-size:10px;line-height:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.8;}
+  .booking-event-line{display:flex;justify-content:space-between;gap:6px;font-size:10px;line-height:15px;font-variant-numeric:tabular-nums;}
+  .booking-event-line i{font-style:normal;opacity:.8;}
+  .booking-event.pending{background:#faf0df;border-color:#e9d5ad;border-left-color:#ac7930;color:#825c25;}
+  .booking-event.completed{background:#eeedf5;border-color:#d5d1e4;border-left-color:#82739d;color:#66577c;}
+  .booking-event.cancelled{background:#f0f0ef;border-color:#ddd;border-left-color:#aaa;color:#888;opacity:.72;}
+  .booking-event.cancelled strong{text-decoration:line-through;}
+  .booking-event.compact small,.booking-event.compact .booking-event-line i{display:none;}
+  .booking-event.tiny{padding:4px 7px;}
+  .booking-event.tiny .booking-event-line{display:none;}
+  .booking-footer{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--text-faint);flex:none;}
+  .booking-legend{display:flex;gap:15px;flex-wrap:wrap;}
+  .booking-legend span{display:flex;align-items:center;gap:5px;}
+  .booking-legend b{width:7px;height:7px;border-radius:2px;background:var(--accent);}
+  .booking-shifts{overflow:auto;flex:none;min-height:0;background:#fff;border:1px solid var(--line);border-radius:8px;}
+  .booking-shift-grid{display:grid;grid-template-columns:190px repeat(7,minmax(105px,1fr));min-width:925px;}
+  .booking-shift-heading{padding:14px 10px;background:var(--paper);border-bottom:1px solid var(--line);font-size:11px;color:var(--text-muted);text-align:center;}
+  .booking-shift-heading strong{display:block;font-size:16px;color:var(--text);}
+  .booking-shift-name{padding:16px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px;font-size:12px;}
+  .booking-shift-cell{padding:12px 7px;border:0;border-left:1px solid var(--line);border-bottom:1px solid var(--line);background:#fff;text-align:center;cursor:pointer;color:var(--text);font:inherit;}
+  .booking-shift-cell:hover{background:var(--paper);}
+  .booking-shift-cell strong{display:block;background:var(--accent-soft);color:var(--accent-dark);border:1px solid #c9ddd4;border-radius:5px;padding:7px 2px;font-size:11px;white-space:nowrap;}
+  .booking-shift-cell small{display:block;color:var(--text-faint);font-size:10px;margin-top:5px;}
+  .booking-shift-cell.off strong{background:transparent;border:1px dashed var(--line);color:var(--text-faint);font-weight:400;}
+  .booking-error{border:1px solid #e6c2ad;background:#fbede5;padding:10px;border-radius:5px;color:#a04020;font-size:12px;margin-bottom:14px;}
+  .booking-hint{font-size:11px;color:var(--text-muted);margin:0 0 14px;}
+  .booking-dialog-meta{font-size:11px;color:var(--text-faint);margin:-10px 0 18px;}
+  [hidden].booking-shifts,[hidden].booking-calendar,[hidden].booking-week{display:none;}
+  @media(max-width:1000px){.booking-page{padding:22px;}.booking-tools{align-items:flex-start;}.booking-date-nav strong{min-width:160px;}}
+  @media(max-width:760px){.booking-page{padding:18px;}.booking-day{padding:7px 5px;flex-direction:column;}.booking-demo{display:none;}.booking-heading-actions{gap:5px;}}
 </style>
 </head>
 <body>
@@ -771,6 +848,9 @@
       </button>
       <button class="rail-btn" data-target="tasks" title="Задачи">
         <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12l2.5 2.5L16 9"/></svg>
+      </button>
+      <button class="rail-btn" data-target="booking" title="Запись и расписание" aria-label="Запись и расписание">
+        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 11h18M8 15h3M8 18h6"/></svg>
       </button>
       <button class="rail-btn" data-target="analytics" title="Аналитика" aria-label="Аналитика">
         <svg viewBox="0 0 24 24"><path d="M3 20h18M6 17v-5M11 17V7M16 17v-8M21 17V4"/></svg>
@@ -931,6 +1011,28 @@
     </main>
   </div>
 
+  <!-- ============ BOOKINGS VIEW — DEMO, NO API ============ -->
+  <div id="view-booking" style="display:none;">
+    <main class="booking-page">
+      <header class="booking-heading">
+        <h1>Запись</h1>
+        <div class="booking-heading-actions"><span class="booking-demo">Демонстрационный макет</span><button class="booking-primary" id="booking-add" type="button">+ Новая запись</button></div>
+      </header>
+      <div class="booking-tools">
+        <div class="booking-tabs" role="group" aria-label="Режим расписания"><button type="button" class="active" data-booking-mode="appointments" aria-pressed="true">Записи</button><button type="button" data-booking-mode="shifts" aria-pressed="false">Рабочие смены</button></div>
+        <div class="booking-date-nav"><button type="button" id="booking-prev" aria-label="Предыдущий период">‹</button><strong id="booking-date-title"></strong><button type="button" id="booking-next" aria-label="Следующий период">›</button><button type="button" id="booking-today">Сегодня</button></div>
+        <label class="booking-filter">Специалист <select id="booking-person-filter" aria-label="Фильтр сотрудников"></select></label>
+      </div>
+      <div class="booking-week" id="booking-week"></div>
+      <section class="booking-calendar" id="booking-calendar" aria-label="Дневное расписание записей">
+        <div class="booking-calendar-head" id="booking-calendar-head"></div>
+        <div class="booking-grid" id="booking-grid"></div>
+      </section>
+      <section class="booking-shifts" id="booking-shifts" hidden aria-label="Рабочие смены за неделю"></section>
+      <footer class="booking-footer"><div class="booking-legend"><span><b></b>Подтверждена</span><span><b style="background:#ac7930"></b>Ожидает подтверждения</span><span><b style="background:#82739d"></b>Завершена</span><span>▧ Нерабочее время</span></div><span id="booking-summary" aria-live="polite"></span></footer>
+    </main>
+  </div>
+
   <!-- ============ BRANCHES VIEW ============ -->
   <div id="view-branches" style="display:none; grid-column: 2 / span 2;">
     <div class="management-shell">
@@ -1041,6 +1143,36 @@
       <button type="button" id="catalog-cancel">Отмена</button>
       <button type="submit" id="catalog-save">Добавить</button>
     </div>
+  </form>
+</dialog>
+
+<dialog class="task-dialog" id="booking-dialog" aria-labelledby="booking-dialog-title">
+  <form id="booking-form">
+    <div class="task-dialog-head"><h2 id="booking-dialog-title">Новая запись</h2><button type="button" class="kanban-icon-button" data-booking-close aria-label="Закрыть запись">×</button></div>
+    <p class="booking-dialog-meta">Филиал «Центр» · Екатеринбург, UTC+5 · локальный макет</p>
+    <div class="booking-error" id="booking-error" role="alert" hidden></div>
+    <label class="task-field"><span>Клиент</span><input id="booking-client" list="booking-clients" required maxlength="255" autocomplete="off" placeholder="Имя клиента"><datalist id="booking-clients"></datalist></label>
+    <label class="task-field"><span>Услуга из каталога</span><select id="booking-service" required></select></label>
+    <label class="task-field"><span>Специалист</span><select id="booking-staff" required></select></label>
+    <div class="task-field-row"><label class="task-field"><span>Дата</span><input id="booking-date" type="date" required></label><label class="task-field"><span>Начало</span><input id="booking-time" type="time" min="09:00" max="19:45" step="900" required></label></div>
+    <div class="task-field-row"><label class="task-field"><span>Длительность, мин.</span><input id="booking-duration" type="number" min="15" max="660" step="15" required value="60"></label><label class="task-field"><span>Статус</span><select id="booking-status"><option value="confirmed">Подтверждена</option><option value="pending">Ожидает подтверждения</option><option value="completed">Завершена</option><option value="cancelled">Отменена</option></select></label></div>
+    <p class="booking-hint" id="booking-service-hint"></p>
+    <label class="task-field"><span>Комментарий</span><textarea id="booking-comment" maxlength="1000" placeholder="Пожелания клиента или детали записи"></textarea></label>
+    <p class="booking-hint">Чтобы перенести запись, измените дату, время или специалиста. Пересечения и рабочая смена проверяются только в этом макете, не сервером.</p>
+    <div class="task-dialog-actions"><button type="button" data-booking-close>Закрыть</button><button type="submit" id="booking-save">Создать запись</button></div>
+  </form>
+</dialog>
+
+<dialog class="task-dialog" id="booking-shift-dialog" aria-labelledby="booking-shift-title">
+  <form id="booking-shift-form">
+    <div class="task-dialog-head"><h2 id="booking-shift-title">Рабочая смена</h2><button type="button" class="kanban-icon-button" data-shift-close aria-label="Закрыть смену">×</button></div>
+    <p class="booking-hint" id="booking-shift-person"></p>
+    <div class="booking-error" id="booking-shift-error" role="alert" hidden></div>
+    <label class="booking-filter" style="margin-bottom:18px"><input id="booking-shift-off" type="checkbox">Выходной день</label>
+    <div class="task-field-row"><label class="task-field"><span>Начало смены</span><input id="booking-shift-start" type="time" min="09:00" max="20:00" required step="900"></label><label class="task-field"><span>Конец смены</span><input id="booking-shift-end" type="time" min="09:00" max="20:00" required step="900"></label></div>
+    <div class="task-field-row"><label class="task-field"><span>Перерыв с (необязательно)</span><input id="booking-break-start" type="time" step="900"></label><label class="task-field"><span>Перерыв до</span><input id="booking-break-end" type="time" step="900"></label></div>
+    <p class="booking-hint">Изменяется только выбранный день. Смену нельзя сократить поверх существующих записей.</p>
+    <div class="task-dialog-actions"><button type="button" data-shift-close>Отмена</button><button type="submit">Сохранить смену</button></div>
   </form>
 </dialog>
 
@@ -1380,6 +1512,9 @@ function loadBoard(){
   } catch(error) { /* Повреждённые демоданные не должны ломать весь шаблон. */ }
   return initialBoard();
 }
+// Demo viewer only; the legacy board stores assignees as names, not API IDs.
+// Do not use currentEmployeeId: it is the selected HR card, not the signed-in user.
+const kanbanDemoViewerId = 1;
 let board = loadBoard();
 let editingTaskId = null;
 const kanbanRoot = document.getElementById('kanban-board');
@@ -1407,7 +1542,9 @@ function menuButton(label, action, id, danger=false){
   return button;
 }
 function renderTaskCard(task){
-  const card = node('article', 'kanban-card');
+  const assignedEmployee = employees.find(employee => employee.name === task.assignee);
+  const isMine = assignedEmployee?.id === kanbanDemoViewerId;
+  const card = node('article', `kanban-card${isMine ? ' is-mine' : ''}`);
   card.draggable = true;
   card.dataset.taskId = task.id;
   const top = node('div', 'kanban-card-top');
@@ -1426,7 +1563,7 @@ function renderTaskCard(task){
     card.append(description);
   }
   const meta = node('div', 'kanban-card-meta');
-  meta.append(node('span', '', task.assignee || 'Без ответственного'));
+  meta.append(node('span', 'kanban-assignee', isMine ? `Вам · ${task.assignee}` : task.assignee || 'Без ответственного'));
   if(task.due) meta.append(node('span', '', `Срок: ${task.due.split('-').reverse().join('.')}`));
   card.append(meta);
   const subtasks = Array.isArray(task.subtasks) ? task.subtasks : [];
@@ -1819,7 +1956,7 @@ function renderProfitChart(){
   bars.replaceChildren(); xAxis.replaceChildren();
   const grid = `repeat(${buckets.length},minmax(0,1fr))`;
   bars.style.gridTemplateColumns = grid;
-  bars.style.setProperty('--bar-width', buckets.length <= 12 ? '14px' : buckets.length <= 31 ? '8px' : '5px');
+  bars.style.setProperty('--bar-width', buckets.length <= 12 ? '28px' : buckets.length <= 31 ? '16px' : '10px');
   xAxis.style.gridTemplateColumns = grid;
   bars.style.gap = buckets.length > 35 ? '2px' : '4px';
   xAxis.style.gap = bars.style.gap;
@@ -2330,10 +2467,244 @@ const staffDemo = {
   });
 }
 
+// ---------- BOOKINGS: SESSION-ONLY PROTOTYPE, NOT A BACKEND CONTRACT ----------
+const bookingStaff = [
+  {id:'irina', name:'Ирина Ковалёва', initials:'ИК', role:'Стилист'},
+  {id:'maria', name:'Мария Белова', initials:'МБ', role:'Колорист'},
+  {id:'alex', name:'Алексей Миронов', initials:'АМ', role:'Стилист'},
+  {id:'daria', name:'Дарья Смирнова', initials:'ДС', role:'Мастер по уходу'}
+];
+const bookingStatusLabels = {confirmed:'Подтверждена', pending:'Ожидает подтверждения', completed:'Завершена', cancelled:'Отменена'};
+const bookingToday = new Intl.DateTimeFormat('sv-SE', {timeZone:'Asia/Yekaterinburg',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+const bookingState = {date:bookingToday, mode:'appointments', person:'all', editingId:null, shift:null, shifts:new Map(), appointments:[]};
+const bookingDayFormat = new Intl.DateTimeFormat('ru-RU', {day:'numeric',month:'long',year:'numeric'});
+const bookingShortDay = new Intl.DateTimeFormat('ru-RU', {weekday:'short'});
+function bookingDateObject(value){ const [y,m,d] = value.split('-').map(Number); return new Date(y,m-1,d,12); }
+function bookingDateKey(date){ return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`; }
+function bookingAddDays(value, offset){ const date = bookingDateObject(value); date.setDate(date.getDate()+offset); return bookingDateKey(date); }
+function bookingWeekStart(value){ return bookingAddDays(value, -((bookingDateObject(value).getDay()+6)%7)); }
+function bookingMinutes(value){ if(!value) return null; const [h,m] = value.split(':').map(Number); return h*60+m; }
+function bookingTime(value){ return `${String(Math.floor(value/60)).padStart(2,'0')}:${String(value%60).padStart(2,'0')}`; }
+function bookingDefaultShift(date, person){
+  const weekday = bookingDateObject(date).getDay();
+  if(weekday === 0 || (person === 'alex' && weekday === 3) || (person === 'daria' && weekday === 5)) return {off:true};
+  return {off:false, start:person === 'maria' ? 600 : 540, end:weekday === 6 ? 900 : person === 'maria' ? 1140 : 1080, breakStart:750, breakEnd:795};
+}
+function bookingShift(date, person){ return bookingState.shifts.get(`${date}:${person}`) || bookingDefaultShift(date,person); }
+function bookingFitsShift(start, end, shift){
+  return !shift.off && start >= shift.start && end <= shift.end &&
+    (shift.breakStart == null || end <= shift.breakStart || start >= shift.breakEnd);
+}
+function bookingServices(){ return catalogItems.filter(item => item.kind === 'service' && item.active); }
+function bookingPeople(){ return bookingStaff.filter(person => bookingState.person === 'all' || person.id === bookingState.person); }
+function bookingSeed(){
+  const services = initialCatalog().filter(item => item.kind === 'service');
+  const names = ['Анна Петрова','Максим Дорофеев','Ольга Синицына','Елена Волкова','Михаил Серов','Алина Орлова','Сергей Иванов','Наталья Белова'];
+  for(let offset=-7;offset<=14;offset++){
+    const date = bookingAddDays(bookingToday,offset);
+    bookingStaff.forEach((person,index) => {
+      const shift = bookingShift(date,person.id);
+      if(shift.off) return;
+      const samples = [{start:shift.start+30, service:services[0]}, {start:840+index%2*30, service:services[index%3]}];
+      samples.forEach((sample,slot) => {
+        if(!bookingFitsShift(sample.start,sample.start+sample.service.duration,shift)) return;
+        bookingState.appointments.push({id:newBoardId(), date, person:person.id,
+          client:names[(index*2+slot+Math.abs(offset))%names.length], serviceId:sample.service.id,
+          serviceName:sample.service.name, duration:sample.service.duration, price:sample.service.price,
+          start:sample.start, status:offset<=0 && slot===0 && index===0 ? 'completed' : index===2 ? 'pending' : 'confirmed',
+          comment:slot===0 && index===1 ? 'Клиент впервые, нужна консультация.' : ''});
+      });
+    });
+  }
+}
+function renderBooking(){
+  const people = bookingPeople();
+  const weekStart = bookingWeekStart(bookingState.date);
+  const shiftMode = bookingState.mode === 'shifts';
+  document.getElementById('booking-date-title').textContent = shiftMode
+    ? `${bookingDayFormat.format(bookingDateObject(weekStart))} — ${bookingDayFormat.format(bookingDateObject(bookingAddDays(weekStart,6)))}`
+    : bookingDayFormat.format(bookingDateObject(bookingState.date));
+  document.querySelectorAll('[data-booking-mode]').forEach(button => {
+    const active = button.dataset.bookingMode === bookingState.mode;
+    button.classList.toggle('active',active); button.setAttribute('aria-pressed',String(active));
+  });
+  document.getElementById('booking-calendar').hidden = shiftMode;
+  document.getElementById('booking-week').hidden = shiftMode;
+  document.getElementById('booking-shifts').hidden = !shiftMode;
+  document.getElementById('booking-add').hidden = shiftMode;
+  const week = document.getElementById('booking-week'); week.replaceChildren();
+  for(let day=0;day<7;day++){
+    const date = bookingAddDays(weekStart,day), object = bookingDateObject(date);
+    const button = node('button',`booking-day${date===bookingState.date?' active':''}`);
+    button.type = 'button'; button.setAttribute('aria-label',bookingDayFormat.format(object));
+    button.setAttribute('aria-pressed',String(date===bookingState.date));
+    button.append(node('span','',bookingShortDay.format(object)),node('strong','',object.getDate()));
+    button.addEventListener('click',() => {bookingState.date=date;renderBooking();}); week.append(button);
+  }
+  if(shiftMode){ renderBookingShifts(weekStart,people); return; }
+  const calendar = document.getElementById('booking-calendar');
+  calendar.style.setProperty('--people',String(people.length));
+  calendar.style.setProperty('--board-min',`${64+people.length*190}px`);
+  const head = document.getElementById('booking-calendar-head'); head.replaceChildren(node('div','booking-zone','UTC+5'));
+  const grid = document.getElementById('booking-grid'); grid.replaceChildren();
+  const axis = node('div','booking-time-axis');
+  for(let hour=9;hour<20;hour++){ const label=node('span','',`${String(hour).padStart(2,'0')}:00`); label.style.top=`${(hour-9)*64+3}px`; axis.append(label); }
+  grid.append(axis);
+  const shown = bookingState.appointments.filter(item => item.date === bookingState.date &&
+    (bookingState.person === 'all' || item.person === bookingState.person) && item.status !== 'cancelled');
+  people.forEach(person => {
+    const shift = bookingShift(bookingState.date,person.id);
+    const heading = node('div','booking-person'), copy = node('div');
+    copy.append(node('strong','',person.name),node('small','',`${person.role} · ${shift.off ? 'Выходной' : `${bookingTime(shift.start)}–${bookingTime(shift.end)}`}`));
+    heading.append(node('span','booking-avatar',person.initials),copy);head.append(heading);
+    const lane=node('div','booking-lane');lane.setAttribute('aria-label',person.name);
+    for(let start=540;start<1200;start+=30){
+      const slot=node('button','booking-slot',`+ ${bookingTime(start)}`);slot.type='button';slot.style.top=`${(start-540)*64/60}px`;
+      slot.setAttribute('aria-label',`Новая запись: ${person.name}, ${bookingTime(start)}`);
+      const occupied = shown.some(item => item.person===person.id && start>=item.start && start<item.start+item.duration);
+      slot.disabled=!bookingFitsShift(start,start+15,shift)||occupied;
+      slot.addEventListener('click',() => openBookingDialog(null,person.id,start));lane.append(slot);
+    }
+    function unavailable(start,end,label,isBreak=false){
+      if(end<=start) return;
+      const shade=node('div',`booking-unavailable${isBreak?' booking-break':''}`,label);
+      shade.style.top=`${(start-540)*64/60}px`;shade.style.height=`${(end-start)*64/60}px`;lane.append(shade);
+    }
+    if(shift.off) unavailable(540,1200,'Выходной');
+    else { unavailable(540,shift.start,'');unavailable(shift.end,1200,'');if(shift.breakStart!=null) unavailable(shift.breakStart,shift.breakEnd,'Перерыв',true); }
+    bookingState.appointments.filter(item => item.date===bookingState.date && item.person===person.id && item.status!=='cancelled').forEach(item => {
+      const card=node('button',`booking-event ${item.status}${item.duration<=45?' compact':''}${item.duration<=30?' tiny':''}`);
+      card.type='button';card.dataset.bookingId=item.id;
+      card.style.top=`${(item.start-540)*64/60+2}px`;card.style.height=`${item.duration*64/60-4}px`;
+      const time=`${bookingTime(item.start)}–${bookingTime(item.start+item.duration)}`;
+      card.title=`${time} · ${item.client}\n${item.serviceName}\n${bookingStatusLabels[item.status]}`;
+      card.setAttribute('aria-label',card.title);
+      const line=node('div','booking-event-line');line.append(node('span','',time),node('i','',item.status==='confirmed'?'✓':item.status==='pending'?'Ожидает':'Завершена'));
+      card.append(line,node('strong','',item.client),node('small','',item.serviceName));
+      card.addEventListener('click',() => openBookingDialog(item.id));lane.append(card);
+    });
+    grid.append(lane);
+  });
+  const minutes=shown.reduce((sum,item)=>sum+item.duration,0);
+  document.getElementById('booking-summary').textContent=`${shown.length} записей · ${(minutes/60).toLocaleString('ru-RU',{maximumFractionDigits:1})} ч занято · Центр · демоданные`;
+}
+function renderBookingShifts(start,people){
+  const container=document.getElementById('booking-shifts');container.replaceChildren();
+  const grid=node('div','booking-shift-grid');grid.append(node('div','booking-shift-heading','Специалист'));
+  for(let day=0;day<7;day++){const date=bookingDateObject(bookingAddDays(start,day)),heading=node('div','booking-shift-heading');heading.append(node('span','',bookingShortDay.format(date)),node('strong','',date.getDate()));grid.append(heading);}
+  people.forEach(person => {
+    const name=node('div','booking-shift-name');name.append(node('span','booking-avatar',person.initials),node('span','',person.name));grid.append(name);
+    for(let day=0;day<7;day++){
+      const date=bookingAddDays(start,day),shift=bookingShift(date,person.id),button=node('button',`booking-shift-cell${shift.off?' off':''}`);
+      button.type='button';button.setAttribute('aria-label',`Изменить смену: ${person.name}, ${bookingDayFormat.format(bookingDateObject(date))}`);
+      button.append(node('strong','',shift.off?'Выходной':`${bookingTime(shift.start)}–${bookingTime(shift.end)}`),
+        node('small','',shift.off?'Добавить смену':shift.breakStart==null?'Без перерыва':`Перерыв ${bookingTime(shift.breakStart)}–${bookingTime(shift.breakEnd)}`));
+      button.addEventListener('click',()=>openBookingShift(person.id,date));grid.append(button);
+    }
+  });container.append(grid);
+  document.getElementById('booking-summary').textContent='Нажмите на день сотрудника, чтобы изменить смену · демоданные';
+}
+function bookingSelect(id,options,value){
+  const select=document.getElementById(id);select.replaceChildren();
+  options.forEach(option=>{const element=node('option','',option.name);element.value=option.id;select.append(element);});
+  if(value!=null) select.value=value;
+}
+const bookingDialog=document.getElementById('booking-dialog');
+const bookingForm=document.getElementById('booking-form');
+function bookingFormError(message){const error=document.getElementById('booking-error');error.textContent=message;error.hidden=!message;}
+function bookingServiceHint(){
+  const selected=bookingServices().find(item=>item.id===document.getElementById('booking-service').value);
+  const old=bookingState.appointments.find(item=>item.id===bookingState.editingId);
+  const item=selected||old;
+  document.getElementById('booking-service-hint').textContent=item
+    ? `Ориентировочная стоимость: ${catalogMoney.format(item.price)}. Цена здесь — справочная, не оплата.`
+    : 'В каталоге нет активных услуг. Сначала добавьте услугу в разделе «Каталог».';
+}
+function openBookingDialog(id=null,person=null,start=null){
+  bookingForm.reset();bookingFormError('');bookingState.editingId=id;
+  const item=bookingState.appointments.find(entry=>entry.id===id);
+  document.getElementById('booking-dialog-title').textContent=item?'Запись клиента':'Новая запись';
+  document.getElementById('booking-save').textContent=item?'Сохранить изменения':'Создать запись';
+  const services=bookingServices().map(service=>({id:service.id,name:`${service.name} · ${service.duration||60} мин.`}));
+  if(item&&!services.some(service=>service.id===item.serviceId)) services.push({id:item.serviceId,name:`${item.serviceName} (нет в активном каталоге)`});
+  bookingSelect('booking-service',services,item?.serviceId);
+  bookingSelect('booking-staff',bookingStaff,item?.person||person||bookingPeople()[0].id);
+  document.getElementById('booking-clients').replaceChildren(...customers.map(customer=>{const option=node('option');option.value=customer.name;return option;}));
+  document.getElementById('booking-client').value=item?.client||'';
+  document.getElementById('booking-date').value=item?.date||bookingState.date;
+  document.getElementById('booking-time').value=bookingTime(item?.start??start??600);
+  document.getElementById('booking-duration').value=String(item?.duration||bookingServices()[0]?.duration||60);
+  document.getElementById('booking-status').value=item?.status||'confirmed';
+  document.getElementById('booking-comment').value=item?.comment||'';
+  bookingServiceHint();bookingDialog.showModal();document.getElementById('booking-client').focus();
+}
+bookingForm.addEventListener('submit',event=>{
+  event.preventDefault();if(!bookingForm.reportValidity())return;
+  const id=bookingState.editingId,old=bookingState.appointments.find(item=>item.id===id);
+  const date=document.getElementById('booking-date').value,person=document.getElementById('booking-staff').value;
+  const start=bookingMinutes(document.getElementById('booking-time').value),duration=Number(document.getElementById('booking-duration').value);
+  const status=document.getElementById('booking-status').value,client=document.getElementById('booking-client').value.trim();
+  const serviceId=document.getElementById('booking-service').value,service=bookingServices().find(item=>item.id===serviceId);
+  if(!client)return bookingFormError('Укажите имя клиента.');
+  if(!service&&(!old||old.serviceId!==serviceId))return bookingFormError('Выберите доступную услугу из каталога.');
+  if(status!=='cancelled'){
+    if(!bookingFitsShift(start,start+duration,bookingShift(date,person)))return bookingFormError('Выбранное время выходит за смену или пересекает перерыв. Измените время или рабочую смену.');
+    const conflict=bookingState.appointments.find(item=>item.id!==id&&item.date===date&&item.person===person&&item.status!=='cancelled'&&start<item.start+item.duration&&start+duration>item.start);
+    if(conflict)return bookingFormError(`В это время уже записан клиент ${conflict.client}: ${bookingTime(conflict.start)}–${bookingTime(conflict.start+conflict.duration)}.`);
+  }
+  const values={date,person,start,duration,status,client,serviceId,serviceName:service?.name||old?.serviceName||'Услуга',price:service?.price??old?.price??0,comment:document.getElementById('booking-comment').value.trim()};
+  if(old)Object.assign(old,values);else bookingState.appointments.push({id:newBoardId(),...values});
+  bookingState.date=date;bookingDialog.close();renderBooking();showToast(status==='cancelled'?'Запись отменена в макете':old?'Запись обновлена в макете':'Запись создана в макете');
+});
+document.getElementById('booking-service').addEventListener('change',()=>{
+  const service=bookingServices().find(item=>item.id===document.getElementById('booking-service').value);
+  if(service)document.getElementById('booking-duration').value=String(service.duration||60);
+  bookingServiceHint();bookingFormError('');
+});
+document.querySelectorAll('[data-booking-close]').forEach(button=>button.addEventListener('click',()=>bookingDialog.close()));
+const bookingShiftDialog=document.getElementById('booking-shift-dialog');
+const bookingShiftForm=document.getElementById('booking-shift-form');
+function bookingToggleShiftOff(){document.querySelectorAll('#booking-shift-form input[type="time"]').forEach(input=>input.disabled=document.getElementById('booking-shift-off').checked);}
+function openBookingShift(person,date){
+  bookingShiftForm.reset();bookingState.shift={person,date};const shift=bookingShift(date,person);
+  document.getElementById('booking-shift-person').textContent=`${bookingStaff.find(item=>item.id===person).name} · ${bookingDayFormat.format(bookingDateObject(date))}`;
+  document.getElementById('booking-shift-off').checked=shift.off;
+  document.getElementById('booking-shift-start').value=bookingTime(shift.start??540);
+  document.getElementById('booking-shift-end').value=bookingTime(shift.end??1080);
+  document.getElementById('booking-break-start').value=shift.breakStart==null?'':bookingTime(shift.breakStart);
+  document.getElementById('booking-break-end').value=shift.breakEnd==null?'':bookingTime(shift.breakEnd);
+  document.getElementById('booking-shift-error').hidden=true;bookingToggleShiftOff();bookingShiftDialog.showModal();
+}
+document.getElementById('booking-shift-off').addEventListener('change',bookingToggleShiftOff);
+document.querySelectorAll('[data-shift-close]').forEach(button=>button.addEventListener('click',()=>bookingShiftDialog.close()));
+bookingShiftForm.addEventListener('submit',event=>{
+  event.preventDefault();if(!bookingShiftForm.reportValidity())return;
+  const shift={off:document.getElementById('booking-shift-off').checked,start:bookingMinutes(document.getElementById('booking-shift-start').value),end:bookingMinutes(document.getElementById('booking-shift-end').value),breakStart:bookingMinutes(document.getElementById('booking-break-start').value),breakEnd:bookingMinutes(document.getElementById('booking-break-end').value)};
+  const error=document.getElementById('booking-shift-error');
+  function fail(message){error.textContent=message;error.hidden=false;}
+  if(!shift.off){
+    if(shift.start>=shift.end)return fail('Конец смены должен быть позже начала.');
+    if((shift.breakStart==null)!==(shift.breakEnd==null))return fail('Укажите обе границы перерыва или очистите обе.');
+    if(shift.breakStart!=null&&(shift.breakStart<shift.start||shift.breakEnd>shift.end||shift.breakStart>=shift.breakEnd))return fail('Перерыв должен находиться внутри смены, конец — позже начала.');
+  }
+  const {person,date}=bookingState.shift;
+  if(bookingState.appointments.some(item=>item.person===person&&item.date===date&&item.status!=='cancelled'&&!bookingFitsShift(item.start,item.start+item.duration,shift)))return fail('В этом интервале есть записи. Сначала перенесите или отмените их.');
+  bookingState.shifts.set(`${date}:${person}`,shift);bookingShiftDialog.close();renderBooking();showToast('Смена сохранена в макете');
+});
+document.getElementById('booking-add').addEventListener('click',()=>openBookingDialog());
+document.getElementById('booking-prev').addEventListener('click',()=>{bookingState.date=bookingAddDays(bookingState.date,bookingState.mode==='shifts'?-7:-1);renderBooking();});
+document.getElementById('booking-next').addEventListener('click',()=>{bookingState.date=bookingAddDays(bookingState.date,bookingState.mode==='shifts'?7:1);renderBooking();});
+document.getElementById('booking-today').addEventListener('click',()=>{bookingState.date=bookingToday;renderBooking();});
+document.querySelectorAll('[data-booking-mode]').forEach(button=>button.addEventListener('click',()=>{bookingState.mode=button.dataset.bookingMode;renderBooking();}));
+bookingSelect('booking-person-filter',[{id:'all',name:'Все специалисты'},...bookingStaff],'all');
+document.getElementById('booking-person-filter').addEventListener('change',event=>{bookingState.person=event.target.value;renderBooking();});
+bookingSeed();renderBooking();
+
 // ---------- RAIL NAV ----------
 const views = {
   customers: document.getElementById('view-customers'),
   tasks: document.getElementById('view-tasks'),
+  booking: document.getElementById('view-booking'),
   analytics: document.getElementById('view-analytics'),
   catalog: document.getElementById('view-catalog'),
   branches: document.getElementById('view-branches'),
@@ -2344,6 +2715,7 @@ document.querySelectorAll('.rail-btn[data-target]').forEach(btn => {
     document.querySelectorAll('.rail-btn[data-target]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     const target = btn.dataset.target;
+    if(target === 'booking') renderBooking();
     Object.entries(views).forEach(([key, node]) => {
       node.style.display = (key === target) ? (key === 'customers' ? 'contents' : 'block') : 'none';
     });

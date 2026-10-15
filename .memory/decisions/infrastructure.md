@@ -132,7 +132,8 @@ version-bump и не требовать глобальной установки 
 повышать числовой build через --bump-build. Обычный commit не требует bump.
 CHANGELOG.md содержит изменения для пользователей в `## Unreleased`; cider release
 оформляет запись выбранной версии и дату, но не создаёт commit/tag/GitHub Release.
-Порядок INFRA-04 сохранён: версия и changelog входят в release commit,
+Порядок INFRA-04 сохранён: версия и changelog входят в release commit
+[правило о changelog заменено INFRA-06 от 2026-10-16],
 тег vVERSION без +build проверяется CI. CI не повышает версию самостоятельно.
 
 Reason:
@@ -156,3 +157,33 @@ Notes:
 У Cider заголовок `[Unreleased]` без Markdown link definition не распознаётся:
 использовать обычный `## Unreleased`, keep_empty_unreleased=true сохраняет секцию
 после оформления релиза. Проверять содержание release entry, не только номер.
+
+## INFRA-06 — Changelog только локальный
+
+date: 2026-10-16
+status: active
+tags: changelog, gitignore, release, local-notes, push
+
+Decision:
+Пользователь считает CHANGELOG.md личными полезными заметками и попросил не
+публиковать его в Git. Файл сохраняется локально, удаляется только из Git index,
+добавляется /CHANGELOG.md в .gitignore. Новые записи не коммитить/пушить.
+Это заменяет часть INFRA-05 об обязательном changelog в release commit;
+выбор Cider, версия pubspec и правила тегов остаются прежними.
+
+Reason:
+Не включать локальные заметки пользователя в публикуемые исходники.
+
+Alternatives considered:
+Оставить tracked и постоянно исключать отдельные изменения ненадёжно:
+.gitignore не действует на уже отслеживаемые файлы. Удалять локальное содержимое
+или переписывать Git-историю не требуется и не поручено.
+
+Affected areas:
+.gitignore; README.md; docs/releases.md; Git index CHANGELOG.md.
+
+Notes:
+В текущем дереве удаляется tracked-копия, не локальный файл. Исторические копии
+остаются в прошлых коммитах. CI/release tooling не читает CHANGELOG.md; Cider bump
+меняет pubspec независимо от него, cider release можно использовать локально.
+Публичные заметки релиза заполняются в GitHub Release. Backend не затрагивается.

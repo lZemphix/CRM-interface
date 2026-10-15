@@ -48,6 +48,7 @@ app.*.map.json
 .widget_preview/
 
 # Local planning notes and screenshots
+/CHANGELOG.md
 /aswers.txt
 /our_crm.txt
 /image.png

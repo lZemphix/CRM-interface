@@ -1,6 +1,8 @@
 import 'package:crm_interface/core/modules/module_registry.dart';
+import 'package:crm_interface/core/auth/current_employee_scope.dart';
 import 'package:crm_interface/core/modules/module_data_changes.dart';
 import 'package:flutter/material.dart';
+import 'package:crm_interface/core/keyboard/search_shortcut_scope.dart';
 import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
 import 'package:crm_interface/layout/sidebar.dart';
@@ -111,51 +113,64 @@ class _AppShellState extends State<AppShell> {
       if (_pinOverrides[module.id] ?? module.pinnedByDefault) module.id,
   };
 
-  Widget currentScreen() {
+  Widget currentScreen(BuildContext moduleContext) {
     final module = widget.modules[_activeModuleId];
     final builder = module?.screenBuilder;
     if (builder == null) {
       return const Center(child: Text('Нет доступных разделов'));
     }
     // Different sections can return the same widget type, but not share State.
-    return KeyedSubtree(key: ValueKey(module!.id), child: builder(context));
+    return KeyedSubtree(
+      key: ValueKey(module!.id),
+      child: builder(moduleContext),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: NotificationListener<ModuleDataChanged>(
-        onNotification: (_) {
-          _dataRevision.value++;
-          return true;
-        },
-        child: ModuleDataScope(
-          revision: _dataRevision,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              FutureBuilder<AuthProfile>(
-                future: _profile,
-                builder: (context, snapshot) {
-                  final profile = snapshot.hasError ? null : snapshot.data;
-                  return SideBar(
-                    modules: widget.modules.modules,
-                    activeModuleId: _activeModuleId,
-                    onModuleSelected: selectModule,
-                    pinnedModuleIds: _pinnedModuleIds,
-                    onModulePinChanged: _setModulePinned,
-                    accountProfile: profile,
-                    accountLoading:
-                        snapshot.connectionState != ConnectionState.done,
-                    accountError: snapshot.hasError,
-                    loggingOut: _isLoggingOut,
-                    onReloadProfile: _reloadProfile,
-                    onLogout: _logout,
-                  );
-                },
-              ),
-              Expanded(child: currentScreen()),
-            ],
+      body: SearchShortcutScope(
+        child: NotificationListener<ModuleDataChanged>(
+          onNotification: (_) {
+            _dataRevision.value++;
+            return true;
+          },
+          child: ModuleDataScope(
+            revision: _dataRevision,
+            child: FutureBuilder<AuthProfile>(
+              future: _profile,
+              builder: (context, snapshot) {
+                // FutureBuilder may retain old data while a new profile loads.
+                final ready =
+                    snapshot.connectionState == ConnectionState.done &&
+                    !snapshot.hasError &&
+                    !_isLoggingOut;
+                final profile = ready ? snapshot.data : null;
+                return CurrentEmployeeScope(
+                  employeeId: profile?.id,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SideBar(
+                        modules: widget.modules.modules,
+                        activeModuleId: _activeModuleId,
+                        onModuleSelected: selectModule,
+                        pinnedModuleIds: _pinnedModuleIds,
+                        onModulePinChanged: _setModulePinned,
+                        accountProfile: profile,
+                        accountLoading:
+                            snapshot.connectionState != ConnectionState.done,
+                        accountError: snapshot.hasError,
+                        loggingOut: _isLoggingOut,
+                        onReloadProfile: _reloadProfile,
+                        onLogout: _logout,
+                      ),
+                      Expanded(child: Builder(builder: currentScreen)),
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
         ),
       ),

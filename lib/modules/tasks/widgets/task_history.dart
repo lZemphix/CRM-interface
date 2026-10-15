@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 
 import '../models/task_details.dart';
 import '../repos/tasks.dart';
@@ -28,58 +29,60 @@ class _TaskHistoryWindowState extends State<TaskHistoryWindow> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('История задачи'),
-    content: SizedBox(
-      width: 580,
-      height: 420,
-      child: FutureBuilder<TaskDetails>(
-        future: _details,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            final error = snapshot.error;
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    error is TaskRequestException
-                        ? error.message
-                        : 'Не удалось получить историю задачи',
-                    textAlign: TextAlign.center,
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      final future = widget.repository.getTaskDetails(
-                        widget.taskId,
-                      );
-                      setState(() {
-                        _details = future;
-                      });
-                    },
-                    child: const Text('Повторить'),
-                  ),
-                ],
-              ),
-            );
-          }
-          final details = snapshot.data;
-          if (details == null) {
-            return const Center(child: Text('Данные не получены'));
-          }
-          return _history(details);
-        },
+  Widget build(BuildContext context) => DialogKeyboardScope(
+    child: AlertDialog(
+      title: const Text('История задачи'),
+      content: SizedBox(
+        width: 580,
+        height: 420,
+        child: FutureBuilder<TaskDetails>(
+          future: _details,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              final error = snapshot.error;
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      error is TaskRequestException
+                          ? error.message
+                          : 'Не удалось получить историю задачи',
+                      textAlign: TextAlign.center,
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        final future = widget.repository.getTaskDetails(
+                          widget.taskId,
+                        );
+                        setState(() {
+                          _details = future;
+                        });
+                      },
+                      child: const Text('Повторить'),
+                    ),
+                  ],
+                ),
+              );
+            }
+            final details = snapshot.data;
+            if (details == null) {
+              return const Center(child: Text('Данные не получены'));
+            }
+            return _history(details);
+          },
+        ),
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Закрыть'),
+        ),
+      ],
     ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.of(context).pop(),
-        child: const Text('Закрыть'),
-      ),
-    ],
   );
 
   Widget _history(TaskDetails details) {

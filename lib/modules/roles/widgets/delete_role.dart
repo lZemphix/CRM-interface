@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 
 import '../models/role.dart';
 import '../repos/roles_repository.dart';
@@ -12,6 +13,7 @@ class DeleteRoleDialog extends StatefulWidget {
 }
 
 class _DeleteRoleDialogState extends State<DeleteRoleDialog> {
+  final _keyboard = GlobalKey<DialogKeyboardScopeState>();
   late Future<List<RoleInfo>> _roles;
   int? _selected;
   RoleInfo? _confirmed;
@@ -119,6 +121,8 @@ class _DeleteRoleDialogState extends State<DeleteRoleDialog> {
           ? snapshot.error
           : null;
       return RoleDialogFrame(
+        keyboardKey: _keyboard,
+        hasChanges: () => _selected != null,
         title: 'Удалить роль',
         description: 'Без удаления сотрудников и их истории.',
         danger: true,
@@ -138,7 +142,9 @@ class _DeleteRoleDialogState extends State<DeleteRoleDialog> {
               ),
         actions: [
           TextButton(
-            onPressed: _busy ? null : () => Navigator.of(context).pop(),
+            onPressed: _busy
+                ? null
+                : () => _keyboard.currentState?.requestClose(),
             child: const Text('Отмена'),
           ),
           if (error != null)

@@ -1,5 +1,6 @@
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
 import 'package:flutter/material.dart';
+import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 
 import '../models/role.dart';
 import '../repos/roles_repository.dart';
@@ -14,6 +15,7 @@ class CreateRoleDialog extends StatefulWidget {
 
 class _CreateRoleDialogState extends State<CreateRoleDialog> {
   final _form = GlobalKey<FormState>();
+  final _keyboard = GlobalKey<DialogKeyboardScopeState>();
   final _name = TextEditingController();
   final _code = TextEditingController();
   final _description = TextEditingController();
@@ -172,6 +174,13 @@ class _CreateRoleDialogState extends State<CreateRoleDialog> {
           ? snapshot.error
           : null;
       return RoleDialogFrame(
+        keyboardKey: _keyboard,
+        hasChanges: () =>
+            _name.text.isNotEmpty ||
+            _code.text.isNotEmpty ||
+            _description.text.isNotEmpty ||
+            _selected.isNotEmpty,
+        onSubmit: ready ? _submit : null,
         title: 'Новая роль',
         description: 'Название и набор прав для сотрудников.',
         busy: _saving,
@@ -190,7 +199,9 @@ class _CreateRoleDialogState extends State<CreateRoleDialog> {
               ),
         actions: [
           TextButton(
-            onPressed: _saving ? null : () => Navigator.of(context).pop(),
+            onPressed: _saving
+                ? null
+                : () => _keyboard.currentState?.requestClose(),
             child: const Text('Отмена'),
           ),
           if (error != null)

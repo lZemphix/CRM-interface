@@ -1,5 +1,6 @@
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
 import 'package:flutter/material.dart';
+import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 
 import '../models/employee_forms.dart';
 import 'dialog_frame.dart';
@@ -15,6 +16,7 @@ class ArchiveEmployeeDialog extends StatefulWidget {
 }
 
 class _ArchiveEmployeeDialogState extends State<ArchiveEmployeeDialog> {
+  final _keyboard = GlobalKey<DialogKeyboardScopeState>();
   final _form = GlobalKey<FormState>();
   final _login = TextEditingController();
   EmployeeArchiveView? _employee;
@@ -118,6 +120,8 @@ class _ArchiveEmployeeDialogState extends State<ArchiveEmployeeDialog> {
         ? widget.onLookup != null
         : widget.onArchive != null;
     return EmployeeDialogFrame(
+      keyboardKey: _keyboard,
+      hasChanges: () => _login.text.isNotEmpty,
       title: 'Архивировать сотрудника',
       description: 'Отключение доступа, а не удаление истории.',
       icon: Icons.inventory_2_outlined,
@@ -160,7 +164,9 @@ class _ArchiveEmployeeDialogState extends State<ArchiveEmployeeDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: _busy ? null : () => Navigator.of(context).pop(),
+          onPressed: _busy
+              ? null
+              : () => _keyboard.currentState?.requestClose(),
           child: const Text('Отмена'),
         ),
         FilledButton(

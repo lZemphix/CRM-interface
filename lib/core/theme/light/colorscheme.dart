@@ -7,6 +7,11 @@ abstract final class AppColors {
   static const taskCardBackground = Color(0xFFFFFFFF);
   static const taskCardText = Color(0xFF101828);
   static const taskCardShadow = Color(0x0A101828);
+  static const ownTaskBackground = Color(0xFFEFF7FF);
+  static const ownTaskBorder = Color(0xFFA9CBEA);
+  static const ownTaskAccent = Color(0xFF76A9D6);
+  static const ownTaskBadgeBackground = Color(0xFFDCECFB);
+  static const ownTaskText = Color(0xFF32699B);
   static const taskHighPriority = Color(0xFFB54708);
   static const taskUrgentPriority = Color(0xFFC43232);
   static const activeElement = Color(0xFF5B5BD6);

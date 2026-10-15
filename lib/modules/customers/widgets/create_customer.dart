@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 
 import '../../../core/theme/light/colorscheme.dart';
 import '../models/create_customer.dart';
@@ -23,6 +24,8 @@ class CreateCustomerWindow extends StatefulWidget {
 
 class _CreateCustomerWindowState extends State<CreateCustomerWindow> {
   final _formKey = GlobalKey<FormState>();
+  final _keyboard = GlobalKey<DialogKeyboardScopeState>();
+  bool _dirty = false;
   final _birthdayController = TextEditingController();
   CustomerCreationOptions? _options;
   bool _isLoading = true;
@@ -131,8 +134,11 @@ class _CreateCustomerWindowState extends State<CreateCustomerWindow> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: !_isSaving,
+    return DialogKeyboardScope(
+      key: _keyboard,
+      busy: _isSaving,
+      hasChanges: () => _dirty,
+      onSubmit: _submit,
       child: AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -157,7 +163,9 @@ class _CreateCustomerWindowState extends State<CreateCustomerWindow> {
         content: SizedBox(width: 480, child: _buildContent()),
         actions: [
           TextButton(
-            onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
+            onPressed: _isSaving
+                ? null
+                : () => _keyboard.currentState?.requestClose(),
             child: const Text('Отмена'),
           ),
           FilledButton(
@@ -205,6 +213,7 @@ class _CreateCustomerWindowState extends State<CreateCustomerWindow> {
     }
     return Form(
       key: _formKey,
+      onChanged: () => _dirty = true,
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,

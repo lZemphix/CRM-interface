@@ -1,5 +1,6 @@
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
 import 'package:flutter/material.dart';
+import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 import 'package:flutter/services.dart';
 
 import '../models/employee_forms.dart';
@@ -25,6 +26,8 @@ class CreateEmployeeDialog extends StatefulWidget {
 
 class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
   final _form = GlobalKey<FormState>();
+  final _keyboard = GlobalKey<DialogKeyboardScopeState>();
+  bool _dirty = false;
   final _roleFieldState = GlobalKey<FormFieldState<int>>();
   late final List<EmployeeRoleChoice> _roles = [...widget.roles];
   final _name = TextEditingController();
@@ -252,6 +255,7 @@ class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
 
   Widget _fields() => Form(
     key: _form,
+    onChanged: () => _dirty = true,
     autovalidateMode: AutovalidateMode.onUserInteraction,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -379,6 +383,9 @@ class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
     final created = _created;
     if (created != null) return _result(created);
     return EmployeeDialogFrame(
+      keyboardKey: _keyboard,
+      hasChanges: () => _dirty || _branches.isNotEmpty || _role != null,
+      onSubmit: _roles.isEmpty ? null : _submit,
       title: 'Новый сотрудник',
       description: 'Создайте аккаунт и задайте уровень доступа.',
       icon: Icons.person_add_alt_outlined,
@@ -389,7 +396,9 @@ class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
           : null,
       actions: [
         TextButton(
-          onPressed: _busy ? null : () => Navigator.of(context).pop(),
+          onPressed: _busy
+              ? null
+              : () => _keyboard.currentState?.requestClose(),
           child: const Text('Отмена'),
         ),
         FilledButton(

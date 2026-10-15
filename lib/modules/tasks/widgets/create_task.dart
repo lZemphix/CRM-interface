@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:crm_interface/modules/tasks/models/taskboard.dart';
 import 'package:crm_interface/modules/tasks/models/tasks.dart';
 import 'package:flutter/material.dart';
+import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 
 import '../repos/request_error.dart';
 import 'customer_field.dart';
@@ -40,6 +41,8 @@ class _SubtaskDraft {
 
 class _CreateTaskWindowState extends State<CreateTaskWindow> {
   final _formKey = GlobalKey<FormState>();
+  final _keyboard = GlobalKey<DialogKeyboardScopeState>();
+  bool _dirty = false;
   final _subtasks = <_SubtaskDraft>[];
   int _nextSubtaskId = 0;
   String _title = '';
@@ -143,16 +146,26 @@ class _CreateTaskWindowState extends State<CreateTaskWindow> {
   Widget build(BuildContext context) {
     final height = math.min(700.0, MediaQuery.sizeOf(context).height - 64);
 
-    return Dialog(
-      child: SizedBox(
-        width: 620,
-        height: height,
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(child: _buildForm()),
-            _buildActions(),
-          ],
+    return DialogKeyboardScope(
+      key: _keyboard,
+      busy: _isSaving,
+      onSubmit: _submit,
+      hasChanges: () =>
+          _dirty ||
+          _dueAt != null ||
+          _subtasks.isNotEmpty ||
+          _customer?.id != widget.initialCustomer?.id,
+      child: Dialog(
+        child: SizedBox(
+          width: 620,
+          height: height,
+          child: Column(
+            children: [
+              _buildHeader(),
+              Expanded(child: _buildForm()),
+              _buildActions(),
+            ],
+          ),
         ),
       ),
     );
@@ -171,6 +184,7 @@ class _CreateTaskWindowState extends State<CreateTaskWindow> {
   Widget _buildForm() {
     return Form(
       key: _formKey,
+      onChanged: () => _dirty = true,
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
@@ -387,7 +401,9 @@ class _CreateTaskWindowState extends State<CreateTaskWindow> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
+                onPressed: _isSaving
+                    ? null
+                    : () => _keyboard.currentState?.requestClose(),
                 child: const Text('Отмена'),
               ),
               const SizedBox(width: 8),

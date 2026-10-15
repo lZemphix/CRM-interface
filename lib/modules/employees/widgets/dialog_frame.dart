@@ -1,5 +1,6 @@
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
 import 'package:flutter/material.dart';
+import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 
 class EmployeeDialogFrame extends StatelessWidget {
   const EmployeeDialogFrame({
@@ -12,6 +13,9 @@ class EmployeeDialogFrame extends StatelessWidget {
     this.busy = false,
     this.danger = false,
     this.note,
+    this.keyboardKey,
+    this.hasChanges,
+    this.onSubmit,
   });
 
   final String title;
@@ -22,12 +26,18 @@ class EmployeeDialogFrame extends StatelessWidget {
   final bool busy;
   final bool danger;
   final String? note;
+  final GlobalKey<DialogKeyboardScopeState>? keyboardKey;
+  final bool Function()? hasChanges;
+  final VoidCallback? onSubmit;
 
   @override
   Widget build(BuildContext context) {
     final color = danger ? const Color(0xFFB42318) : AppColors.activeElement;
-    return PopScope(
-      canPop: !busy,
+    return DialogKeyboardScope(
+      key: keyboardKey,
+      busy: busy,
+      hasChanges: hasChanges,
+      onSubmit: onSubmit,
       child: Theme(
         data: Theme.of(context).copyWith(
           inputDecorationTheme: InputDecorationTheme(
@@ -108,7 +118,9 @@ class EmployeeDialogFrame extends StatelessWidget {
                           tooltip: 'Закрыть',
                           onPressed: busy
                               ? null
-                              : () => Navigator.of(context).pop(),
+                              : () => keyboardKey == null
+                                    ? Navigator.of(context).pop()
+                                    : keyboardKey!.currentState?.requestClose(),
                           style: IconButton.styleFrom(
                             minimumSize: Size.zero,
                             fixedSize: const Size(28, 28),

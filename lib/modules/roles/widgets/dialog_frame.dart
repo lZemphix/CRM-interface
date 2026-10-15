@@ -1,5 +1,6 @@
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
 import 'package:flutter/material.dart';
+import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 
 class RoleDialogFrame extends StatelessWidget {
   const RoleDialogFrame({
@@ -10,6 +11,9 @@ class RoleDialogFrame extends StatelessWidget {
     required this.actions,
     this.busy = false,
     this.danger = false,
+    this.keyboardKey,
+    this.hasChanges,
+    this.onSubmit,
   });
   final String title;
   final String description;
@@ -17,10 +21,16 @@ class RoleDialogFrame extends StatelessWidget {
   final List<Widget> actions;
   final bool busy;
   final bool danger;
+  final GlobalKey<DialogKeyboardScopeState>? keyboardKey;
+  final bool Function()? hasChanges;
+  final VoidCallback? onSubmit;
 
   @override
-  Widget build(BuildContext context) => PopScope(
-    canPop: !busy,
+  Widget build(BuildContext context) => DialogKeyboardScope(
+    key: keyboardKey,
+    busy: busy,
+    hasChanges: hasChanges,
+    onSubmit: onSubmit,
     child: Dialog(
       backgroundColor: Colors.white,
       surfaceTintColor: Colors.transparent,
@@ -59,7 +69,9 @@ class RoleDialogFrame extends StatelessWidget {
                       tooltip: 'Закрыть',
                       onPressed: busy
                           ? null
-                          : () => Navigator.of(context).pop(),
+                          : () => keyboardKey == null
+                                ? Navigator.of(context).pop()
+                                : keyboardKey!.currentState?.requestClose(),
                       icon: const Icon(Icons.close, size: 19),
                     ),
                   ],

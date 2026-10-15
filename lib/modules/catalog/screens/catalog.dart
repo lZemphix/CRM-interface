@@ -2,6 +2,10 @@ import 'dart:async';
 
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
 import 'package:flutter/material.dart';
+import 'package:crm_interface/core/keyboard/command_scope.dart';
+import 'package:crm_interface/core/keyboard/keybindings.dart';
+import 'package:crm_interface/core/keyboard/search_shortcut_scope.dart';
+import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 
 import '../models/catalog_item.dart';
 import '../repos/catalog_repository.dart';
@@ -21,6 +25,7 @@ class CatalogScreen extends StatefulWidget {
 
 class _CatalogScreenState extends State<CatalogScreen> {
   final _search = TextEditingController();
+  final _searchFocus = FocusNode();
   CatalogKind? _kind;
   String? _category;
   CatalogPage? _page;
@@ -46,6 +51,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
   @override
   void dispose() {
+    _searchFocus.dispose();
     _requestId++;
     _categoryRequestId++;
     _debounce?.cancel();
@@ -179,25 +185,28 @@ class _CatalogScreenState extends State<CatalogScreen> {
     setState(() => _dialogOpen = true);
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Архивировать позицию?'),
-        content: Text(
-          '«${item.name}» исчезнет из каталога. Это не просто скрытие: данные сохранятся, но восстановление здесь пока недоступно.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Отмена'),
+      barrierDismissible: false,
+      builder: (context) => DialogKeyboardScope(
+        child: AlertDialog(
+          title: const Text('Архивировать позицию?'),
+          content: Text(
+            '«${item.name}» исчезнет из каталога. Это не просто скрытие: данные сохранятся, но восстановление здесь пока недоступно.',
           ),
-          FilledButton(
-            key: const Key('catalog-confirm-archive'),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.activeElement,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Отмена'),
             ),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Архивировать'),
-          ),
-        ],
+            FilledButton(
+              key: const Key('catalog-confirm-archive'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.activeElement,
+              ),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Архивировать'),
+            ),
+          ],
+        ),
       ),
     );
     if (!mounted) return;
@@ -370,91 +379,105 @@ class _CatalogScreenState extends State<CatalogScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => ColoredBox(
-    color: AppColors.background,
-    child: LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 700;
-        return SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              compact ? 18 : 32,
-              28,
-              compact ? 18 : 32,
-              60,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _header(),
-                const SizedBox(height: 24),
-                CatalogSummary(
-                  counts: _loading || _error != null ? null : _page?.counts,
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  clipBehavior: Clip.antiAlias,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: AppColors.notActiveBorder),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x09101828),
-                        blurRadius: 10,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      CatalogToolbar(
-                        searchController: _search,
-                        kind: _kind,
-                        category: _category,
-                        categories: _categories,
-                        onSearchChanged: _searchChanged,
-                        onSearchSubmitted: () => unawaited(_loadPage()),
-                        onKindChanged: (value) =>
-                            _applyFilters(kind: value, category: _category),
-                        onCategoryChanged: (value) =>
-                            _applyFilters(kind: _kind, category: value),
-                      ),
-                      if (_categoryError != null)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Wrap(
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              const Text(
-                                'Категории недоступны',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textMutted,
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () => unawaited(_loadCategories()),
-                                child: const Text('Повторить категории'),
-                              ),
-                            ],
-                          ),
-                        ),
-                      const Divider(
-                        height: 1,
-                        color: AppColors.notActiveBorder,
-                      ),
-                      _list(compact, constraints.maxWidth >= 1050),
-                      _footer(),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
+  Widget build(BuildContext context) => RegisterSearchFocus(
+    node: _searchFocus,
+    child: CommandScope(
+      commands: {
+        AppCommand.focusSearch: () {
+          if (!_busy) _searchFocus.requestFocus();
+        },
       },
+      child: ColoredBox(
+        color: AppColors.background,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 700;
+            return SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  compact ? 18 : 32,
+                  28,
+                  compact ? 18 : 32,
+                  60,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _header(),
+                    const SizedBox(height: 24),
+                    CatalogSummary(
+                      counts: _loading || _error != null ? null : _page?.counts,
+                    ),
+                    const SizedBox(height: 20),
+                    Container(
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(color: AppColors.notActiveBorder),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x09101828),
+                            blurRadius: 10,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          CatalogToolbar(
+                            searchController: _search,
+                            searchFocusNode: _searchFocus,
+                            kind: _kind,
+                            category: _category,
+                            categories: _categories,
+                            onSearchChanged: _searchChanged,
+                            onSearchSubmitted: () => unawaited(_loadPage()),
+                            onKindChanged: (value) =>
+                                _applyFilters(kind: value, category: _category),
+                            onCategoryChanged: (value) =>
+                                _applyFilters(kind: _kind, category: value),
+                          ),
+                          if (_categoryError != null)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                              ),
+                              child: Wrap(
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  const Text(
+                                    'Категории недоступны',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.textMutted,
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        unawaited(_loadCategories()),
+                                    child: const Text('Повторить категории'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          const Divider(
+                            height: 1,
+                            color: AppColors.notActiveBorder,
+                          ),
+                          _list(compact, constraints.maxWidth >= 1050),
+                          _footer(),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
     ),
   );
 }

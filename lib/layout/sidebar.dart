@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'package:crm_interface/core/keyboard/command_scope.dart';
+import 'package:crm_interface/core/keyboard/keybindings_dialog.dart';
+
 import 'package:crm_interface/core/modules/module_definition.dart';
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
 import 'package:crm_interface/layout/navigation/module_navigation.dart';
@@ -86,14 +89,18 @@ class SideBar extends StatelessWidget {
                     onReloadProfile: onReloadProfile,
                     onLogout: onLogout,
                   ),
-                  const Tooltip(
-                    message: 'Параметры — пока не реализованы',
+                  Tooltip(
+                    message: 'Параметры — горячие клавиши',
                     child: SizedBox(
                       width: 44,
                       height: 44,
                       child: IconButton(
                         key: Key('sidebar-settings'),
-                        onPressed: null,
+                        onPressed:
+                            loggingOut ||
+                                KeybindingsScope.maybeOf(context) == null
+                            ? null
+                            : () => showKeybindingsSettings(context),
                         disabledColor: AppColors.sidebarElement,
                         icon: Icon(Icons.settings_outlined),
                       ),

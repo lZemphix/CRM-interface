@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 
 import '../models/taskboard.dart';
 import '../repos/request_error.dart';
@@ -30,6 +31,8 @@ class TaskColumnActionWindow extends StatefulWidget {
 
 class _TaskColumnActionWindowState extends State<TaskColumnActionWindow> {
   final _formKey = GlobalKey<FormState>();
+  final _keyboard = GlobalKey<DialogKeyboardScopeState>();
+  bool _dirty = false;
   late String _name;
   String? _target;
   bool _saving = false;
@@ -81,8 +84,11 @@ class _TaskColumnActionWindowState extends State<TaskColumnActionWindow> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: !_saving,
+    return DialogKeyboardScope(
+      key: _keyboard,
+      busy: _saving,
+      hasChanges: () => _dirty,
+      onSubmit: _isRename ? _submit : null,
       child: AlertDialog(
         title: Text(
           _isRename ? 'Переименовать колонку' : 'Архивировать колонку',
@@ -110,7 +116,9 @@ class _TaskColumnActionWindowState extends State<TaskColumnActionWindow> {
         ),
         actions: [
           TextButton(
-            onPressed: _saving ? null : () => Navigator.of(context).pop(),
+            onPressed: _saving
+                ? null
+                : () => _keyboard.currentState?.requestClose(),
             child: const Text('Отмена'),
           ),
           FilledButton(
@@ -131,6 +139,7 @@ class _TaskColumnActionWindowState extends State<TaskColumnActionWindow> {
   Widget _nameField() {
     return Form(
       key: _formKey,
+      onChanged: () => _dirty = true,
       child: TextFormField(
         initialValue: _name,
         autofocus: true,

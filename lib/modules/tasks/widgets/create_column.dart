@@ -1,5 +1,6 @@
 import 'package:crm_interface/modules/tasks/models/task_column.dart';
 import 'package:flutter/material.dart';
+import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 
 import '../repos/request_error.dart';
 
@@ -14,6 +15,8 @@ class CreateTaskColumnWindow extends StatefulWidget {
 
 class _CreateTaskColumnWindowState extends State<CreateTaskColumnWindow> {
   final _formKey = GlobalKey<FormState>();
+  final _keyboard = GlobalKey<DialogKeyboardScopeState>();
+  bool _dirty = false;
   String _name = '';
   TaskColumnStatus? _status;
   bool _isSaving = false;
@@ -49,8 +52,11 @@ class _CreateTaskColumnWindowState extends State<CreateTaskColumnWindow> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: !_isSaving,
+    return DialogKeyboardScope(
+      key: _keyboard,
+      busy: _isSaving,
+      hasChanges: () => _dirty,
+      onSubmit: _submit,
       child: AlertDialog(
         title: const Text('Новая колонка'),
         content: _buildForm(),
@@ -64,6 +70,7 @@ class _CreateTaskColumnWindowState extends State<CreateTaskColumnWindow> {
       width: 360,
       child: Form(
         key: _formKey,
+        onChanged: () => _dirty = true,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -117,7 +124,9 @@ class _CreateTaskColumnWindowState extends State<CreateTaskColumnWindow> {
   List<Widget> _buildActions() {
     return [
       TextButton(
-        onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
+        onPressed: _isSaving
+            ? null
+            : () => _keyboard.currentState?.requestClose(),
         child: const Text('Отмена'),
       ),
       FilledButton(

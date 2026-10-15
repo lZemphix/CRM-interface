@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
+import 'package:crm_interface/core/keyboard/command_scope.dart';
+import 'package:crm_interface/core/keyboard/keybindings.dart';
 
 import '../../models/customer_note.dart';
 import '../../repos/customers_repository.dart';
@@ -30,6 +33,7 @@ class CustomerNoteEditor extends StatefulWidget {
 
 class _CustomerNoteEditorState extends State<CustomerNoteEditor> {
   final _form = GlobalKey<FormState>();
+  final _keyboard = GlobalKey<DialogKeyboardScopeState>();
   late final TextEditingController _text;
   bool _saving = false;
   bool _refreshRequired = false;
@@ -99,8 +103,11 @@ class _CustomerNoteEditorState extends State<CustomerNoteEditor> {
   @override
   Widget build(BuildContext context) => widget.inline
       ? _inlineComposer()
-      : PopScope(
-          canPop: !_saving,
+      : DialogKeyboardScope(
+          key: _keyboard,
+          busy: _saving,
+          onSubmit: _save,
+          hasChanges: () => _text.text != (widget.note?.text ?? ''),
           child: AlertDialog(
             title: Text(
               widget.note == null ? 'Новая заметка' : 'Редактировать заметку',
@@ -160,7 +167,9 @@ class _CustomerNoteEditorState extends State<CustomerNoteEditor> {
             ),
             actions: [
               TextButton(
-                onPressed: _saving ? null : () => Navigator.of(context).pop(),
+                onPressed: _saving
+                    ? null
+                    : () => _keyboard.currentState?.requestClose(),
                 child: const Text('Отмена'),
               ),
               FilledButton(
@@ -240,49 +249,54 @@ class _CustomerNoteEditorState extends State<CustomerNoteEditor> {
           ),
       child: Text(_saving ? 'Сохранение…' : 'Сохранить'),
     );
-    return PopScope(
-      canPop: !_saving,
-      child: Form(
-        key: _form,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            LayoutBuilder(
-              builder: (_, constraints) => constraints.maxWidth < 440
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        field,
-                        const SizedBox(height: 8),
-                        Align(alignment: Alignment.centerRight, child: save),
-                      ],
-                    )
-                  : Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(child: field),
-                        const SizedBox(width: 10),
-                        save,
-                      ],
+    return CommandScope(
+      commands: {AppCommand.submitForm: _save},
+      child: PopScope(
+        canPop: !_saving,
+        child: Form(
+          key: _form,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              LayoutBuilder(
+                builder: (_, constraints) => constraints.maxWidth < 440
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          field,
+                          const SizedBox(height: 8),
+                          Align(alignment: Alignment.centerRight, child: save),
+                        ],
+                      )
+                    : Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: field),
+                          const SizedBox(width: 10),
+                          save,
+                        ],
+                      ),
+              ),
+              if (_error != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    _error!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
                     ),
-            ),
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  _error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  ),
                 ),
-              ),
-            if (_refreshRequired)
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text(
-                  'Обновите заметки перед повторной попыткой. Черновик сохранён в поле ввода.',
+              if (_refreshRequired)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: Text(
+                    'Обновите заметки перед повторной попыткой. Черновик сохранён в поле ввода.',
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -325,8 +339,8 @@ class _ArchiveCustomerNoteDialogState extends State<ArchiveCustomerNoteDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => PopScope(
-    canPop: !_saving,
+  Widget build(BuildContext context) => DialogKeyboardScope(
+    busy: _saving,
     child: AlertDialog(
       title: const Text('Архивировать заметку?'),
       scrollable: true,

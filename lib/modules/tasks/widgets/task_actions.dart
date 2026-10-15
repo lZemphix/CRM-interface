@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 
 import '../models/taskboard.dart';
 import '../models/tasks.dart';
@@ -30,6 +31,8 @@ class TaskActionWindow extends StatefulWidget {
 
 class _TaskActionWindowState extends State<TaskActionWindow> {
   final _formKey = GlobalKey<FormState>();
+  final _keyboard = GlobalKey<DialogKeyboardScopeState>();
+  bool _dirty = false;
   late String _title;
   late String _description;
   Priority? _priority;
@@ -103,8 +106,11 @@ class _TaskActionWindowState extends State<TaskActionWindow> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: !_saving,
+    return DialogKeyboardScope(
+      key: _keyboard,
+      busy: _saving,
+      onSubmit: _save,
+      hasChanges: () => _dirty || _customerChanged || _reason.isNotEmpty,
       child: AlertDialog(
         title: Text(
           _isEdit ? 'Редактировать задачу' : 'Назначить ответственного',
@@ -114,6 +120,7 @@ class _TaskActionWindowState extends State<TaskActionWindow> {
           child: SingleChildScrollView(
             child: Form(
               key: _formKey,
+              onChanged: () => _dirty = true,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -136,7 +143,9 @@ class _TaskActionWindowState extends State<TaskActionWindow> {
         ),
         actions: [
           TextButton(
-            onPressed: _saving ? null : () => Navigator.of(context).pop(),
+            onPressed: _saving
+                ? null
+                : () => _keyboard.currentState?.requestClose(),
             child: const Text('Отмена'),
           ),
           FilledButton(

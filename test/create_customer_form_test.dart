@@ -266,7 +266,10 @@ void main() {
       tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
       isNull,
     );
-    expect(tester.widget<PopScope>(find.byType(PopScope).last).canPop, isFalse);
+    await Navigator.of(tester.element(find.byType(CreateCustomerWindow)))
+        .maybePop();
+    await tester.pump();
+    expect(find.byType(CreateCustomerWindow), findsOneWidget);
     expect(calls, 1);
     pending.complete(result());
     await tester.pumpAndSettle();

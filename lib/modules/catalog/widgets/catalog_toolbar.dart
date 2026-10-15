@@ -14,9 +14,11 @@ class CatalogToolbar extends StatelessWidget {
     required this.onSearchSubmitted,
     required this.onKindChanged,
     required this.onCategoryChanged,
+    this.searchFocusNode,
   });
 
   final TextEditingController searchController;
+  final FocusNode? searchFocusNode;
   final CatalogKind? kind;
   final String? category;
   final List<String> categories;
@@ -92,6 +94,7 @@ class CatalogToolbar extends StatelessWidget {
   Widget _search() => TextField(
     key: const Key('catalog-search'),
     controller: searchController,
+    focusNode: searchFocusNode,
     maxLength: 100,
     style: const TextStyle(fontSize: 12),
     decoration: InputDecoration(

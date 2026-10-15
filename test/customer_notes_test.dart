@@ -482,6 +482,8 @@ void main() {
       expect(find.text('Черновик'), findsOneWidget);
       await tester.tap(find.text('Отмена'));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Не сохранять'));
+      await tester.pumpAndSettle();
       repo.failure = null;
       repo.notes = [
         CustomerNote.fromJson(noteJson(text: 'Чужая правка', version: 5)),

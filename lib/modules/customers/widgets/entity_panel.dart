@@ -10,17 +10,23 @@ import 'package:crm_interface/modules/customers/repos/customers_repository.dart'
 import 'customer_identity.dart';
 
 import 'package:flutter/material.dart';
+import 'package:crm_interface/core/keyboard/command_scope.dart';
+import 'package:crm_interface/core/keyboard/keybindings.dart';
 
 class EntityPanel extends StatefulWidget {
   const EntityPanel({
     super.key,
     required this.apiClient,
     required this.onCustomerSelected,
+    this.searchFocusNode,
+    this.reloadToken = 0,
   });
 
   final ApiClient apiClient;
   final String title = 'Клиенты';
   final ValueChanged<Customer> onCustomerSelected;
+  final FocusNode? searchFocusNode;
+  final int reloadToken;
 
   @override
   State<EntityPanel> createState() => _ListPanelState();
@@ -30,6 +36,8 @@ class _ListPanelState extends State<EntityPanel> {
   late Future<List<Customer>> customersFuture;
   late final CustomersRepository _repository;
   final _searchController = TextEditingController();
+  final _localSearchFocus = FocusNode();
+  FocusNode get _searchFocus => widget.searchFocusNode ?? _localSearchFocus;
   Timer? _searchDebounce;
   String _searchQuery = '';
   bool _isSearchPending = false;
@@ -57,6 +65,12 @@ class _ListPanelState extends State<EntityPanel> {
     });
   }
 
+  @override
+  void didUpdateWidget(covariant EntityPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.reloadToken != widget.reloadToken) _refreshCustomers();
+  }
+
   void _onSearchChanged(String text) {
     _searchDebounce?.cancel();
     final query = text.trim();
@@ -81,6 +95,7 @@ class _ListPanelState extends State<EntityPanel> {
 
   @override
   void dispose() {
+    _localSearchFocus.dispose();
     _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
@@ -110,32 +125,35 @@ class _ListPanelState extends State<EntityPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(
-          right: BorderSide(color: AppColors.notActiveBorder, width: 1),
-        ),
-      ),
+    return CommandScope(
+      commands: {AppCommand.focusSearch: _searchFocus.requestFocus},
       child: Container(
         decoration: BoxDecoration(
           border: Border(
-            bottom: BorderSide(color: AppColors.notActiveBorder, width: 1),
+            right: BorderSide(color: AppColors.notActiveBorder, width: 1),
           ),
         ),
-        child: Column(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  bottom: BorderSide(color: AppColors.notActiveBorder),
-                ),
-              ),
-              padding: EdgeInsets.all(20),
-              child: listPanelHead(),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: AppColors.notActiveBorder, width: 1),
             ),
-            Expanded(child: customersList()),
-          ],
+          ),
+          child: Column(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(color: AppColors.notActiveBorder),
+                  ),
+                ),
+                padding: EdgeInsets.all(20),
+                child: listPanelHead(),
+              ),
+              Expanded(child: customersList()),
+            ],
+          ),
         ),
       ),
     );
@@ -148,6 +166,7 @@ class _ListPanelState extends State<EntityPanel> {
       children: [
         titleArea(),
         TextField(
+          focusNode: _searchFocus,
           key: const Key('customer-list-search'),
           controller: _searchController,
           maxLength: 100,

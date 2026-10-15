@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 import '../api_client/endpoint.dart';
 import '../settings/server_settings.dart';
 import 'server_probe.dart';
+import '../keyboard/command_scope.dart';
+import '../keyboard/dialog_keyboard_scope.dart';
+import '../keyboard/keybindings.dart';
 
 class ServerSettingsForm extends StatefulWidget {
   const ServerSettingsForm({
@@ -28,6 +31,7 @@ class ServerSettingsForm extends StatefulWidget {
 
 class _ServerSettingsFormState extends State<ServerSettingsForm> {
   final _form = GlobalKey<FormState>();
+  final _keyboard = GlobalKey<DialogKeyboardScopeState>();
   late final _address = TextEditingController(text: widget.initialUrl);
   bool _busy = false;
   bool _allowHttp = false;
@@ -82,7 +86,7 @@ class _ServerSettingsFormState extends State<ServerSettingsForm> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
+    final form = PopScope(
       canPop: !_busy,
       child: Form(
         key: _form,
@@ -101,6 +105,7 @@ class _ServerSettingsFormState extends State<ServerSettingsForm> {
             if (widget.notice != null) Text(widget.notice!),
             TextFormField(
               key: const Key('server-address'),
+              autofocus: true,
               controller: _address,
               enabled: !_busy,
               autocorrect: false,
@@ -122,7 +127,6 @@ class _ServerSettingsFormState extends State<ServerSettingsForm> {
                   return error.message;
                 }
               },
-              onFieldSubmitted: (_) => _save(),
             ),
             if (Uri.tryParse(_address.text.trim())?.scheme == 'http')
               CheckboxListTile(
@@ -152,7 +156,9 @@ class _ServerSettingsFormState extends State<ServerSettingsForm> {
               children: [
                 if (widget.onCancel != null)
                   TextButton(
-                    onPressed: _busy ? null : widget.onCancel,
+                    onPressed: _busy
+                        ? null
+                        : () => _keyboard.currentState?.requestClose(),
                     child: const Text('Отмена'),
                   ),
                 FilledButton(
@@ -166,5 +172,16 @@ class _ServerSettingsFormState extends State<ServerSettingsForm> {
         ),
       ),
     );
+    if (widget.onCancel != null) {
+      return DialogKeyboardScope(
+        key: _keyboard,
+        busy: _busy,
+        hasChanges: () => _address.text.trim() != widget.initialUrl.trim(),
+        onSubmit: _save,
+        onClose: widget.onCancel,
+        child: form,
+      );
+    }
+    return CommandScope(commands: {AppCommand.submitForm: _save}, child: form);
   }
 }

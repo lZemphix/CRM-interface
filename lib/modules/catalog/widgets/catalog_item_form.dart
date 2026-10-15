@@ -1,5 +1,6 @@
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
 import 'package:flutter/material.dart';
+import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 
 import '../models/catalog_input.dart';
 import '../models/catalog_item.dart';
@@ -23,6 +24,8 @@ class CatalogItemForm extends StatefulWidget {
 
 class _CatalogItemFormState extends State<CatalogItemForm> {
   final _form = GlobalKey<FormState>();
+  final _keyboard = GlobalKey<DialogKeyboardScopeState>();
+  bool _dirty = false;
   late final TextEditingController _name;
   late final TextEditingController _description;
   late final TextEditingController _price;
@@ -229,6 +232,7 @@ class _CatalogItemFormState extends State<CatalogItemForm> {
 
   Widget _fields() => Form(
     key: _form,
+    onChanged: () => _dirty = true,
     child: SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -296,8 +300,15 @@ class _CatalogItemFormState extends State<CatalogItemForm> {
   );
 
   @override
-  Widget build(BuildContext context) => PopScope(
-    canPop: !_saving,
+  Widget build(BuildContext context) => DialogKeyboardScope(
+    key: _keyboard,
+    busy: _saving,
+    onSubmit: _submit,
+    hasChanges: () =>
+        _dirty ||
+        _categoryController.text != (widget.details?.item.category ?? '') ||
+        _kind != (widget.details?.item.kind ?? CatalogKind.service) ||
+        _active != (widget.details?.item.isActive ?? true),
     child: Theme(
       data: Theme.of(context).copyWith(
         inputDecorationTheme: InputDecorationTheme(
@@ -329,7 +340,9 @@ class _CatalogItemFormState extends State<CatalogItemForm> {
         content: SizedBox(width: 520, child: _fields()),
         actions: [
           TextButton(
-            onPressed: _saving ? null : () => Navigator.of(context).pop(false),
+            onPressed: _saving
+                ? null
+                : () => _keyboard.currentState?.requestClose(),
             child: const Text('Отмена'),
           ),
           FilledButton(

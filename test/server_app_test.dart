@@ -201,6 +201,8 @@ void main() {
       expect(factory.created.single.retired, isFalse);
       await tester.tap(find.text('Отмена'));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Не сохранять'));
+      await tester.pumpAndSettle();
       expect(find.text('Войти'), findsOneWidget);
       expect(factory.created, hasLength(1));
     },
@@ -318,6 +320,8 @@ void main() {
       expect(find.byType(Dialog), findsOneWidget);
       await tester.tap(find.text('Отмена'));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Не сохранять'));
+      await tester.pumpAndSettle();
       expect(find.text('Сервер: https://old.example'), findsOneWidget);
       expect(factory.created.last.retired, isFalse);
     },
@@ -340,6 +344,8 @@ void main() {
     expect(factory.created, hasLength(1));
     factory.failRetire = false;
     await tester.tap(find.text('Отмена'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Не сохранять'));
     await tester.pumpAndSettle();
     expect(find.text('Войти'), findsOneWidget);
     expect(factory.created.last.url, 'https://old.example');

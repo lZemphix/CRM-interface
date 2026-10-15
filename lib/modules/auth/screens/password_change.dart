@@ -3,6 +3,8 @@ import 'package:crm_interface/modules/auth/repos/auth.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:crm_interface/core/keyboard/command_scope.dart';
+import 'package:crm_interface/core/keyboard/keybindings.dart';
 
 class ChangeFormScreen extends StatefulWidget {
   const ChangeFormScreen({
@@ -25,10 +27,14 @@ class _ChangeFormScreenState extends State<ChangeFormScreen> {
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _fields = List.generate(3, (_) => FocusNode());
   bool _isSubmitting = false;
 
   @override
   void dispose() {
+    for (final node in _fields) {
+      node.dispose();
+    }
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
@@ -87,83 +93,107 @@ class _ChangeFormScreenState extends State<ChangeFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          child: Center(
-            child: Container(
-              width: 350,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.notActiveBorder),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  spacing: 10,
-                  children: [
-                    const Text('Смена временного пароля'),
-                    TextFormField(
-                      controller: _currentPasswordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Текущий пароль',
-                        border: OutlineInputBorder(),
+    return CommandScope(
+      commands: {
+        AppCommand.submitAuth: () {
+          if (_isSubmitting) return;
+          final index = _fields.indexWhere((field) => field.hasFocus);
+          if (index >= 0 && index < 2) {
+            _fields[index + 1].requestFocus();
+          } else {
+            _submit();
+          }
+        },
+        AppCommand.submitForm: _submit,
+      },
+      child: Scaffold(
+        body: Center(
+          child: SingleChildScrollView(
+            child: Center(
+              child: Container(
+                width: 350,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.notActiveBorder),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: 10,
+                    children: [
+                      const Text('Смена временного пароля'),
+                      TextFormField(
+                        autofocus: true,
+                        focusNode: _fields[0],
+                        enabled: !_isSubmitting,
+                        textInputAction: TextInputAction.next,
+                        controller: _currentPasswordController,
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Текущий пароль',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) => value == null || value.isEmpty
+                            ? 'Введите текущий пароль'
+                            : null,
                       ),
-                      validator: (value) => value == null || value.isEmpty
-                          ? 'Введите текущий пароль'
-                          : null,
-                    ),
-                    TextFormField(
-                      controller: _newPasswordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Новый пароль',
-                        border: OutlineInputBorder(),
+                      TextFormField(
+                        focusNode: _fields[1],
+                        enabled: !_isSubmitting,
+                        textInputAction: TextInputAction.next,
+                        controller: _newPasswordController,
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Новый пароль',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) {
+                          if (value == null ||
+                              value.length < 15 ||
+                              value.length > 128) {
+                            return 'От 15 до 128 символов';
+                          }
+                          if (value == _currentPasswordController.text) {
+                            return 'Новый пароль должен отличаться от текущего';
+                          }
+                          return null;
+                        },
                       ),
-                      validator: (value) {
-                        if (value == null ||
-                            value.length < 15 ||
-                            value.length > 128) {
-                          return 'От 15 до 128 символов';
-                        }
-                        if (value == _currentPasswordController.text) {
-                          return 'Новый пароль должен отличаться от текущего';
-                        }
-                        return null;
-                      },
-                    ),
-                    TextFormField(
-                      controller: _confirmPasswordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Повторите новый пароль',
-                        border: OutlineInputBorder(),
+                      TextFormField(
+                        focusNode: _fields[2],
+                        enabled: !_isSubmitting,
+                        controller: _confirmPasswordController,
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Повторите новый пароль',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) =>
+                            value == _newPasswordController.text
+                            ? null
+                            : 'Пароли не совпадают',
                       ),
-                      validator: (value) => value == _newPasswordController.text
-                          ? null
-                          : 'Пароли не совпадают',
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        ElevatedButton(
-                          onPressed: _isSubmitting ? null : _submit,
-                          child: Text(
-                            _isSubmitting ? 'Сохраняем…' : 'Сменить пароль',
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          ElevatedButton(
+                            onPressed: _isSubmitting ? null : _submit,
+                            child: Text(
+                              _isSubmitting ? 'Сохраняем…' : 'Сменить пароль',
+                            ),
                           ),
-                        ),
-                        TextButton(
-                          onPressed: _isSubmitting
-                              ? null
-                              : widget.onReturnToLogin,
-                          child: const Text('Назад'),
-                        ),
-                      ],
-                    ),
-                  ],
+                          TextButton(
+                            onPressed: _isSubmitting
+                                ? null
+                                : widget.onReturnToLogin,
+                            child: const Text('Назад'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

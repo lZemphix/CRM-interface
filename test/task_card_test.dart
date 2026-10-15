@@ -2,6 +2,9 @@ import 'package:crm_interface/modules/tasks/models/taskboard.dart';
 import 'package:crm_interface/modules/tasks/widgets/task_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:appflowy_board/appflowy_board.dart';
+import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/modules/tasks/widgets/task_subtasks.dart';
 
 TaskboardTask makeTask({
   String title = 'Позвонить клиенту',
@@ -34,6 +37,7 @@ Future<void> pumpCard(
   ValueChanged<TaskCardAction>? onAction,
   bool compact = false,
   double width = 300,
+  int? currentEmployeeId,
   Future<void> Function(TaskboardTaskSubtask, bool)? onSubtaskChanged,
 }) async {
   await tester.pumpWidget(
@@ -47,6 +51,7 @@ Future<void> pumpCard(
               task: task,
               onAction: onAction,
               compact: compact,
+              currentEmployeeId: currentEmployeeId,
               onSubtaskChanged: onSubtaskChanged,
             ),
           ),
@@ -58,6 +63,133 @@ Future<void> pumpCard(
 }
 
 void main() {
+  BoxDecoration decoration(WidgetTester tester) => tester
+      .widget<AppFlowyGroupCard>(find.byType(AppFlowyGroupCard))
+      .decoration;
+
+  testWidgets(
+    'own card is blue and labelled by employee ID, even without a name',
+    (tester) async {
+      await pumpCard(tester, makeTask(responsibleId: 7), currentEmployeeId: 7);
+      expect(decoration(tester).color, AppColors.ownTaskBackground);
+      expect(
+        (decoration(tester).border! as Border).left.color,
+        AppColors.ownTaskBorder,
+      );
+      expect(find.text('Вам · Сотрудник #7'), findsOneWidget);
+      expect(find.byType(ClipRRect), findsOneWidget);
+    },
+  );
+
+  testWidgets('another employee with the same name is not highlighted', (
+    tester,
+  ) async {
+    await pumpCard(
+      tester,
+      makeTask(responsibleId: 8, responsibleName: 'Одинаковое имя'),
+      currentEmployeeId: 7,
+    );
+    expect(decoration(tester).color, AppColors.taskCardBackground);
+    expect(find.textContaining('Вам ·'), findsNothing);
+  });
+
+  testWidgets(
+    'missing viewer and unassigned tasks never produce false ownership',
+    (tester) async {
+      for (final ids in [(null, null), (null, 7), (7, null)]) {
+        await pumpCard(
+          tester,
+          makeTask(responsibleId: ids.$2),
+          currentEmployeeId: ids.$1,
+        );
+        expect(decoration(tester).color, AppColors.taskCardBackground);
+        expect(find.textContaining('Вам ·'), findsNothing);
+      }
+    },
+  );
+
+  testWidgets('assignment and viewer changes update ownership immediately', (
+    tester,
+  ) async {
+    for (final ids in [(7, 7), (7, 8), (7, null), (8, 8), (null, 8)]) {
+      await pumpCard(
+        tester,
+        makeTask(responsibleId: ids.$2),
+        currentEmployeeId: ids.$1,
+      );
+      expect(
+        decoration(tester).color,
+        ids.$1 != null && ids.$1 == ids.$2
+            ? AppColors.ownTaskBackground
+            : AppColors.taskCardBackground,
+      );
+    }
+  });
+
+  testWidgets('own narrow cards retain actions and subtasks', (tester) async {
+    final actions = <TaskCardAction>[];
+    final checked = <bool>[];
+    await pumpCard(
+      tester,
+      makeTask(
+        responsibleId: 7,
+        responsibleName: 'Очень длинное имя текущего сотрудника',
+        priority: 'urgent',
+        subtasks: const [
+          TaskboardTaskSubtask(id: 1, title: 'Проверка', done: false, order: 0),
+        ],
+      ),
+      currentEmployeeId: 7,
+      width: 170,
+      onAction: actions.add,
+      onSubtaskChanged: (_, value) async => checked.add(value),
+    );
+    await tester.tap(find.text('Подзадачи · 0/1'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(Checkbox));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Действия с задачей'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('История задачи'));
+    await tester.pumpAndSettle();
+    expect(checked, [true]);
+    expect(actions, [TaskCardAction.history]);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('compact customer task cards keep their existing design', (
+    tester,
+  ) async {
+    await pumpCard(
+      tester,
+      makeTask(responsibleId: 7),
+      currentEmployeeId: 7,
+      compact: true,
+    );
+    expect(find.byType(AppFlowyGroupCard), findsNothing);
+    expect(find.textContaining('Вам ·'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('highlight changes preserve the expanded checklist State', (
+    tester,
+  ) async {
+    final task = makeTask(
+      responsibleId: 7,
+      subtasks: const [
+        TaskboardTaskSubtask(id: 1, title: 'Проверка', done: false, order: 0),
+      ],
+    );
+    await pumpCard(tester, task);
+    await tester.tap(find.text('Подзадачи · 0/1'));
+    await tester.pumpAndSettle();
+    final state = tester.state(find.byType(TaskSubtasks));
+    await pumpCard(tester, task, currentEmployeeId: 7);
+    expect(tester.state(find.byType(TaskSubtasks)), same(state));
+    expect(find.byType(Checkbox), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('narrow kanban cards keep menus and subtasks usable', (
     tester,
   ) async {

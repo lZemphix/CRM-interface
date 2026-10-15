@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:crm_interface/core/modules/module_data_changes.dart';
+import 'package:crm_interface/core/auth/current_employee_scope.dart';
 
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
 import 'package:crm_interface/core/widgets/material_button.dart';
@@ -552,6 +553,7 @@ class _TasksScreenState extends State<TasksScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final currentEmployeeId = CurrentEmployeeScope.idOf(context);
     return AbsorbPointer(
       key: const Key('tasks-move-guard'),
       absorbing: _isMovingTask,
@@ -571,14 +573,14 @@ class _TasksScreenState extends State<TasksScreen> with WidgetsBindingObserver {
                 ),
               ),
             if (_isMovingTask) const LinearProgressIndicator(),
-            canbanBoard(),
+            canbanBoard(currentEmployeeId),
           ],
         ),
       ),
     );
   }
 
-  Widget canbanBoard() {
+  Widget canbanBoard(int? currentEmployeeId) {
     if (!_isBoardLoaded) {
       return Expanded(
         child: Center(
@@ -673,6 +675,8 @@ class _TasksScreenState extends State<TasksScreen> with WidgetsBindingObserver {
                   return TaskCard(
                     key: ValueKey(card.id),
                     task: card.task,
+                    // Explicit value also survives AppFlowy's root drag overlay.
+                    currentEmployeeId: currentEmployeeId,
                     onAction: (action) => _openTaskAction(card.task, action),
                     onSubtaskChanged: (subtask, done) =>
                         _markSubtask(card.task, subtask, done),

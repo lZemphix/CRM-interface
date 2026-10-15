@@ -15,10 +15,12 @@ class TaskCard extends StatelessWidget {
     this.onSubtaskChanged,
     this.onAction,
     this.compact = false,
+    this.currentEmployeeId,
   });
 
   final TaskboardTask task;
   final bool compact;
+  final int? currentEmployeeId;
   final ValueChanged<TaskCardAction>? onAction;
   final Future<void> Function(TaskboardTaskSubtask, bool)? onSubtaskChanged;
 
@@ -27,12 +29,19 @@ class TaskCard extends StatelessWidget {
     final description = task.description?.trim();
 
     if (compact) return _buildCompactCard(description);
+    final isMine =
+        currentEmployeeId != null &&
+        task.responsibleEmployeeId == currentEmployeeId;
 
     return AppFlowyGroupCard(
       margin: const EdgeInsets.fromLTRB(8, 0, 8, 10),
       decoration: BoxDecoration(
-        color: AppColors.taskCardBackground,
-        border: Border.all(color: AppColors.notActiveBorder),
+        color: isMine
+            ? AppColors.ownTaskBackground
+            : AppColors.taskCardBackground,
+        border: Border.all(
+          color: isMine ? AppColors.ownTaskBorder : AppColors.notActiveBorder,
+        ),
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
           BoxShadow(
@@ -42,69 +51,94 @@ class TaskCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildHeading(),
-            if (task.status != null) ...[
-              const SizedBox(height: 5),
-              Text(
-                _statusLabel(),
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textMutted,
-                ),
-              ),
-            ],
-            if (description != null && description.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              _buildDescription(description),
-            ],
-            const SizedBox(height: 12),
-            _buildAssignee(),
-            if (task.customerId != null) ...[
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.person_outline,
-                    size: 14,
+      child: _withOwnAccent(
+        isMine,
+        Padding(
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildHeading(),
+              if (task.status != null) ...[
+                const SizedBox(height: 5),
+                Text(
+                  _statusLabel(),
+                  style: const TextStyle(
+                    fontSize: 11,
                     color: AppColors.textMutted,
                   ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      task.customerName ?? 'Клиент #${task.customerId}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textMutted,
+                ),
+              ],
+              if (description != null && description.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _buildDescription(description),
+              ],
+              const SizedBox(height: 12),
+              _buildAssignee(isMine: isMine),
+              if (task.customerId != null) ...[
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.person_outline,
+                      size: 14,
+                      color: AppColors.textMutted,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        task.customerName ?? 'Клиент #${task.customerId}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textMutted,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
+              if (task.dueAt != null || task.dueDate != null) ...[
+                const SizedBox(height: 6),
+                _buildDeadline(),
+              ],
+              const SizedBox(height: 12),
+              _buildProgress(),
+              if (task.subtasks.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                TaskSubtasks(
+                  taskId: task.id,
+                  subtasks: task.subtasks,
+                  onChanged: onSubtaskChanged,
+                ),
+              ],
             ],
-            if (task.dueAt != null || task.dueDate != null) ...[
-              const SizedBox(height: 6),
-              _buildDeadline(),
-            ],
-            const SizedBox(height: 12),
-            _buildProgress(),
-            if (task.subtasks.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              TaskSubtasks(
-                taskId: task.id,
-                subtasks: task.subtasks,
-                onChanged: onSubtaskChanged,
-              ),
-            ],
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _withOwnAccent(bool isMine, Widget child) {
+    return ClipRRect(
+      // Keep the subtree stable when the profile/assignment changes.
+      clipBehavior: isMine ? Clip.antiAlias : Clip.none,
+      borderRadius: BorderRadius.circular(11),
+      child: Stack(
+        children: [
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 3,
+            child: ColoredBox(
+              color: isMine ? AppColors.ownTaskAccent : Colors.transparent,
+            ),
+          ),
+          child,
+        ],
       ),
     );
   }
@@ -313,7 +347,7 @@ class TaskCard extends StatelessWidget {
     );
   }
 
-  Widget _buildAssignee() {
+  Widget _buildAssignee({bool isMine = false}) {
     final name = task.responsibleEmployeeName?.trim();
     String label = 'Без ответственного';
     if (name != null && name.isNotEmpty) {
@@ -321,7 +355,27 @@ class TaskCard extends StatelessWidget {
     } else if (task.responsibleEmployeeId != null) {
       label = 'Сотрудник #${task.responsibleEmployeeId}';
     }
-    return _buildMetadataLine(Icons.person_outline_rounded, label);
+    if (!isMine) return _buildMetadataLine(Icons.person_outline_rounded, label);
+    return Tooltip(
+      message: 'Назначено вам · $label',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppColors.ownTaskBadgeBackground,
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: Text(
+          'Вам · $label',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: AppColors.ownTaskText,
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildDeadline() {

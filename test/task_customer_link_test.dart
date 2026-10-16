@@ -175,8 +175,11 @@ void main() {
                     action: TaskCardAction.edit,
                     employees: const [],
                     searchCustomers: (_) async => [customer],
-                    onEdit: (request) async => sent = request,
-                    onAssign: (_) async {},
+                    onEdit: (request) async {
+                      sent = request;
+                      return linkedTask();
+                    },
+                    onAssign: (_) async => linkedTask(),
                   ),
                 ),
                 child: const Text('Открыть'),
@@ -438,8 +441,11 @@ void main() {
                     action: TaskCardAction.edit,
                     employees: const [],
                     searchCustomers: (_) async => [customer],
-                    onEdit: (request) async => sent = request,
-                    onAssign: (_) async {},
+                    onEdit: (request) async {
+                      sent = request;
+                      return linkedTask();
+                    },
+                    onAssign: (_) async => linkedTask(),
                   ),
                 ),
                 child: const Text('Открыть'),

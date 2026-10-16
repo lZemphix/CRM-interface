@@ -210,7 +210,7 @@ void main() {
         lessThan(tester.getTopLeft(settings).dy),
       );
       expect(tester.widget<IconButton>(settings).onPressed, isNull);
-      expect(find.byTooltip('Параметры — горячие клавиши'), findsOneWidget);
+      expect(find.byTooltip('Параметры'), findsOneWidget);
       await tester.tap(avatar);
       await tester.pumpAndSettle();
       expect(find.text('Об аккаунте'), findsOneWidget);

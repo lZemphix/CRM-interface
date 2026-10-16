@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 
-import '../../../core/theme/light/colorscheme.dart';
+import '../../../core/theme/app_palette.dart';
 import '../models/create_customer.dart';
 import '../models/customer.dart';
 import '../repos/customers_repository.dart';
@@ -140,7 +140,7 @@ class _CreateCustomerWindowState extends State<CreateCustomerWindow> {
       hasChanges: () => _dirty,
       onSubmit: _submit,
       child: AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: context.colors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,7 +170,7 @@ class _CreateCustomerWindowState extends State<CreateCustomerWindow> {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.activeElement,
+              backgroundColor: context.colors.activeElement,
             ),
             onPressed:
                 _isSaving || _isLoading || _options?.sources.isNotEmpty != true

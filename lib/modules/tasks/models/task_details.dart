@@ -104,14 +104,57 @@ class TaskDetails {
     required this.columnHistory,
     required this.statusHistory,
     required this.assignmentHistory,
+    this.author,
+    this.createdByEmployeeId,
+    this.createdAt,
+    this.updatedAt,
   });
   final TaskboardTask task;
   final List<TaskColumnChange> columnHistory;
   final List<TaskStatusChange> statusHistory;
   final List<TaskAssignmentChange> assignmentHistory;
+  final TaskEmployee? author;
+  final int? createdByEmployeeId;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  TaskAssignmentChange? get currentAssignment {
+    if (task.responsibleEmployeeId == null || assignmentHistory.isEmpty) {
+      return null;
+    }
+    final latest = assignmentHistory.reduce(
+      (previous, next) =>
+          next.changedAt.isBefore(previous.changedAt) ? previous : next,
+    );
+    // Never attribute the current executor to an older matching assignment.
+    return latest.newEmployee?.id == task.responsibleEmployeeId ? latest : null;
+  }
+
+  String? get columnName {
+    if (columnHistory.isEmpty) return null;
+    final latest = columnHistory.reduce(
+      (previous, next) =>
+          next.changedAt.isBefore(previous.changedAt) ? previous : next,
+    );
+    return latest.newColumn.id.toString() == task.columnId
+        ? latest.newColumn.name
+        : null;
+  }
 
   factory TaskDetails.fromApi(Map<String, dynamic> json) => TaskDetails(
     task: TaskboardTask.fromApi(json),
+    author: json['author'] == null
+        ? null
+        : TaskEmployee.fromApi(
+            Map<String, dynamic>.from(json['author'] as Map),
+          ),
+    createdByEmployeeId: json['created_by_employee_id'] as int?,
+    createdAt: json['created_at'] == null
+        ? null
+        : DateTime.parse(json['created_at'] as String),
+    updatedAt: json['updated_at'] == null
+        ? null
+        : DateTime.parse(json['updated_at'] as String),
     columnHistory: (json['column_history'] as List)
         .map(
           (item) =>

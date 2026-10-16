@@ -1,4 +1,4 @@
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 
@@ -133,7 +133,7 @@ class _CreateRoleDialogState extends State<CreateRoleDialog> {
             key: ValueKey('role-permission-${permission.code}'),
             contentPadding: EdgeInsets.zero,
             controlAffinity: ListTileControlAffinity.leading,
-            activeColor: AppColors.activeElement,
+            activeColor: context.colors.activeElement,
             dense: true,
             title: Text(permission.name, style: const TextStyle(fontSize: 12)),
             subtitle: Text(
@@ -142,7 +142,7 @@ class _CreateRoleDialogState extends State<CreateRoleDialog> {
                 if (permission.description?.isNotEmpty == true)
                   permission.description!,
               ].join('\n'),
-              style: const TextStyle(fontSize: 11, color: AppColors.textMutted),
+              style: TextStyle(fontSize: 11, color: context.colors.textMutted),
             ),
             value: _selected.contains(permission.code),
             onChanged: _saving
@@ -218,7 +218,7 @@ class _CreateRoleDialogState extends State<CreateRoleDialog> {
             FilledButton(
               key: const Key('role-create-submit'),
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.activeElement,
+                backgroundColor: context.colors.activeElement,
               ),
               onPressed: _saving || _blocked ? null : _submit,
               child: Text(_saving ? 'Создаём…' : 'Создать роль'),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/light/colorscheme.dart';
+import '../../../../core/theme/app_palette.dart';
 
 /// Client header actions follow btn-primary / btn-ghost in crm_template.html.
 class CustomerActionButton extends StatelessWidget {
@@ -31,14 +31,14 @@ class CustomerActionButton extends StatelessWidget {
       ),
       foregroundColor: WidgetStateProperty.resolveWith(
         (states) => states.contains(WidgetState.disabled)
-            ? AppColors.textMutted
+            ? context.colors.textMutted
             : primary
-            ? Colors.white
-            : const Color(0xFF172033),
+            ? context.colors.onAccent
+            : context.colors.text,
       ),
       backgroundColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.disabled)) {
-          return AppColors.notActiveBorder;
+          return context.colors.notActiveBorder;
         }
         final highlighted = states.any(
           {
@@ -49,13 +49,13 @@ class CustomerActionButton extends StatelessWidget {
         );
         if (primary) {
           return highlighted
-              ? AppColors.activeElementHover
-              : AppColors.activeElement;
+              ? context.colors.activeElementHover
+              : context.colors.activeElement;
         }
         return states.contains(WidgetState.pressed) ||
                 states.contains(WidgetState.focused)
-            ? AppColors.background
-            : Colors.white;
+            ? context.colors.background
+            : context.colors.surface;
       }),
       side: WidgetStateProperty.resolveWith(
         (states) => primary
@@ -64,8 +64,8 @@ class CustomerActionButton extends StatelessWidget {
                 color:
                     states.contains(WidgetState.hovered) ||
                         states.contains(WidgetState.focused)
-                    ? AppColors.textFaint
-                    : AppColors.strongBorder,
+                    ? context.colors.textFaint
+                    : context.colors.strongBorder,
               ),
       ),
       overlayColor: const WidgetStatePropertyAll(Colors.transparent),

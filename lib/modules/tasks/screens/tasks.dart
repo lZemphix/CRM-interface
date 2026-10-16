@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:crm_interface/core/modules/module_data_changes.dart';
 import 'package:crm_interface/core/auth/current_employee_scope.dart';
 
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:crm_interface/core/widgets/material_button.dart';
 import 'package:appflowy_board/appflowy_board.dart';
 import 'package:crm_interface/modules/tasks/models/taskboard.dart';
@@ -23,7 +23,9 @@ import '../widgets/column_decoration.dart';
 import '../widgets/task_actions.dart';
 import '../widgets/move_task_reason.dart';
 import '../widgets/task_history.dart';
+import '../widgets/task_details.dart';
 import '../widgets/board_sync.dart';
+import '../widgets/board_scroll_storage.dart';
 
 export '../widgets/board_sync.dart' show TasksCanbanCard;
 
@@ -41,8 +43,12 @@ class TasksScreen extends StatefulWidget {
 class _TasksScreenState extends State<TasksScreen> with WidgetsBindingObserver {
   late final AppFlowyBoardController _controller;
   final _boardScrollController = ScrollController();
+  final _boardScrollStorage = TaskBoardScrollStorage();
   bool _isChangingColumn = false;
   List<TaskboardColumn> _columns = [];
+  Widget? _boardView;
+  ({List<TaskboardColumn> columns, int? employeeId, bool canCreate})?
+  _boardViewInputs;
   bool _isCreating = false;
   bool _isCreatingColumn = false;
   bool _isBoardLoaded = false;
@@ -56,6 +62,7 @@ class _TasksScreenState extends State<TasksScreen> with WidgetsBindingObserver {
   bool _isOpeningColumnForm = false;
   bool _wasTruncated = false;
   bool _appActive = true;
+  bool _screenVisible = true;
   int _pendingSubtasks = 0;
   final Set<int> _boardPointers = {};
   String? _refreshError;
@@ -64,9 +71,16 @@ class _TasksScreenState extends State<TasksScreen> with WidgetsBindingObserver {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final revision = ModuleDataScope.revisionOf(context);
-    if (_dataRevision != null && _dataRevision != revision) {
+    final wasVisible = _screenVisible;
+    _screenVisible = Visibility.of(context);
+    if (wasVisible && !_screenVisible) {
       _boardRequestId++;
+      _boardPointers.clear();
+    }
+    final revision = ModuleDataScope.revisionOf(context);
+    final dataChanged = _dataRevision != null && _dataRevision != revision;
+    if (dataChanged) _boardRequestId++;
+    if (_screenVisible && (dataChanged || !wasVisible)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) unawaited(_reloadAfterModuleChange());
       });
@@ -83,6 +97,7 @@ class _TasksScreenState extends State<TasksScreen> with WidgetsBindingObserver {
 
   bool get _refreshBlocked =>
       !_appActive ||
+      !_screenVisible ||
       _boardPointers.isNotEmpty ||
       _controller.groupDatas.any(
         (group) => group.items.any((item) => item.isPhantom),
@@ -139,12 +154,18 @@ class _TasksScreenState extends State<TasksScreen> with WidgetsBindingObserver {
           (!recovery && _refreshBlocked)) {
         return;
       }
-      synchronizeTaskBoard(controller, taskboard);
-      setState(() {
-        _columns = taskboard.columns;
-        _isBoardLoaded = true;
-        _refreshError = null;
-      });
+      final tasksChanged = synchronizeTaskBoard(controller, taskboard);
+      final columnsChanged = !sameTaskBoardColumns(_columns, taskboard.columns);
+      if (tasksChanged ||
+          columnsChanged ||
+          !_isBoardLoaded ||
+          _refreshError != null) {
+        setState(() {
+          if (columnsChanged) _columns = taskboard.columns;
+          _isBoardLoaded = true;
+          _refreshError = null;
+        });
+      }
       if (taskboard.truncated && !_wasTruncated) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -198,7 +219,7 @@ class _TasksScreenState extends State<TasksScreen> with WidgetsBindingObserver {
           reason: reason,
         ),
       );
-      await _applyTask(updated);
+      await _acceptTaskChange(updated);
     } on TaskRequestException catch (error) {
       if (!mounted) return;
       await _applyTask(task);
@@ -239,6 +260,7 @@ class _TasksScreenState extends State<TasksScreen> with WidgetsBindingObserver {
       if (!mounted) return;
       _boardRequestId++;
       controller.addGroupItem(newTask.columnId, TasksCanbanCard(task: newTask));
+      const ModuleDataChanged().dispatch(context);
     } finally {
       if (mounted) setState(() => _isCreating = false);
     }
@@ -273,7 +295,7 @@ class _TasksScreenState extends State<TasksScreen> with WidgetsBindingObserver {
         subtask.id,
         MarkSubtaskRequest(done: done, version: task.version),
       );
-      await _applyTask(updated);
+      await _acceptTaskChange(updated);
     } finally {
       _pendingSubtasks--;
       if (mounted) setState(() {});
@@ -298,6 +320,33 @@ class _TasksScreenState extends State<TasksScreen> with WidgetsBindingObserver {
       updated.columnId,
       TasksCanbanCard(task: updated),
     );
+  }
+
+  Future<void> _acceptTaskChange(TaskboardTask updated) async {
+    await _applyTask(updated);
+    if (mounted) const ModuleDataChanged().dispatch(context);
+  }
+
+  Future<void> _openTaskDetails(TaskboardTask task) async {
+    if (_isOpeningTaskAction || _isMovingTask || _pendingSubtasks > 0) return;
+    _boardRequestId++;
+    setState(() => _isOpeningTaskAction = true);
+    try {
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => TaskDetailsWindow(
+          task: task,
+          repository: widget.tasksRepository,
+          onChanged: _acceptTaskChange,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isOpeningTaskAction = false);
+        await _loadBoard(_controller, automatic: true);
+      }
+    }
   }
 
   Future<void> _openTaskAction(
@@ -330,19 +379,27 @@ class _TasksScreenState extends State<TasksScreen> with WidgetsBindingObserver {
           action: action,
           employees: employees,
           searchCustomers: widget.tasksRepository.searchCustomers,
+          onReload: () async {
+            final fresh = (await widget.tasksRepository.getTaskDetails(task.id))
+                .task;
+            await _applyTask(fresh);
+            return fresh;
+          },
           onEdit: (request) async {
             final updated = await widget.tasksRepository.editTask(
               task.id,
               request,
             );
-            await _applyTask(updated);
+            await _acceptTaskChange(updated);
+            return updated;
           },
           onAssign: (request) async {
             final updated = await widget.tasksRepository.assignTask(
               task.id,
               request,
             );
-            await _applyTask(updated);
+            await _acceptTaskChange(updated);
+            return updated;
           },
         ),
       );
@@ -559,7 +616,7 @@ class _TasksScreenState extends State<TasksScreen> with WidgetsBindingObserver {
       absorbing: _isMovingTask,
       child: Container(
         padding: EdgeInsets.all(30),
-        decoration: BoxDecoration(color: AppColors.background),
+        decoration: BoxDecoration(color: context.colors.background),
         child: Column(
           spacing: 24,
           children: [
@@ -596,6 +653,7 @@ class _TasksScreenState extends State<TasksScreen> with WidgetsBindingObserver {
       );
     }
     return Expanded(
+      key: const ValueKey('tasks-board-viewport'),
       child: Listener(
         onPointerDown: (event) {
           _boardPointers.add(event.pointer);
@@ -617,71 +675,9 @@ class _TasksScreenState extends State<TasksScreen> with WidgetsBindingObserver {
             padding: const EdgeInsets.only(bottom: 16),
             child: Align(
               alignment: AlignmentGeometry.topLeft,
-              child: AppFlowyBoard(
-                key: const ValueKey('template-columns-v2'),
-                scrollController: _boardScrollController,
-                background: ListenableBuilder(
-                  listenable: _controller,
-                  builder: (_, _) => SizedBox.expand(
-                    child: CustomPaint(
-                      painter: TaskColumnFrames(
-                        columns: _controller.groupDatas.length,
-                        scrollController: _boardScrollController,
-                      ),
-                    ),
-                  ),
-                ),
-                groupConstraints: const BoxConstraints.tightFor(
-                  width: TaskColumnFrames.slotWidth,
-                ),
-                controller: _controller,
-                config: const AppFlowyBoardConfig(
-                  groupBackgroundColor: Colors.transparent,
-                  groupCornerRadius: 16,
-                  groupMargin: EdgeInsets.symmetric(horizontal: 8),
-                  groupBodyPadding: EdgeInsets.symmetric(horizontal: 2),
-                  stretchGroupHeight: true,
-                ),
-                headerBuilder: (context, groupData) {
-                  return ListenableBuilder(
-                    listenable: _controller.getGroupController(groupData.id)!,
-                    builder: (context, _) => TaskColumnHeader(
-                      title: groupData.headerData.groupName,
-                      taskCount: groupData.items
-                          .whereType<TasksCanbanCard>()
-                          .length,
-                      onAction: (action) =>
-                          _openColumnAction(groupData.id, action),
-                    ),
-                  );
-                },
-                footerBuilder: (context, groupData) {
-                  final column = _columns
-                      .where((column) => column.id == groupData.id)
-                      .firstOrNull;
-                  return TaskColumnFooter(
-                    onCreate:
-                        column?.canCreateTask == true &&
-                            !_isCreating &&
-                            !_isOpeningTaskForm
-                        ? () => _openCreateTask(
-                            initialColumnId: int.parse(groupData.id),
-                          )
-                        : null,
-                  );
-                },
-                cardBuilder: (context, groupData, item) {
-                  final card = item as TasksCanbanCard;
-                  return TaskCard(
-                    key: ValueKey(card.id),
-                    task: card.task,
-                    // Explicit value also survives AppFlowy's root drag overlay.
-                    currentEmployeeId: currentEmployeeId,
-                    onAction: (action) => _openTaskAction(card.task, action),
-                    onSubtaskChanged: (subtask, done) =>
-                        _markSubtask(card.task, subtask, done),
-                  );
-                },
+              child: PageStorage(
+                bucket: _boardScrollStorage,
+                child: _boardViewFor(currentEmployeeId),
               ),
             ),
           ),
@@ -689,6 +685,86 @@ class _TasksScreenState extends State<TasksScreen> with WidgetsBindingObserver {
       ),
     );
   }
+
+  Widget _boardViewFor(int? currentEmployeeId) {
+    final inputs = (
+      columns: _columns,
+      employeeId: currentEmployeeId,
+      canCreate: !_isCreating && !_isOpeningTaskForm,
+    );
+    if (_boardViewInputs != inputs) {
+      _boardViewInputs = inputs;
+      // Loading/error toolbar changes must not rebuild AppFlowy's scroll tree.
+      // Actual task changes are delivered by the existing group controllers.
+      _boardView = _buildBoardView(currentEmployeeId);
+    }
+    return _boardView!;
+  }
+
+  Widget _buildBoardView(int? currentEmployeeId) => AppFlowyBoard(
+    key: const ValueKey('template-columns-v2'),
+    scrollController: _boardScrollController,
+    background: ListenableBuilder(
+      listenable: _controller,
+      builder: (context, _) => SizedBox.expand(
+        child: CustomPaint(
+          painter: TaskColumnFrames(
+            fillColor: context.colors.taskColumnBackground,
+            borderColor: context.colors.notActiveBorder,
+            columns: _controller.groupDatas.length,
+            scrollController: _boardScrollController,
+          ),
+        ),
+      ),
+    ),
+    groupConstraints: const BoxConstraints.tightFor(
+      width: TaskColumnFrames.slotWidth,
+    ),
+    controller: _controller,
+    config: const AppFlowyBoardConfig(
+      groupBackgroundColor: Colors.transparent,
+      groupCornerRadius: 16,
+      groupMargin: EdgeInsets.symmetric(horizontal: 8),
+      groupBodyPadding: EdgeInsets.symmetric(horizontal: 2),
+      stretchGroupHeight: true,
+    ),
+    headerBuilder: (context, groupData) {
+      return ListenableBuilder(
+        listenable: _controller.getGroupController(groupData.id)!,
+        builder: (context, _) => TaskColumnHeader(
+          title: groupData.headerData.groupName,
+          taskCount: groupData.items.whereType<TasksCanbanCard>().length,
+          onAction: (action) => _openColumnAction(groupData.id, action),
+        ),
+      );
+    },
+    footerBuilder: (context, groupData) {
+      _boardScrollStorage.registerColumn(context, groupData.id);
+      final column = _columns
+          .where((column) => column.id == groupData.id)
+          .firstOrNull;
+      return TaskColumnFooter(
+        onCreate:
+            column?.canCreateTask == true && !_isCreating && !_isOpeningTaskForm
+            ? () => _openCreateTask(initialColumnId: int.parse(groupData.id))
+            : null,
+      );
+    },
+    cardBuilder: (context, groupData, item) {
+      _boardScrollStorage.registerColumn(context, groupData.id);
+      final card = item as TasksCanbanCard;
+      return TaskCard(
+        key: ValueKey(card.id),
+        task: card.task,
+        // Explicit value also survives AppFlowy's root drag overlay.
+        currentEmployeeId: currentEmployeeId,
+        onOpen: () => _openTaskDetails(card.task),
+        onAction: (action) => _openTaskAction(card.task, action),
+        onSubtaskChanged: (subtask, done) =>
+            _markSubtask(card.task, subtask, done),
+      );
+    },
+  );
 
   Widget titleBar() {
     return Row(
@@ -707,9 +783,9 @@ class _TasksScreenState extends State<TasksScreen> with WidgetsBindingObserver {
           children: [
             squareButton(
               _isLoadingBoard ? 'Обновление…' : 'Обновить',
-              Colors.white,
-              Colors.black,
-              AppColors.notActiveBorder,
+              context.colors.surface,
+              context.colors.text,
+              context.colors.notActiveBorder,
               115,
               40,
               _isLoadingBoard || _refreshBlocked
@@ -718,18 +794,18 @@ class _TasksScreenState extends State<TasksScreen> with WidgetsBindingObserver {
             ),
             squareButton(
               '+ Колонка',
-              Colors.white,
-              Colors.black,
-              AppColors.notActiveBorder,
+              context.colors.surface,
+              context.colors.text,
+              context.colors.notActiveBorder,
               100,
               40,
               !_isBoardLoaded || _isCreatingColumn ? null : _openCreateColumn,
             ),
             squareButton(
               'Добавить задачу',
-              AppColors.activeElement,
-              Colors.white,
-              AppColors.notActiveBorder,
+              context.colors.activeElement,
+              context.colors.onAccent,
+              context.colors.notActiveBorder,
               155,
               40,
               !_columns.any((column) => column.canCreateTask) ||

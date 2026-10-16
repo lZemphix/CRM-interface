@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:crm_interface/core/widgets/section_refresh_controller.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/theme/light/colorscheme.dart';
+import '../../../core/theme/app_palette.dart';
 import '../models/taskboard.dart';
 import '../repos/request_error.dart';
 import '../repos/tasks.dart';
@@ -163,8 +163,8 @@ class _CustomerNextTaskState extends State<CustomerNextTask> {
       key: const Key('customer-next-task'),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AppColors.notActiveBorder),
+        color: context.colors.surface,
+        border: Border.all(color: context.colors.notActiveBorder),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -176,7 +176,7 @@ class _CustomerNextTaskState extends State<CustomerNextTask> {
                 child: Text(
                   'БЛИЖАЙШАЯ ЗАДАЧА',
                   style: TextStyle(
-                    color: AppColors.activeElement,
+                    color: context.colors.accent,
                     fontWeight: FontWeight.w700,
                     fontSize: 11,
                     letterSpacing: 0.6,
@@ -209,7 +209,7 @@ class _CustomerNextTaskState extends State<CustomerNextTask> {
                         Text(
                           '${_deadline(task)} • ${task.responsibleEmployeeName ?? 'Нет ответственного'}',
                           style: TextStyle(
-                            color: AppColors.textMutted,
+                            color: context.colors.textMutted,
                             fontSize: 12,
                           ),
                         ),
@@ -221,7 +221,7 @@ class _CustomerNextTaskState extends State<CustomerNextTask> {
                             _ => 'Неизвестный статус',
                           },
                           style: TextStyle(
-                            color: AppColors.textMutted,
+                            color: context.colors.textMutted,
                             fontSize: 12,
                           ),
                         ),
@@ -241,10 +241,10 @@ class _CustomerNextTaskState extends State<CustomerNextTask> {
                           : null,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 10),
-                        backgroundColor: AppColors.activeElement,
-                        foregroundColor: Colors.white,
-                        disabledBackgroundColor: AppColors.notActiveBorder,
-                        disabledForegroundColor: AppColors.textMutted,
+                        backgroundColor: context.colors.activeElement,
+                        foregroundColor: context.colors.onAccent,
+                        disabledBackgroundColor: context.colors.notActiveBorder,
+                        disabledForegroundColor: context.colors.textMutted,
                         fixedSize: const Size(100, 37),
                         minimumSize: Size.zero,
                         shape: RoundedRectangleBorder(

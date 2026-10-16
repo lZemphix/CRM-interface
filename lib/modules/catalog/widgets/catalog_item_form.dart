@@ -1,4 +1,4 @@
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 
@@ -271,7 +271,7 @@ class _CatalogItemFormState extends State<CatalogItemForm> {
             contentPadding: EdgeInsets.zero,
             dense: true,
             controlAffinity: ListTileControlAffinity.leading,
-            activeColor: AppColors.activeElement,
+            activeColor: context.colors.activeElement,
             value: _active,
             onChanged: _saving
                 ? null
@@ -282,9 +282,9 @@ class _CatalogItemFormState extends State<CatalogItemForm> {
             ),
           ),
           if (widget.details != null)
-            const Text(
+            Text(
               'Тип существующей позиции изменить нельзя. Филиальные цены и доступность сохраняются.',
-              style: TextStyle(fontSize: 12, color: AppColors.textMutted),
+              style: TextStyle(fontSize: 12, color: context.colors.textMutted),
             ),
           if (_error != null)
             SelectableText(
@@ -320,16 +320,16 @@ class _CatalogItemFormState extends State<CatalogItemForm> {
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AppColors.notActiveBorder),
+            borderSide: BorderSide(color: context.colors.notActiveBorder),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AppColors.activeElement),
+            borderSide: BorderSide(color: context.colors.accent),
           ),
         ),
       ),
       child: AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: context.colors.surface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -348,7 +348,7 @@ class _CatalogItemFormState extends State<CatalogItemForm> {
           FilledButton(
             key: const Key('catalog-form-save'),
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.activeElement,
+              backgroundColor: context.colors.activeElement,
             ),
             onPressed: _saving || _blocked ? null : _submit,
             child: Text(

@@ -1,4 +1,4 @@
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 import 'package:flutter/services.dart';
@@ -149,15 +149,15 @@ class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
                   child: Text(role.name, overflow: TextOverflow.ellipsis),
                 ),
               if (widget.onCreateRole != null)
-                const DropdownMenuItem(
+                DropdownMenuItem(
                   value: -1,
                   child: Row(
                     spacing: 8,
                     children: [
-                      Icon(Icons.add, size: 18, color: AppColors.activeElement),
+                      Icon(Icons.add, size: 18, color: context.colors.accent),
                       Text(
                         'Создать роль…',
-                        style: TextStyle(color: AppColors.activeElement),
+                        style: TextStyle(color: context.colors.accent),
                       ),
                     ],
                   ),
@@ -184,7 +184,7 @@ class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
 
   Widget _branchFields() => Container(
     decoration: BoxDecoration(
-      border: Border.all(color: AppColors.notActiveBorder),
+      border: Border.all(color: context.colors.notActiveBorder),
       borderRadius: BorderRadius.circular(10),
     ),
     child: ExpansionTile(
@@ -194,7 +194,7 @@ class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
       title: const Text('Филиалы', style: TextStyle(fontSize: 12)),
       subtitle: Text(
         _branches.isEmpty ? 'Необязательно' : 'Выбрано: ${_branches.length}',
-        style: const TextStyle(fontSize: 11, color: AppColors.textFaint),
+        style: TextStyle(fontSize: 11, color: context.colors.textFaint),
       ),
       childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
       children: [
@@ -203,7 +203,7 @@ class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
             widget.onCreate == null
                 ? 'Филиалы появятся после подключения API.'
                 : 'Активных филиалов нет. Сотрудника можно создать без филиала.',
-            style: const TextStyle(fontSize: 12, color: AppColors.textMutted),
+            style: TextStyle(fontSize: 12, color: context.colors.textMutted),
           ),
         Wrap(
           spacing: 7,
@@ -338,9 +338,9 @@ class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 14,
       children: [
-        const Text(
+        Text(
           'Логин',
-          style: TextStyle(fontSize: 12, color: AppColors.textMutted),
+          style: TextStyle(fontSize: 12, color: context.colors.textMutted),
         ),
         SelectableText(created.login),
         TextField(
@@ -404,7 +404,7 @@ class _CreateEmployeeDialogState extends State<CreateEmployeeDialog> {
         FilledButton(
           key: const Key('employee-create-submit'),
           style: FilledButton.styleFrom(
-            backgroundColor: AppColors.activeElement,
+            backgroundColor: context.colors.activeElement,
           ),
           onPressed:
               widget.onCreate == null || _busy || _blocked || _roles.isEmpty

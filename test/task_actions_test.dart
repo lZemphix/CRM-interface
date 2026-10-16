@@ -33,8 +33,14 @@ Future<void> openForm(
                 task: task,
                 action: action,
                 employees: const [TaskEmployee(id: 4, fullName: 'Анна')],
-                onEdit: onEdit,
-                onAssign: onAssign,
+                onEdit: (request) async {
+                  await onEdit(request);
+                  return task;
+                },
+                onAssign: (request) async {
+                  await onAssign(request);
+                  return task;
+                },
               ),
             ),
             child: const Text('Открыть'),

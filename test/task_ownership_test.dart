@@ -169,7 +169,7 @@ void main() {
   );
 
   testWidgets(
-    'new or failed profile never retains the previous employee highlight',
+    'auth graph replacement clears cached pages and previous employee highlight',
     (tester) async {
       final auth = ValueNotifier<AuthRepository>(
         ProfileRepository(api, api.sessionStore),
@@ -187,8 +187,9 @@ void main() {
       auth.value = ProfileRepository(api, api.sessionStore, failure: true);
       await tester.pumpAndSettle();
       expect(decorationFor(tester, 8).color, AppColors.taskCardBackground);
-      expect(tester.state(find.byType(TasksScreen)), same(state));
-      expect(board.reads, 1);
+      expect(state.mounted, isFalse);
+      expect(tester.state(find.byType(TasksScreen)), isNot(same(state)));
+      expect(board.reads, 3);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     },

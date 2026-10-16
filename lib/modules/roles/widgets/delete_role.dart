@@ -1,3 +1,4 @@
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 
@@ -155,7 +156,7 @@ class _DeleteRoleDialogState extends State<DeleteRoleDialog> {
               style: _confirmed == null
                   ? null
                   : FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFB42318),
+                      backgroundColor: context.colors.dangerFill,
                     ),
               onPressed:
                   _busy || _selected == null || _confirmed?.canDelete == false

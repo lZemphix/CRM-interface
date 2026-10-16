@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:crm_interface/core/api_client/client.dart';
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:crm_interface/modules/customers/models/customer.dart';
 import 'package:crm_interface/modules/customers/models/create_customer.dart';
 import 'package:crm_interface/modules/customers/widgets/create_customer.dart';
@@ -130,22 +130,25 @@ class _ListPanelState extends State<EntityPanel> {
       child: Container(
         decoration: BoxDecoration(
           border: Border(
-            right: BorderSide(color: AppColors.notActiveBorder, width: 1),
+            right: BorderSide(color: context.colors.notActiveBorder, width: 1),
           ),
         ),
         child: Container(
           decoration: BoxDecoration(
             border: Border(
-              bottom: BorderSide(color: AppColors.notActiveBorder, width: 1),
+              bottom: BorderSide(
+                color: context.colors.notActiveBorder,
+                width: 1,
+              ),
             ),
           ),
           child: Column(
             children: [
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.colors.surface,
                   border: Border(
-                    bottom: BorderSide(color: AppColors.notActiveBorder),
+                    bottom: BorderSide(color: context.colors.notActiveBorder),
                   ),
                 ),
                 padding: EdgeInsets.all(20),
@@ -183,13 +186,13 @@ class _ListPanelState extends State<EntityPanel> {
                     onPressed: _clearSearch,
                     icon: const Icon(Icons.close, size: 18),
                   ),
-            labelStyle: TextStyle(color: Colors.grey),
+            labelStyle: TextStyle(color: context.colors.textMutted),
             enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: AppColors.notActiveBorder),
+              borderSide: BorderSide(color: context.colors.notActiveBorder),
               borderRadius: BorderRadius.circular(12),
             ),
             focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: AppColors.notActiveBorder),
+              borderSide: BorderSide(color: context.colors.notActiveBorder),
               borderRadius: BorderRadius.circular(12),
             ),
           ),
@@ -217,9 +220,7 @@ class _ListPanelState extends State<EntityPanel> {
       decoration: BoxDecoration(
         border: customerSelected == false
             ? Border.all(color: Colors.transparent)
-            : Border(
-                left: BorderSide(color: AppColors.activeElement, width: 3),
-              ),
+            : Border(left: BorderSide(color: context.colors.accent, width: 3)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -232,13 +233,13 @@ class _ListPanelState extends State<EntityPanel> {
                 Container(
                   padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.notActiveBorder,
+                    color: context.colors.notActiveBorder,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     customerNameIcon(customer.fullName),
                     style: TextStyle(
-                      color: Color.fromARGB(255, 71, 84, 103),
+                      color: context.colors.textMutted,
                       fontWeight: FontWeight(700),
                       fontSize: 12,
                     ),
@@ -254,7 +255,7 @@ class _ListPanelState extends State<EntityPanel> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: Colors.black,
+                          color: context.colors.text,
                           fontWeight: FontWeight(600),
                         ),
                       ),
@@ -265,7 +266,7 @@ class _ListPanelState extends State<EntityPanel> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: AppColors.textMutted,
+                          color: context.colors.textMutted,
                           fontSize: 12,
                         ),
                       ),
@@ -274,7 +275,7 @@ class _ListPanelState extends State<EntityPanel> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: AppColors.textMutted,
+                          color: context.colors.textMutted,
                           fontSize: 12,
                         ),
                       ),
@@ -295,11 +296,11 @@ class _ListPanelState extends State<EntityPanel> {
         padding: EdgeInsets.zero,
         fixedSize: const Size(30, 30),
         minimumSize: Size.zero,
-        backgroundColor: AppColors.activeElement,
+        backgroundColor: context.colors.activeElement,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       onPressed: _openCreateCustomer,
-      child: Text('+', style: TextStyle(color: Colors.white)),
+      child: Text('+', style: TextStyle(color: context.colors.onAccent)),
     );
   }
 
@@ -321,10 +322,10 @@ class _ListPanelState extends State<EntityPanel> {
       onPressed: () {},
       style: TextButton.styleFrom(
         minimumSize: Size(35, 35),
-        foregroundColor: Colors.grey,
+        foregroundColor: context.colors.textMutted,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: AppColors.notActiveBorder),
+          side: BorderSide(color: context.colors.notActiveBorder),
         ),
       ),
       child: Text(
@@ -379,7 +380,7 @@ class _ListPanelState extends State<EntityPanel> {
                 boxShadow: [
                   BoxShadow(
                     color: customerSelected
-                        ? AppColors.hoveredElement
+                        ? context.colors.hoveredElement
                         : Colors.transparent,
                     offset: Offset(0, 10),
                     blurRadius: 10,
@@ -390,7 +391,9 @@ class _ListPanelState extends State<EntityPanel> {
               ),
               padding: EdgeInsets.symmetric(vertical: 3, horizontal: 10),
               child: Material(
-                color: customerSelected ? Colors.white : AppColors.background,
+                color: customerSelected
+                    ? context.colors.surface
+                    : context.colors.background,
                 borderRadius: BorderRadius.circular(12),
                 clipBehavior: Clip.antiAlias,
                 child: InkWell(

@@ -1,4 +1,4 @@
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:crm_interface/modules/auth/repos/auth.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -114,7 +114,7 @@ class _ChangeFormScreenState extends State<ChangeFormScreen> {
                 width: 350,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.notActiveBorder),
+                  border: Border.all(color: context.colors.notActiveBorder),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Form(

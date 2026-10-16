@@ -1,5 +1,5 @@
 import 'package:appflowy_board/appflowy_board.dart';
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:crm_interface/modules/tasks/models/taskboard.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -14,6 +14,7 @@ class TaskCard extends StatelessWidget {
     required this.task,
     this.onSubtaskChanged,
     this.onAction,
+    this.onOpen,
     this.compact = false,
     this.currentEmployeeId,
   });
@@ -22,13 +23,14 @@ class TaskCard extends StatelessWidget {
   final bool compact;
   final int? currentEmployeeId;
   final ValueChanged<TaskCardAction>? onAction;
+  final VoidCallback? onOpen;
   final Future<void> Function(TaskboardTaskSubtask, bool)? onSubtaskChanged;
 
   @override
   Widget build(BuildContext context) {
     final description = task.description?.trim();
 
-    if (compact) return _buildCompactCard(description);
+    if (compact) return _buildCompactCard(context, description);
     final isMine =
         currentEmployeeId != null &&
         task.responsibleEmployeeId == currentEmployeeId;
@@ -37,77 +39,188 @@ class TaskCard extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(8, 0, 8, 10),
       decoration: BoxDecoration(
         color: isMine
-            ? AppColors.ownTaskBackground
-            : AppColors.taskCardBackground,
+            ? context.colors.ownTaskBackground
+            : context.colors.taskCardBackground,
         border: Border.all(
-          color: isMine ? AppColors.ownTaskBorder : AppColors.notActiveBorder,
+          color: isMine
+              ? context.colors.ownTaskBorder
+              : context.colors.notActiveBorder,
         ),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: AppColors.taskCardShadow,
+            color: context.colors.taskCardShadow,
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
         ],
       ),
-      child: _withOwnAccent(
-        isMine,
-        Padding(
-          padding: const EdgeInsets.all(10),
+      child: _withOpen(
+        context,
+        _withOwnAccent(
+          context,
+          isMine,
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildHeading(context),
+                if (task.status != null) ...[
+                  const SizedBox(height: 5),
+                  Text(
+                    _statusLabel(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: context.colors.textMutted,
+                    ),
+                  ),
+                ],
+                if (description != null && description.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  _buildDescription(context, description),
+                ],
+                const SizedBox(height: 12),
+                _buildAssignee(context, isMine: isMine),
+                if (task.customerId != null) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.person_outline,
+                        size: 14,
+                        color: context.colors.textMutted,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          task.customerName ?? 'Клиент #${task.customerId}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: context.colors.textMutted,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                if (task.dueAt != null || task.dueDate != null) ...[
+                  const SizedBox(height: 6),
+                  _buildDeadline(context),
+                ],
+                const SizedBox(height: 12),
+                _buildProgress(context),
+                if (task.subtasks.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  TaskSubtasks(
+                    taskId: task.id,
+                    subtasks: task.subtasks,
+                    onChanged: onSubtaskChanged,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _withOpen(BuildContext context, Widget child) => Material(
+    type: MaterialType.transparency,
+    borderRadius: BorderRadius.circular(11),
+    clipBehavior: Clip.antiAlias,
+    child: InkWell(
+      onTap: onOpen,
+      borderRadius: BorderRadius.circular(11),
+      child: child,
+    ),
+  );
+
+  Widget _withOwnAccent(BuildContext context, bool isMine, Widget child) {
+    return ClipRRect(
+      // Keep the subtree stable when the profile/assignment changes.
+      clipBehavior: isMine ? Clip.antiAlias : Clip.none,
+      borderRadius: BorderRadius.circular(11),
+      child: Stack(
+        children: [
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 3,
+            child: ColoredBox(
+              color: isMine ? context.colors.ownTaskAccent : Colors.transparent,
+            ),
+          ),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactCard(BuildContext context, String? description) {
+    return Material(
+      color: context.colors.taskCardBackground,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: context.colors.notActiveBorder),
+      ),
+      child: InkWell(
+        onTap: onOpen,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildHeading(),
-              if (task.status != null) ...[
-                const SizedBox(height: 5),
-                Text(
-                  _statusLabel(),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textMutted,
-                  ),
-                ),
-              ],
-              if (description != null && description.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                _buildDescription(description),
-              ],
-              const SizedBox(height: 12),
-              _buildAssignee(isMine: isMine),
-              if (task.customerId != null) ...[
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.person_outline,
-                      size: 14,
-                      color: AppColors.textMutted,
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
+              Row(
+                children: [
+                  Expanded(
+                    child: Tooltip(
+                      message: task.title,
                       child: Text(
-                        task.customerName ?? 'Клиент #${task.customerId}',
+                        task.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textMutted,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: context.colors.taskCardText,
                         ),
                       ),
                     ),
-                  ],
+                  ),
+                  const SizedBox(width: 8),
+                  _buildPriority(context),
+                  const SizedBox(width: 8),
+                  _buildActionMenu(context),
+                ],
+              ),
+              if (description != null && description.isNotEmpty) ...[
+                const SizedBox(height: 3),
+                Tooltip(
+                  message: description,
+                  child: Text(
+                    description,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: context.colors.textMutted,
+                    ),
+                  ),
                 ),
               ],
-              if (task.dueAt != null || task.dueDate != null) ...[
-                const SizedBox(height: 6),
-                _buildDeadline(),
-              ],
-              const SizedBox(height: 12),
-              _buildProgress(),
+              const SizedBox(height: 8),
+              _buildCompactMetadata(context),
               if (task.subtasks.isNotEmpty) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: 6),
                 TaskSubtasks(
                   taskId: task.id,
                   subtasks: task.subtasks,
@@ -121,96 +234,7 @@ class TaskCard extends StatelessWidget {
     );
   }
 
-  Widget _withOwnAccent(bool isMine, Widget child) {
-    return ClipRRect(
-      // Keep the subtree stable when the profile/assignment changes.
-      clipBehavior: isMine ? Clip.antiAlias : Clip.none,
-      borderRadius: BorderRadius.circular(11),
-      child: Stack(
-        children: [
-          Positioned(
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: 3,
-            child: ColoredBox(
-              color: isMine ? AppColors.ownTaskAccent : Colors.transparent,
-            ),
-          ),
-          child,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCompactCard(String? description) {
-    return Material(
-      color: AppColors.taskCardBackground,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: const BorderSide(color: AppColors.notActiveBorder),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Tooltip(
-                    message: task.title,
-                    child: Text(
-                      task.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.taskCardText,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                _buildPriority(),
-                const SizedBox(width: 8),
-                _buildActionMenu(),
-              ],
-            ),
-            if (description != null && description.isNotEmpty) ...[
-              const SizedBox(height: 3),
-              Tooltip(
-                message: description,
-                child: Text(
-                  description,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textMutted,
-                  ),
-                ),
-              ),
-            ],
-            const SizedBox(height: 8),
-            _buildCompactMetadata(),
-            if (task.subtasks.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              TaskSubtasks(
-                taskId: task.id,
-                subtasks: task.subtasks,
-                onChanged: onSubtaskChanged,
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCompactMetadata() {
+  Widget _buildCompactMetadata(BuildContext context) {
     return LayoutBuilder(
       builder: (_, constraints) {
         // Bound metadata in Wrap: the existing lines contain an Expanded.
@@ -224,24 +248,24 @@ class TaskCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: context.colors.background,
                 borderRadius: BorderRadius.circular(5),
               ),
               child: Text(
                 _statusLabel(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
-                  color: AppColors.textMutted,
+                  color: context.colors.textMutted,
                 ),
               ),
             ),
-            SizedBox(width: assigneeWidth, child: _buildAssignee()),
+            SizedBox(width: assigneeWidth, child: _buildAssignee(context)),
             if (task.dueAt != null || task.dueDate != null)
-              SizedBox(width: deadlineWidth, child: _buildDeadline()),
+              SizedBox(width: deadlineWidth, child: _buildDeadline(context)),
             if (task.subtasks.isNotEmpty)
               SizedBox(
                 width: constraints.maxWidth.clamp(0.0, 100.0).toDouble(),
-                child: _buildProgress(showMenu: false),
+                child: _buildProgress(context, showMenu: false),
               ),
           ],
         );
@@ -259,7 +283,7 @@ class TaskCard extends StatelessWidget {
     _ => 'Статус неизвестен',
   };
 
-  Widget _buildHeading() {
+  Widget _buildHeading(BuildContext context) {
     return LayoutBuilder(
       builder: (_, constraints) {
         final title = Tooltip(
@@ -268,18 +292,22 @@ class TaskCard extends StatelessWidget {
             task.title,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               height: 1.4,
               fontWeight: FontWeight.w700,
-              color: AppColors.taskCardText,
+              color: context.colors.taskCardText,
             ),
           ),
         );
         if (constraints.maxWidth < 200) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [title, const SizedBox(height: 6), _buildPriority()],
+            children: [
+              title,
+              const SizedBox(height: 6),
+              _buildPriority(context),
+            ],
           );
         }
         return Row(
@@ -287,32 +315,32 @@ class TaskCard extends StatelessWidget {
           children: [
             Expanded(child: title),
             const SizedBox(width: 8),
-            _buildPriority(),
+            _buildPriority(context),
           ],
         );
       },
     );
   }
 
-  Widget _buildPriority() {
+  Widget _buildPriority(BuildContext context) {
     String label;
     Color color;
     switch (task.priority) {
       case 'low':
         label = 'Низкая';
-        color = AppColors.textMutted;
+        color = context.colors.textMutted;
       case 'normal':
         label = 'Обычная';
-        color = AppColors.activeElement;
+        color = context.colors.normalPriority;
       case 'high':
         label = 'Высокая';
-        color = AppColors.taskHighPriority;
+        color = context.colors.taskHighPriority;
       case 'urgent':
         label = 'Срочная';
-        color = AppColors.taskUrgentPriority;
+        color = context.colors.taskUrgentPriority;
       default:
         label = 'Неизвестный';
-        color = AppColors.textMutted;
+        color = context.colors.textMutted;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
@@ -331,23 +359,23 @@ class TaskCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDescription(String description) {
+  Widget _buildDescription(BuildContext context, String description) {
     return Tooltip(
       message: description,
       child: Text(
         description,
         maxLines: 3,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 12,
           height: 1.45,
-          color: AppColors.textMutted,
+          color: context.colors.textMutted,
         ),
       ),
     );
   }
 
-  Widget _buildAssignee({bool isMine = false}) {
+  Widget _buildAssignee(BuildContext context, {bool isMine = false}) {
     final name = task.responsibleEmployeeName?.trim();
     String label = 'Без ответственного';
     if (name != null && name.isNotEmpty) {
@@ -355,34 +383,37 @@ class TaskCard extends StatelessWidget {
     } else if (task.responsibleEmployeeId != null) {
       label = 'Сотрудник #${task.responsibleEmployeeId}';
     }
-    if (!isMine) return _buildMetadataLine(Icons.person_outline_rounded, label);
+    if (!isMine) {
+      return _buildMetadataLine(context, Icons.person_outline_rounded, label);
+    }
     return Tooltip(
       message: 'Назначено вам · $label',
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
         decoration: BoxDecoration(
-          color: AppColors.ownTaskBadgeBackground,
+          color: context.colors.ownTaskBadgeBackground,
           borderRadius: BorderRadius.circular(5),
         ),
         child: Text(
           'Вам · $label',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: AppColors.ownTaskText,
+            color: context.colors.ownTaskText,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildDeadline() {
+  Widget _buildDeadline(BuildContext context) {
     final day = task.dueDate;
     if (day != null) {
       final label = 'Срок: ${DateFormat('dd.MM.yyyy').format(day)}';
       return _buildMetadataLine(
+        context,
         Icons.calendar_today_outlined,
         label,
         tooltip:
@@ -392,25 +423,31 @@ class TaskCard extends StatelessWidget {
     final localDate = task.dueAt!.toLocal();
     final label = 'Срок: ${DateFormat('dd.MM.yyyy HH:mm').format(localDate)}';
     return _buildMetadataLine(
+      context,
       Icons.schedule_rounded,
       label,
       tooltip: '$label (время этого устройства)',
     );
   }
 
-  Widget _buildMetadataLine(IconData icon, String label, {String? tooltip}) {
+  Widget _buildMetadataLine(
+    BuildContext context,
+    IconData icon,
+    String label, {
+    String? tooltip,
+  }) {
     return Tooltip(
       message: tooltip ?? label,
       child: Row(
         children: [
-          Icon(icon, size: 14, color: AppColors.textMutted),
+          Icon(icon, size: 14, color: context.colors.textMutted),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 11, color: AppColors.textMutted),
+              style: TextStyle(fontSize: 11, color: context.colors.textMutted),
             ),
           ),
         ],
@@ -418,7 +455,7 @@ class TaskCard extends StatelessWidget {
     );
   }
 
-  Widget _buildProgress({bool showMenu = true}) {
+  Widget _buildProgress(BuildContext context, {bool showMenu = true}) {
     final total = task.subtasks.length;
     final completed = task.subtasks.where((subtask) => subtask.done).length;
     final progress = total == 0 ? 0.0 : completed / total;
@@ -427,15 +464,15 @@ class TaskCard extends StatelessWidget {
       value: progress,
       minHeight: 6,
       borderRadius: BorderRadius.circular(99),
-      color: AppColors.activeElement,
-      backgroundColor: AppColors.notActiveBorder,
+      color: context.colors.accent,
+      backgroundColor: context.colors.notActiveBorder,
       semanticsLabel: 'Подзадачи: выполнено $completed из $total',
     );
     final label = Text(
       total == 0 ? 'Без подзадач' : '$completed/$total',
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: const TextStyle(fontSize: 11, color: AppColors.textMutted),
+      style: TextStyle(fontSize: 11, color: context.colors.textMutted),
     );
     return LayoutBuilder(
       builder: (_, constraints) {
@@ -447,7 +484,7 @@ class TaskCard extends StatelessWidget {
                 children: [
                   Expanded(child: label),
                   const SizedBox(width: 6),
-                  _buildActionMenu(),
+                  _buildActionMenu(context),
                 ],
               ),
               const SizedBox(height: 4),
@@ -460,14 +497,17 @@ class TaskCard extends StatelessWidget {
             label,
             const SizedBox(width: 10),
             Expanded(child: indicator),
-            if (showMenu) ...[const SizedBox(width: 9), _buildActionMenu()],
+            if (showMenu) ...[
+              const SizedBox(width: 9),
+              _buildActionMenu(context),
+            ],
           ],
         );
       },
     );
   }
 
-  Widget _buildActionMenu() {
+  Widget _buildActionMenu(BuildContext context) {
     return SizedBox(
       width: 28,
       height: 28,
@@ -477,19 +517,19 @@ class TaskCard extends StatelessWidget {
         padding: EdgeInsets.zero,
         borderRadius: BorderRadius.circular(7),
         constraints: const BoxConstraints(minWidth: 190, maxWidth: 250),
-        color: Colors.white,
+        color: context.colors.surface,
         elevation: 5,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
-          side: const BorderSide(color: AppColors.notActiveBorder),
+          side: BorderSide(color: context.colors.notActiveBorder),
         ),
-        icon: const Icon(
+        icon: Icon(
           Icons.more_horiz_rounded,
           size: 20,
-          color: AppColors.textMutted,
+          color: context.colors.textMutted,
         ),
         onSelected: onAction,
-        itemBuilder: (_) => const [
+        itemBuilder: (_) => [
           PopupMenuItem(
             value: TaskCardAction.history,
             height: 34,
@@ -517,7 +557,10 @@ class TaskCard extends StatelessWidget {
                   'Удаление и архивирование задач ещё не поддерживаются API',
               child: Text(
                 'Удалить задачу',
-                style: TextStyle(fontSize: 12, color: AppColors.textMutted),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: context.colors.textMutted,
+                ),
               ),
             ),
           ),

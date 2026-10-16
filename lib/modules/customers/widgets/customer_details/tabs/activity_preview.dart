@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:crm_interface/core/widgets/section_refresh_controller.dart';
 
-import '../../../../../core/theme/light/colorscheme.dart';
+import '../../../../../core/theme/app_palette.dart';
 
 import '../../../models/customer_activity.dart';
 import '../../../repos/customers_repository.dart';
@@ -98,8 +98,8 @@ class _CustomerActivityPreviewState extends State<CustomerActivityPreview> {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: Colors.white,
-      border: Border.all(color: AppColors.notActiveBorder),
+      color: context.colors.surface,
+      border: Border.all(color: context.colors.notActiveBorder),
       borderRadius: BorderRadius.circular(12),
     ),
     child: FutureBuilder<CustomerActivityPage>(

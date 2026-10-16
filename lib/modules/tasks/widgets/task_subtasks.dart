@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 
 import '../models/taskboard.dart';
 import '../repos/request_error.dart';
@@ -62,13 +62,13 @@ class _TaskSubtasksState extends State<TaskSubtasks> {
         visualDensity: VisualDensity.compact,
         controlAffinity: ListTileControlAffinity.leading,
         showTrailingIcon: true,
-        shape: const Border(top: BorderSide(color: AppColors.notActiveBorder)),
-        collapsedShape: const Border(
-          top: BorderSide(color: AppColors.notActiveBorder),
+        shape: Border(top: BorderSide(color: context.colors.notActiveBorder)),
+        collapsedShape: Border(
+          top: BorderSide(color: context.colors.notActiveBorder),
         ),
         title: Text(
           'Подзадачи · ${widget.subtasks.where((item) => item.done).length}/${widget.subtasks.length}',
-          style: const TextStyle(fontSize: 11, color: AppColors.activeElement),
+          style: TextStyle(fontSize: 11, color: context.colors.accent),
         ),
         children: [
           for (final subtask in widget.subtasks)
@@ -81,15 +81,15 @@ class _TaskSubtasksState extends State<TaskSubtasks> {
               checkboxScaleFactor: .75,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-              activeColor: AppColors.activeElement,
+              activeColor: context.colors.activeElement,
               value: subtask.done,
               title: Text(
                 subtask.title,
                 style: TextStyle(
                   fontSize: 12,
                   color: subtask.done
-                      ? AppColors.textMutted
-                      : AppColors.taskCardText,
+                      ? context.colors.textMutted
+                      : context.colors.taskCardText,
                   decoration: subtask.done ? TextDecoration.lineThrough : null,
                 ),
               ),

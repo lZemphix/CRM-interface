@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:crm_interface/core/widgets/section_refresh_controller.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../../core/theme/light/colorscheme.dart';
+import '../../../../../core/theme/app_palette.dart';
 import '../../../models/customer_activity.dart';
 import '../../../repos/customers_repository.dart';
 import '../timeline_entry.dart';
@@ -106,8 +106,8 @@ class _CustomerActivityPanelState extends State<CustomerActivityPanel>
       margin: const EdgeInsets.only(top: 14),
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AppColors.notActiveBorder),
+        color: context.colors.surface,
+        border: Border.all(color: context.colors.notActiveBorder),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -124,30 +124,30 @@ class _CustomerActivityPanelState extends State<CustomerActivityPanel>
                       initialValue: _type,
                       isExpanded: true,
                       hint: const Text('Все события'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: Colors.black87,
+                        color: context.colors.text,
                       ),
                       icon: const Icon(
                         Icons.keyboard_arrow_down_rounded,
                         size: 20,
                       ),
-                      iconEnabledColor: AppColors.textMutted,
-                      dropdownColor: Colors.white,
+                      iconEnabledColor: context.colors.textMutted,
+                      dropdownColor: context.colors.surface,
                       borderRadius: BorderRadius.circular(10),
                       menuMaxHeight: 320,
                       decoration: InputDecoration(
                         isDense: true,
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: context.colors.surface,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 10,
                         ),
-                        prefixIcon: const Icon(
+                        prefixIcon: Icon(
                           Icons.filter_list_rounded,
                           size: 16,
-                          color: AppColors.textMutted,
+                          color: context.colors.textMutted,
                         ),
                         prefixIconConstraints: const BoxConstraints(
                           minWidth: 36,
@@ -155,21 +155,19 @@ class _CustomerActivityPanelState extends State<CustomerActivityPanel>
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppColors.notActiveBorder,
+                          borderSide: BorderSide(
+                            color: context.colors.notActiveBorder,
                           ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppColors.notActiveBorder,
+                          borderSide: BorderSide(
+                            color: context.colors.notActiveBorder,
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppColors.activeElement,
-                          ),
+                          borderSide: BorderSide(color: context.colors.accent),
                         ),
                       ),
                       items: [

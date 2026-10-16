@@ -1,4 +1,4 @@
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 
 import '../models/catalog_item.dart';
@@ -27,10 +27,10 @@ class CatalogToolbar extends StatelessWidget {
   final ValueChanged<CatalogKind?> onKindChanged;
   final ValueChanged<String?> onCategoryChanged;
 
-  Widget _types() => Container(
+  Widget _types(BuildContext context) => Container(
     padding: const EdgeInsets.all(3),
     decoration: BoxDecoration(
-      color: const Color(0xFFF2F4F7),
+      color: context.colors.surfaceMuted,
       borderRadius: BorderRadius.circular(9),
     ),
     child: Wrap(
@@ -40,11 +40,11 @@ class CatalogToolbar extends StatelessWidget {
             key: ValueKey('catalog-kind-${value?.apiValue ?? 'all'}'),
             style: TextButton.styleFrom(
               backgroundColor: kind == value
-                  ? Colors.white
+                  ? context.colors.surface
                   : Colors.transparent,
               foregroundColor: kind == value
-                  ? AppColors.activeElement
-                  : AppColors.textMutted,
+                  ? context.colors.activeElement
+                  : context.colors.textMutted,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(7),
               ),
@@ -62,11 +62,11 @@ class CatalogToolbar extends StatelessWidget {
     ),
   );
 
-  Widget _category() => Container(
+  Widget _category(BuildContext context) => Container(
     width: 170,
     padding: const EdgeInsets.symmetric(horizontal: 10),
     decoration: BoxDecoration(
-      border: Border.all(color: AppColors.notActiveBorder),
+      border: Border.all(color: context.colors.notActiveBorder),
       borderRadius: BorderRadius.circular(9),
     ),
     child: DropdownButtonHideUnderline(
@@ -76,7 +76,7 @@ class CatalogToolbar extends StatelessWidget {
         isExpanded: true,
         isDense: true,
         padding: const EdgeInsets.symmetric(vertical: 11),
-        style: const TextStyle(fontSize: 12, color: AppColors.taskCardText),
+        style: TextStyle(fontSize: 12, color: context.colors.taskCardText),
         hint: const Text('Все категории', style: TextStyle(fontSize: 12)),
         items: [
           const DropdownMenuItem<String>(child: Text('Все категории')),
@@ -91,7 +91,7 @@ class CatalogToolbar extends StatelessWidget {
     ),
   );
 
-  Widget _search() => TextField(
+  Widget _search(BuildContext context) => TextField(
     key: const Key('catalog-search'),
     controller: searchController,
     focusNode: searchFocusNode,
@@ -101,11 +101,7 @@ class CatalogToolbar extends StatelessWidget {
       isDense: true,
       counterText: '',
       hintText: 'Поиск по названию, категории или артикулу',
-      prefixIcon: const Icon(
-        Icons.search,
-        size: 18,
-        color: AppColors.textFaint,
-      ),
+      prefixIcon: Icon(Icons.search, size: 18, color: context.colors.textFaint),
       suffixIcon: searchController.text.isEmpty
           ? null
           : IconButton(
@@ -119,15 +115,15 @@ class CatalogToolbar extends StatelessWidget {
             ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(9),
-        borderSide: const BorderSide(color: AppColors.notActiveBorder),
+        borderSide: BorderSide(color: context.colors.notActiveBorder),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(9),
-        borderSide: const BorderSide(color: AppColors.notActiveBorder),
+        borderSide: BorderSide(color: context.colors.notActiveBorder),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(9),
-        borderSide: const BorderSide(color: AppColors.activeElement),
+        borderSide: BorderSide(color: context.colors.accent),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 11, vertical: 12),
     ),
@@ -144,21 +140,23 @@ class CatalogToolbar extends StatelessWidget {
           spacing: 9,
           runSpacing: 8,
           crossAxisAlignment: WrapCrossAlignment.center,
-          children: [_types(), _category()],
+          children: [_types(context), _category(context)],
         );
         return constraints.maxWidth >= 800
             ? Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 spacing: 12,
                 children: [
-                  Flexible(child: SizedBox(width: 390, child: _search())),
+                  Flexible(
+                    child: SizedBox(width: 390, child: _search(context)),
+                  ),
                   filters,
                 ],
               )
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 spacing: 12,
-                children: [_search(), filters],
+                children: [_search(context), filters],
               );
       },
     ),

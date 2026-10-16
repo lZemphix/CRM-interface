@@ -1,4 +1,4 @@
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 
 import '../models/catalog_item.dart';
@@ -11,12 +11,12 @@ class CatalogListHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-    color: const Color(0xFFF9FAFB),
+    color: context.colors.background,
     child: DefaultTextStyle(
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 11,
         fontWeight: FontWeight.w700,
-        color: AppColors.textMutted,
+        color: context.colors.textMutted,
       ),
       child: Row(
         spacing: 14,
@@ -48,7 +48,7 @@ class CatalogRow extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onArchive;
 
-  Widget _name() => Row(
+  Widget _name(BuildContext context) => Row(
     spacing: 12,
     children: [
       Container(
@@ -58,8 +58,8 @@ class CatalogRow extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           color: item.kind == CatalogKind.service
-              ? const Color(0xFFEEEEFF)
-              : const Color(0xFFE7F5EE),
+              ? context.colors.accentSoft
+              : context.colors.successSoft,
         ),
         child: Text(
           item.kind == CatalogKind.service ? 'У' : 'Т',
@@ -67,8 +67,8 @@ class CatalogRow extends StatelessWidget {
             fontSize: 16,
             fontWeight: FontWeight.w800,
             color: item.kind == CatalogKind.service
-                ? AppColors.activeElement
-                : const Color(0xFF21865D),
+                ? context.colors.activeElement
+                : context.colors.success,
           ),
         ),
       ),
@@ -83,10 +83,10 @@ class CatalogRow extends StatelessWidget {
                 item.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.taskCardText,
+                  color: context.colors.taskCardText,
                 ),
               ),
             ),
@@ -94,7 +94,7 @@ class CatalogRow extends StatelessWidget {
               item.subtitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 11, color: AppColors.textFaint),
+              style: TextStyle(fontSize: 11, color: context.colors.textFaint),
             ),
           ],
         ),
@@ -102,15 +102,15 @@ class CatalogRow extends StatelessWidget {
     ],
   );
 
-  Widget _status() => Align(
+  Widget _status(BuildContext context) => Align(
     alignment: Alignment.centerLeft,
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         color: item.isActive
-            ? const Color(0xFFECFDF3)
-            : const Color(0xFFF2F4F7),
+            ? context.colors.successSoft
+            : context.colors.surfaceMuted,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -122,8 +122,8 @@ class CatalogRow extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: item.isActive
-                  ? const Color(0xFF027A48)
-                  : AppColors.textMutted,
+                  ? context.colors.success
+                  : context.colors.textMutted,
             ),
           ),
           Flexible(
@@ -134,8 +134,8 @@ class CatalogRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 color: item.isActive
-                    ? const Color(0xFF027A48)
-                    : AppColors.textMutted,
+                    ? context.colors.success
+                    : context.colors.textMutted,
               ),
             ),
           ),
@@ -144,7 +144,7 @@ class CatalogRow extends StatelessWidget {
     ),
   );
 
-  Widget _actions() => Row(
+  Widget _actions(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
       IconButton(
@@ -158,10 +158,10 @@ class CatalogRow extends StatelessWidget {
         ),
         constraints: const BoxConstraints.tightFor(width: 34, height: 34),
         padding: EdgeInsets.zero,
-        icon: const Icon(
+        icon: Icon(
           Icons.edit_outlined,
           size: 17,
-          color: AppColors.textMutted,
+          color: context.colors.textMutted,
         ),
       ),
       IconButton(
@@ -175,7 +175,7 @@ class CatalogRow extends StatelessWidget {
         ),
         constraints: const BoxConstraints.tightFor(width: 34, height: 34),
         padding: EdgeInsets.zero,
-        icon: const Icon(Icons.close, size: 18, color: AppColors.textMutted),
+        icon: Icon(Icons.close, size: 18, color: context.colors.textMutted),
       ),
     ],
   );
@@ -186,20 +186,22 @@ class CatalogRow extends StatelessWidget {
       item.price.formatted,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w700,
-        color: AppColors.taskCardText,
+        color: context.colors.taskCardText,
       ),
     );
     return Material(
-      color: Colors.white,
+      color: context.colors.surface,
       child: InkWell(
-        hoverColor: const Color(0xFFFCFCFF),
+        hoverColor: context.colors.background,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: Color(0xFFF0F2F5))),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: context.colors.notActiveBorder),
+            ),
           ),
           child: compact
               ? Column(
@@ -208,8 +210,8 @@ class CatalogRow extends StatelessWidget {
                     Row(
                       spacing: 8,
                       children: [
-                        Expanded(child: _name()),
-                        _status(),
+                        Expanded(child: _name(context)),
+                        _status(context),
                       ],
                     ),
                     Row(
@@ -221,16 +223,16 @@ class CatalogRow extends StatelessWidget {
                             children: [
                               Text(
                                 item.category,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
-                                  color: AppColors.textMutted,
+                                  color: context.colors.textMutted,
                                 ),
                               ),
                               price,
                             ],
                           ),
                         ),
-                        _actions(),
+                        _actions(context),
                       ],
                     ),
                   ],
@@ -238,26 +240,26 @@ class CatalogRow extends StatelessWidget {
               : Row(
                   spacing: 14,
                   children: [
-                    Expanded(flex: 23, child: _name()),
+                    Expanded(flex: 23, child: _name(context)),
                     if (showCategory)
                       Expanded(
                         flex: 10,
                         child: Text(
                           item.category,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.textMutted,
+                            color: context.colors.textMutted,
                           ),
                         ),
                       ),
                     SizedBox(width: 115, child: price),
-                    SizedBox(width: 100, child: _status()),
+                    SizedBox(width: 100, child: _status(context)),
                     SizedBox(
                       width: 80,
                       child: Align(
                         alignment: Alignment.centerRight,
-                        child: _actions(),
+                        child: _actions(context),
                       ),
                     ),
                   ],

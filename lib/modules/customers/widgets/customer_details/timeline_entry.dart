@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/light/colorscheme.dart';
+import '../../../../core/theme/app_palette.dart';
 
 class CustomerTimelineEntry extends StatelessWidget {
   const CustomerTimelineEntry({
@@ -22,13 +22,13 @@ class CustomerTimelineEntry extends StatelessWidget {
   Widget build(BuildContext context) => Stack(
     children: [
       if (!isLast)
-        const Positioned(
+        Positioned(
           left: 7,
           top: 10,
           bottom: 0,
           child: SizedBox(
             width: 1,
-            child: ColoredBox(color: AppColors.notActiveBorder),
+            child: ColoredBox(color: context.colors.notActiveBorder),
           ),
         ),
       Padding(
@@ -41,10 +41,10 @@ class CustomerTimelineEntry extends StatelessWidget {
               children: [
                 Expanded(
                   child: DefaultTextStyle(
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF172033),
+                      color: context.colors.text,
                     ),
                     child: title,
                   ),
@@ -55,9 +55,9 @@ class CustomerTimelineEntry extends StatelessWidget {
             if (content != null) ...[
               const SizedBox(height: 4),
               DefaultTextStyle(
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
-                  color: AppColors.textMutted,
+                  color: context.colors.textMutted,
                   height: 1.5,
                 ),
                 child: content!,
@@ -66,7 +66,7 @@ class CustomerTimelineEntry extends StatelessWidget {
             const SizedBox(height: 5),
             Text(
               metadata,
-              style: const TextStyle(fontSize: 11, color: AppColors.textFaint),
+              style: TextStyle(fontSize: 11, color: context.colors.textFaint),
             ),
           ],
         ),
@@ -79,8 +79,8 @@ class CustomerTimelineEntry extends StatelessWidget {
           height: 15,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white,
-            border: Border.all(color: AppColors.activeElement, width: 4),
+            color: context.colors.surface,
+            border: Border.all(color: context.colors.accent, width: 4),
           ),
         ),
       ),

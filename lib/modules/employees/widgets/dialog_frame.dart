@@ -1,4 +1,4 @@
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 
@@ -32,7 +32,7 @@ class EmployeeDialogFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = danger ? const Color(0xFFB42318) : AppColors.activeElement;
+    final color = danger ? context.colors.danger : context.colors.activeElement;
     return DialogKeyboardScope(
       key: keyboardKey,
       busy: busy,
@@ -43,7 +43,7 @@ class EmployeeDialogFrame extends StatelessWidget {
           inputDecorationTheme: InputDecorationTheme(
             isDense: true,
             filled: true,
-            fillColor: Colors.white,
+            fillColor: context.colors.surface,
             counterStyle: const TextStyle(fontSize: 10),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
@@ -52,16 +52,16 @@ class EmployeeDialogFrame extends StatelessWidget {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(9)),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(9),
-              borderSide: const BorderSide(color: AppColors.strongBorder),
+              borderSide: BorderSide(color: context.colors.strongBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(9),
-              borderSide: const BorderSide(color: AppColors.activeElement),
+              borderSide: BorderSide(color: context.colors.accent),
             ),
           ),
         ),
         child: Dialog(
-          backgroundColor: Colors.white,
+          backgroundColor: context.colors.surface,
           surfaceTintColor: Colors.transparent,
           insetPadding: const EdgeInsets.all(16),
           shape: RoundedRectangleBorder(
@@ -96,18 +96,18 @@ class EmployeeDialogFrame extends StatelessWidget {
                             children: [
                               Text(
                                 title,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 21,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.taskCardText,
+                                  color: context.colors.taskCardText,
                                 ),
                               ),
                               Text(
                                 description,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   height: 1.5,
-                                  color: AppColors.textMutted,
+                                  color: context.colors.textMutted,
                                 ),
                               ),
                             ],
@@ -127,10 +127,10 @@ class EmployeeDialogFrame extends StatelessWidget {
                             padding: EdgeInsets.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.close,
                             size: 19,
-                            color: AppColors.textFaint,
+                            color: context.colors.textFaint,
                           ),
                         ),
                       ],
@@ -138,7 +138,7 @@ class EmployeeDialogFrame extends StatelessWidget {
                     const SizedBox(height: 24),
                     body,
                     const SizedBox(height: 20),
-                    const Divider(height: 1, color: AppColors.notActiveBorder),
+                    Divider(height: 1, color: context.colors.notActiveBorder),
                     const SizedBox(height: 16),
                     Wrap(
                       alignment: WrapAlignment.end,
@@ -151,9 +151,9 @@ class EmployeeDialogFrame extends StatelessWidget {
                         padding: const EdgeInsets.only(top: 14),
                         child: Text(
                           note!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: AppColors.textFaint,
+                            color: context.colors.textFaint,
                             height: 1.5,
                           ),
                         ),
@@ -178,7 +178,7 @@ class EmployeeInfoBox extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(13),
     decoration: BoxDecoration(
-      color: warning ? const Color(0xFFFFFAEB) : AppColors.background,
+      color: warning ? context.colors.warningSoft : context.colors.background,
       borderRadius: BorderRadius.circular(10),
     ),
     child: Row(
@@ -188,7 +188,7 @@ class EmployeeInfoBox extends StatelessWidget {
         Icon(
           warning ? Icons.info_outline : Icons.lock_outline,
           size: 16,
-          color: warning ? const Color(0xFFB88720) : AppColors.textFaint,
+          color: warning ? context.colors.warning : context.colors.textFaint,
         ),
         Expanded(
           child: Text(
@@ -196,7 +196,9 @@ class EmployeeInfoBox extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               height: 1.55,
-              color: warning ? const Color(0xFF8B5B13) : AppColors.textMutted,
+              color: warning
+                  ? context.colors.warning
+                  : context.colors.textMutted,
             ),
           ),
         ),

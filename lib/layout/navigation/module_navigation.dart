@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:crm_interface/core/modules/module_definition.dart';
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -44,12 +44,12 @@ class ModuleNavigation extends StatelessWidget {
         localPosition & const Size(1, 1),
         Offset.zero & overlay.size,
       ),
-      color: AppColors.background,
+      color: context.colors.background,
       surfaceTintColor: Colors.transparent,
       constraints: const BoxConstraints(minWidth: 240, maxWidth: 320),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
-        side: const BorderSide(color: AppColors.notActiveBorder),
+        side: BorderSide(color: context.colors.notActiveBorder),
       ),
       items: [
         PopupMenuItem(
@@ -99,7 +99,7 @@ class ModuleNavigation extends StatelessWidget {
                     dimension: 44,
                     child: Material(
                       color: activeModuleId == module.id
-                          ? AppColors.activeElement
+                          ? context.colors.activeElement
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
                       clipBehavior: Clip.antiAlias,
@@ -108,10 +108,10 @@ class ModuleNavigation extends StatelessWidget {
                           : InkWell(
                               key: ValueKey('sidebar-module-${module.id}'),
                               onTap: () => onModuleSelected(module.id),
-                              hoverColor: AppColors.hoveredElement,
+                              hoverColor: context.colors.hoveredElement,
                               child: Icon(
                                 module.icon,
-                                color: AppColors.sidebarElement,
+                                color: context.colors.sidebarElement,
                               ),
                             ),
                     ),
@@ -244,7 +244,7 @@ class _OverflowMenuState extends State<_OverflowMenu> {
         _hoveredRegions.removeWhere((name) => name != 'button');
       },
       style: MenuStyle(
-        backgroundColor: const WidgetStatePropertyAll(AppColors.background),
+        backgroundColor: WidgetStatePropertyAll(context.colors.background),
         surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
         elevation: const WidgetStatePropertyAll(5),
         padding: const WidgetStatePropertyAll(EdgeInsets.zero),
@@ -252,7 +252,7 @@ class _OverflowMenuState extends State<_OverflowMenu> {
         shape: WidgetStatePropertyAll(
           RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
-            side: const BorderSide(color: AppColors.notActiveBorder),
+            side: BorderSide(color: context.colors.notActiveBorder),
           ),
         ),
       ),
@@ -279,9 +279,9 @@ class _OverflowMenuState extends State<_OverflowMenu> {
                         ? SubmenuButton(
                             key: ValueKey('overflow-module-${module.id}'),
                             leadingIcon: Icon(module.icon, size: 20),
-                            menuStyle: const MenuStyle(
+                            menuStyle: MenuStyle(
                               backgroundColor: WidgetStatePropertyAll(
-                                AppColors.background,
+                                context.colors.background,
                               ),
                               surfaceTintColor: WidgetStatePropertyAll(
                                 Colors.transparent,
@@ -312,10 +312,10 @@ class _OverflowMenuState extends State<_OverflowMenu> {
                             },
                             leadingIcon: Icon(module.icon, size: 20),
                             trailingIcon: module.id == widget.activeModuleId
-                                ? const Icon(
+                                ? Icon(
                                     Icons.check,
                                     size: 18,
-                                    color: AppColors.activeElement,
+                                    color: context.colors.accent,
                                   )
                                 : null,
                             child: Text(module.title),
@@ -335,11 +335,11 @@ class _OverflowMenuState extends State<_OverflowMenu> {
             focusNode: _buttonFocus,
             tooltip: 'Другие разделы',
             style: IconButton.styleFrom(
-              foregroundColor: AppColors.sidebarElement,
+              foregroundColor: context.colors.sidebarElement,
               backgroundColor: active
-                  ? AppColors.activeElement
+                  ? context.colors.activeElement
                   : Colors.transparent,
-              hoverColor: AppColors.hoveredElement,
+              hoverColor: context.colors.hoveredElement,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),

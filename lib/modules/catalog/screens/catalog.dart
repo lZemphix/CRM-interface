@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:crm_interface/core/keyboard/command_scope.dart';
 import 'package:crm_interface/core/keyboard/keybindings.dart';
@@ -200,7 +200,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
             FilledButton(
               key: const Key('catalog-confirm-archive'),
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.activeElement,
+                backgroundColor: context.colors.activeElement,
               ),
               onPressed: () => Navigator.of(context).pop(true),
               child: const Text('Архивировать'),
@@ -235,14 +235,14 @@ class _CatalogScreenState extends State<CatalogScreen> {
     spacing: 20,
     runSpacing: 12,
     children: [
-      const Text(
+      Text(
         'Каталог',
         style: TextStyle(
           fontSize: 25,
           height: 1.2,
           letterSpacing: -.5,
           fontWeight: FontWeight.w700,
-          color: AppColors.taskCardText,
+          color: context.colors.taskCardText,
         ),
       ),
       FilledButton.icon(
@@ -251,7 +251,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
         icon: const Icon(Icons.add, size: 18),
         label: const Text('Добавить позицию'),
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.activeElement,
+          backgroundColor: context.colors.activeElement,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -304,7 +304,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   ? 'Попробуйте изменить поиск или фильтры.'
                   : 'Добавьте первую услугу или товар.',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, color: AppColors.textMutted),
+              style: TextStyle(fontSize: 13, color: context.colors.textMutted),
             ),
           ],
         ),
@@ -338,8 +338,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
     if (page == null || _error != null || _loading) return const SizedBox();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.notActiveBorder)),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: context.colors.notActiveBorder)),
       ),
       child: Row(
         children: [
@@ -348,7 +348,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
               page.items.isEmpty
                   ? 'Показано 0 из ${page.total}'
                   : 'Показано ${page.offset + 1}–${page.offset + page.items.length} из ${page.total}',
-              style: const TextStyle(fontSize: 11, color: AppColors.textFaint),
+              style: TextStyle(fontSize: 11, color: context.colors.textFaint),
             ),
           ),
           IconButton(
@@ -388,7 +388,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
         },
       },
       child: ColoredBox(
-        color: AppColors.background,
+        color: context.colors.background,
         child: LayoutBuilder(
           builder: (context, constraints) {
             final compact = constraints.maxWidth < 700;
@@ -412,9 +412,11 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     Container(
                       clipBehavior: Clip.antiAlias,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.colors.surface,
                         borderRadius: BorderRadius.circular(15),
-                        border: Border.all(color: AppColors.notActiveBorder),
+                        border: Border.all(
+                          color: context.colors.notActiveBorder,
+                        ),
                         boxShadow: const [
                           BoxShadow(
                             color: Color(0x09101828),
@@ -447,11 +449,11 @@ class _CatalogScreenState extends State<CatalogScreen> {
                               child: Wrap(
                                 crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'Категории недоступны',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: AppColors.textMutted,
+                                      color: context.colors.textMutted,
                                     ),
                                   ),
                                   TextButton(
@@ -462,9 +464,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
                                 ],
                               ),
                             ),
-                          const Divider(
+                          Divider(
                             height: 1,
-                            color: AppColors.notActiveBorder,
+                            color: context.colors.notActiveBorder,
                           ),
                           _list(compact, constraints.maxWidth >= 1050),
                           _footer(),

@@ -5,7 +5,7 @@ abstract final class AppColors {
   static const sidebarBackground = Color(0xFF101828);
   static const taskColumnBackground = Color(0xFFF1F3F8);
   static const taskCardBackground = Color(0xFFFFFFFF);
-  static const taskCardText = Color(0xFF101828);
+  static const taskCardText = Color(0xFF172033);
   static const taskCardShadow = Color(0x0A101828);
   static const ownTaskBackground = Color(0xFFEFF7FF);
   static const ownTaskBorder = Color(0xFFA9CBEA);

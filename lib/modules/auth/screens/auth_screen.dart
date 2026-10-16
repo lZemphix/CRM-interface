@@ -1,4 +1,4 @@
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:crm_interface/modules/auth/repos/auth.dart';
 import 'package:crm_interface/modules/auth/screens/password_change.dart';
 import 'package:dio/dio.dart';
@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:crm_interface/core/keyboard/command_scope.dart';
 import 'package:crm_interface/core/keyboard/keybindings.dart';
-import 'package:crm_interface/core/keyboard/keybindings_dialog.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({
@@ -153,7 +152,7 @@ class _AuthScreenState extends State<AuthScreen> {
               width: 350,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.notActiveBorder),
+                border: Border.all(color: context.colors.notActiveBorder),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Form(
@@ -217,23 +216,6 @@ class _AuthScreenState extends State<AuthScreen> {
                             ? null
                             : _configureServer,
                         child: const Text('Изменить сервер'),
-                      ),
-                    if (KeybindingsScope.maybeOf(context) != null)
-                      TextButton(
-                        key: const Key('login-keybindings'),
-                        onPressed: _isSubmitting || _configuringServer
-                            ? null
-                            : () async {
-                                setState(() => _configuringServer = true);
-                                try {
-                                  await showKeybindingsSettings(context);
-                                } finally {
-                                  if (mounted) {
-                                    setState(() => _configuringServer = false);
-                                  }
-                                }
-                              },
-                        child: const Text('Горячие клавиши'),
                       ),
                   ],
                 ),

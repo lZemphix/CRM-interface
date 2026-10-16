@@ -3,13 +3,19 @@ import 'package:crm_interface/core/theme/light/colorscheme.dart';
 
 /// Decorations only: AppFlowy retains layout, scrolling and drag targets.
 class TaskColumnFrames extends CustomPainter {
-  TaskColumnFrames({required this.columns, required this.scrollController})
-    : super(repaint: scrollController);
+  TaskColumnFrames({
+    required this.columns,
+    required this.scrollController,
+    this.fillColor = AppColors.taskColumnBackground,
+    this.borderColor = AppColors.notActiveBorder,
+  }) : super(repaint: scrollController);
 
   static const slotWidth = 250.0;
   static const margin = 8.0;
   final int columns;
   final ScrollController scrollController;
+  final Color fillColor;
+  final Color borderColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -17,9 +23,9 @@ class TaskColumnFrames extends CustomPainter {
     final offset = scrollController.hasClients
         ? scrollController.positions.last.pixels
         : 0.0;
-    final fill = Paint()..color = AppColors.taskColumnBackground;
+    final fill = Paint()..color = fillColor;
     final stroke = Paint()
-      ..color = AppColors.notActiveBorder
+      ..color = borderColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     canvas.save();
@@ -45,11 +51,14 @@ class TaskColumnFrames extends CustomPainter {
   @override
   bool shouldRepaint(TaskColumnFrames oldDelegate) =>
       oldDelegate.columns != columns ||
-      oldDelegate.scrollController != scrollController;
+      oldDelegate.scrollController != scrollController ||
+      oldDelegate.fillColor != fillColor ||
+      oldDelegate.borderColor != borderColor;
 }
 
 class DashedColumnBorder extends CustomPainter {
-  const DashedColumnBorder();
+  const DashedColumnBorder({this.color = AppColors.strongBorder});
+  final Color color;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -61,7 +70,7 @@ class DashedColumnBorder extends CustomPainter {
         ),
       );
     final paint = Paint()
-      ..color = const Color(0xFFC9CFD9)
+      ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     for (final metric in path.computeMetrics()) {
@@ -72,5 +81,6 @@ class DashedColumnBorder extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(DashedColumnBorder oldDelegate) => false;
+  bool shouldRepaint(DashedColumnBorder oldDelegate) =>
+      oldDelegate.color != color;
 }

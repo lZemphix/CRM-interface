@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/keyboard/dialog_keyboard_scope.dart';
-import '../../../../core/theme/light/colorscheme.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../models/create_customer.dart';
 import '../../models/customer.dart';
 import '../../models/update_customer.dart';
@@ -275,9 +275,12 @@ class _EditCustomerWindowState extends State<EditCustomerWindow> {
                       ? null
                       : (value) => setState(() => _responsible = value),
                 ),
-                const Text(
+                Text(
                   'Источник, способ регистрации и создавший сотрудник — история появления клиента; здесь они не меняются.',
-                  style: TextStyle(color: AppColors.textMutted, fontSize: 12),
+                  style: TextStyle(
+                    color: context.colors.textMutted,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),

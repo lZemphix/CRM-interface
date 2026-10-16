@@ -1,4 +1,4 @@
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 
@@ -75,7 +75,7 @@ class _ArchiveEmployeeDialogState extends State<ArchiveEmployeeDialog> {
       Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.notActiveBorder),
+          border: Border.all(color: context.colors.notActiveBorder),
           borderRadius: BorderRadius.circular(11),
         ),
         child: Column(
@@ -88,18 +88,18 @@ class _ArchiveEmployeeDialogState extends State<ArchiveEmployeeDialog> {
             ),
             Text(
               '${employee.login} · ${employee.roleName}',
-              style: const TextStyle(fontSize: 12, color: AppColors.textMutted),
+              style: TextStyle(fontSize: 12, color: context.colors.textMutted),
             ),
           ],
         ),
       ),
       if (employee.isActive)
-        const Text(
+        Text(
           'Доступ к CRM прекратится, активные сессии завершатся. История действий и завершённые задачи сохранятся.',
           style: TextStyle(
             fontSize: 12,
             height: 1.6,
-            color: AppColors.textMutted,
+            color: context.colors.textMutted,
           ),
         ),
       EmployeeInfoBox(
@@ -173,8 +173,8 @@ class _ArchiveEmployeeDialogState extends State<ArchiveEmployeeDialog> {
           key: const Key('employee-archive-submit'),
           style: FilledButton.styleFrom(
             backgroundColor: employee == null
-                ? AppColors.activeElement
-                : const Color(0xFFB42318),
+                ? context.colors.activeElement
+                : context.colors.dangerFill,
           ),
           onPressed:
               !connected || _busy || _blocked || employee?.isActive == false

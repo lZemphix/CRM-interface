@@ -1,10 +1,11 @@
 import 'dart:async';
 
 import 'package:crm_interface/core/keyboard/command_scope.dart';
-import 'package:crm_interface/core/keyboard/keybindings_dialog.dart';
+import 'package:crm_interface/core/theme/appearance_settings.dart';
+import 'package:crm_interface/core/theme/theme_settings.dart';
 
 import 'package:crm_interface/core/modules/module_definition.dart';
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:crm_interface/layout/navigation/module_navigation.dart';
 import 'package:crm_interface/modules/auth/models/profile.dart';
 import 'package:flutter/material.dart';
@@ -60,7 +61,7 @@ class SideBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.sidebarBackground,
+      color: context.colors.sidebarBackground,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10),
         child: Column(
@@ -90,7 +91,7 @@ class SideBar extends StatelessWidget {
                     onLogout: onLogout,
                   ),
                   Tooltip(
-                    message: 'Параметры — горячие клавиши',
+                    message: 'Параметры',
                     child: SizedBox(
                       width: 44,
                       height: 44,
@@ -98,11 +99,15 @@ class SideBar extends StatelessWidget {
                         key: Key('sidebar-settings'),
                         onPressed:
                             loggingOut ||
-                                KeybindingsScope.maybeOf(context) == null
+                                (ThemeSettingsScope.maybeOf(context) == null &&
+                                    KeybindingsScope.maybeOf(context) == null)
                             ? null
-                            : () => showKeybindingsSettings(context),
-                        disabledColor: AppColors.sidebarElement,
-                        icon: Icon(Icons.settings_outlined),
+                            : () => showAppearanceSettings(context),
+                        disabledColor: context.colors.sidebarElement,
+                        icon: Icon(
+                          Icons.settings_outlined,
+                          color: context.colors.sidebarElement,
+                        ),
                       ),
                     ),
                   ),
@@ -178,14 +183,14 @@ class _AccountMenuState extends State<_AccountMenu> {
         ? 'Аккаунт — профиль недоступен'
         : name ?? 'Аккаунт';
     final menuStyle = MenuStyle(
-      backgroundColor: const WidgetStatePropertyAll(AppColors.background),
+      backgroundColor: WidgetStatePropertyAll(context.colors.background),
       surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
       elevation: const WidgetStatePropertyAll(5),
       padding: const WidgetStatePropertyAll(EdgeInsets.zero),
       shape: WidgetStatePropertyAll(
         RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
-          side: const BorderSide(color: AppColors.notActiveBorder),
+          side: BorderSide(color: context.colors.notActiveBorder),
         ),
       ),
     );
@@ -292,13 +297,13 @@ class _AccountMenuState extends State<_AccountMenu> {
                         : controller.open(),
               style: ButtonStyle(
                 padding: const WidgetStatePropertyAll(EdgeInsets.zero),
-                foregroundColor: const WidgetStatePropertyAll(
-                  Color(0xFF475467),
+                foregroundColor: WidgetStatePropertyAll(
+                  context.colors.sidebarAvatarText,
                 ),
                 backgroundColor: WidgetStateProperty.resolveWith((states) {
                   return states.contains(WidgetState.hovered)
-                      ? AppColors.strongBorder
-                      : AppColors.notActiveBorder;
+                      ? context.colors.strongBorder
+                      : context.colors.sidebarAvatarBackground;
                 }),
                 shape: WidgetStatePropertyAll(
                   RoundedRectangleBorder(

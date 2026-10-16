@@ -185,6 +185,67 @@ Future<void> mountDetail(
 
 void main() {
   testWidgets(
+    'hidden customer defers module invalidation and preserves tab and note draft on return',
+    (tester) async {
+      final api = CardApi();
+      final revision = ValueNotifier(0);
+      final index = ValueNotifier(0);
+      addTearDown(revision.dispose);
+      addTearDown(index.dispose);
+      tester.view.physicalSize = const Size(1400, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ModuleDataScope(
+              revision: revision,
+              child: ValueListenableBuilder<int>(
+                valueListenable: index,
+                builder: (_, value, _) => IndexedStack(
+                  index: value,
+                  children: [
+                    DetailPanel(
+                      customer: const Customer(
+                        id: 1,
+                        fullName: 'Анна',
+                        status: 'active',
+                        acquisitionSourceName: 'Сайт',
+                      ),
+                      apiClient: api.client,
+                    ),
+                    const Center(child: Text('Другой модуль')),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final original = tester.state(find.byType(DetailPanel));
+      await tester.tap(find.text('Заметки'));
+      await tester.pumpAndSettle();
+      final input = find.byKey(const ValueKey('customer-note-text'));
+      await tester.enterText(input, 'Черновик до переключения');
+      api.requests.clear();
+      index.value = 1;
+      await tester.pumpAndSettle();
+      revision.value++;
+      await tester.pumpAndSettle();
+      expect(api.requests, isEmpty);
+      index.value = 0;
+      await tester.pumpAndSettle();
+      expect(tester.state(find.byType(DetailPanel)), same(original));
+      expect(api.requests.where((p) => p == '/customers/1'), isNotEmpty);
+      expect(find.text('Черновик до переключения'), findsOneWidget);
+      expect(tester.widget<TabBar>(find.byType(TabBar)).controller!.index, 2);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'module mutation refreshes customer task readers without changing selected tab',
     (tester) async {
       final api = CardApi();

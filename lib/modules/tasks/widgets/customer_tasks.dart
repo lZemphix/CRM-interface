@@ -8,6 +8,7 @@ import '../repos/tasks.dart';
 import 'task_actions.dart';
 import 'task_card.dart';
 import 'task_history.dart';
+import 'task_details.dart';
 
 /// Представление задач модуля tasks, отфильтрованных по одному клиенту.
 class CustomerTasksPanel extends StatefulWidget {
@@ -126,6 +127,29 @@ class _CustomerTasksPanelState extends State<CustomerTasksPanel> {
     widget.onChanged?.call();
   }
 
+  Future<void> _openDetails(TaskboardTask task) async {
+    if (_openingAction || _savingSubtask) return;
+    _openingAction = true;
+    widget.refreshController?.changed();
+    try {
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => TaskDetailsWindow(
+          task: task,
+          repository: widget.repository,
+          onChanged: _apply,
+        ),
+      );
+    } finally {
+      _openingAction = false;
+      if (mounted) {
+        widget.refreshController?.changed();
+        await _load(offset: _page?.offset ?? 0);
+      }
+    }
+  }
+
   Future<void> _openAction(TaskboardTask task, TaskCardAction action) async {
     if (_openingAction || action == TaskCardAction.delete) return;
     _openingAction = true;
@@ -151,10 +175,25 @@ class _CustomerTasksPanelState extends State<CustomerTasksPanel> {
           action: action,
           employees: employees,
           searchCustomers: widget.repository.searchCustomers,
-          onEdit: (request) async =>
-              _apply(await widget.repository.editTask(task.id, request)),
-          onAssign: (request) async =>
-              _apply(await widget.repository.assignTask(task.id, request)),
+          onReload: () async {
+            final fresh = (await widget.repository.getTaskDetails(task.id))
+                .task;
+            await _apply(fresh);
+            return fresh;
+          },
+          onEdit: (request) async {
+            final updated = await widget.repository.editTask(task.id, request);
+            await _apply(updated);
+            return updated;
+          },
+          onAssign: (request) async {
+            final updated = await widget.repository.assignTask(
+              task.id,
+              request,
+            );
+            await _apply(updated);
+            return updated;
+          },
         ),
       );
     } on TaskRequestException catch (error) {
@@ -238,6 +277,7 @@ class _CustomerTasksPanelState extends State<CustomerTasksPanel> {
           key: ValueKey(task.id),
           task: task,
           compact: true,
+          onOpen: () => _openDetails(task),
           onAction: (action) => _openAction(task, action),
           onSubtaskChanged: (subtask, done) async {
             if (_savingSubtask) return;

@@ -62,14 +62,14 @@ class _RegisterSearchFocusState extends State<RegisterSearchFocus> {
     super.didChangeDependencies();
     _clear(widget.node);
     _owner = context.dependOnInheritedWidgetOfExactType<_SearchOwner>()?.owner;
-    _owner?.target = widget.node;
+    if (Visibility.of(context)) _owner?.target = widget.node;
   }
 
   @override
   void didUpdateWidget(covariant RegisterSearchFocus oldWidget) {
     super.didUpdateWidget(oldWidget);
     _clear(oldWidget.node);
-    _owner?.target = widget.node;
+    if (Visibility.of(context)) _owner?.target = widget.node;
   }
 
   @override

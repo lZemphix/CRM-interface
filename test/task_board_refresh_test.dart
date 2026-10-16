@@ -111,7 +111,123 @@ AppFlowyBoardController controller(WidgetTester tester) =>
 TaskboardTask displayedTask(WidgetTester tester) =>
     tester.widget<TaskCard>(find.byType(TaskCard).first).task;
 
+ScrollableState columnScroll(WidgetTester tester, String taskId) => tester
+    .stateList<ScrollableState>(
+      find.ancestor(
+        of: find.byKey(ValueKey(taskId)),
+        matching: find.byType(Scrollable),
+      ),
+    )
+    .singleWhere(
+      (state) =>
+          axisDirectionToAxis(state.widget.axisDirection) == Axis.vertical,
+    );
+
 void main() {
+  testWidgets(
+    'retained hidden board pauses polling and rejects old GET before refreshing on return',
+    (tester) async {
+      final repo = RefreshRepository();
+      addTearDown(() => repo.apiClient.dio.close(force: true));
+      tester.view.physicalSize = const Size(1600, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final index = ValueNotifier(0);
+      final revision = ValueNotifier(0);
+      addTearDown(index.dispose);
+      addTearDown(revision.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ModuleDataScope(
+              revision: revision,
+              child: ValueListenableBuilder<int>(
+                valueListenable: index,
+                builder: (_, value, _) => IndexedStack(
+                  index: value,
+                  children: [
+                    TasksScreen(tasksRepository: repo),
+                    const Center(child: Text('Другой модуль')),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final original = controller(tester);
+      final state = tester.state(find.byType(TasksScreen));
+      await tester.tap(find.text('Подзадачи · 0/1'));
+      await tester.pumpAndSettle();
+      final pending = Completer<Taskboard>();
+      repo.nextRead = pending;
+      await tester.pump(const Duration(seconds: 20));
+      await tester.pump();
+      expect(repo.reads, 2);
+      index.value = 1;
+      await tester.pump();
+      pending.complete(
+        Taskboard(
+          columns: repo.board.columns,
+          tasks: [task(title: 'Старый GET')],
+        ),
+      );
+      await tester.pumpAndSettle();
+      revision.value++;
+      await tester.pump(const Duration(seconds: 60));
+      await tester.pumpAndSettle();
+      expect(repo.reads, 2);
+      expect(state.mounted, isTrue);
+      repo.board = Taskboard(
+        columns: repo.board.columns,
+        tasks: [task(title: 'Актуальная задача', version: 2)],
+      );
+      final fresh = Completer<Taskboard>();
+      repo.nextRead = fresh;
+      index.value = 0;
+      await tester.pump();
+      expect(controller(tester), same(original));
+      expect(displayedTask(tester).title, 'Первая задача');
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      fresh.complete(repo.board);
+      await tester.pumpAndSettle();
+      expect(repo.reads, 3);
+      expect(displayedTask(tester).title, 'Актуальная задача');
+      expect(find.text('Проверить').hitTestable(), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  test('identical snapshots produce no controller notifications', () {
+    final c = AppFlowyBoardController();
+    addTearDown(c.dispose);
+    expect(
+      synchronizeTaskBoard(
+        c,
+        Taskboard(columns: [column('1')], tasks: [task()]),
+      ),
+      isTrue,
+    );
+    var notifications = 0;
+    c.addListener(() => notifications++);
+    c.getGroupController('1')!.addListener(() => notifications++);
+    expect(
+      synchronizeTaskBoard(
+        c,
+        Taskboard(columns: [column('1')], tasks: [task()]),
+      ),
+      isFalse,
+    );
+    expect(notifications, 0);
+    expect(sameTaskBoardColumns([column('1')], [column('1')]), isTrue);
+    expect(
+      sameTaskBoardColumns([column('1')], [column('1', name: 'Изменена')]),
+      isFalse,
+    );
+  });
+
   testWidgets(
     'module mutation invalidates an old GET and rereads board without losing controller',
     (tester) async {
@@ -278,6 +394,153 @@ void main() {
     await tester.pumpAndSettle();
     expect(repo.reads, 3);
   });
+
+  testWidgets(
+    'unchanged automatic and manual GETs retain the vertical reading position',
+    (tester) async {
+      final repo = RefreshRepository();
+      repo.board = Taskboard(
+        columns: [column('1'), column('2')],
+        tasks: [for (var i = 100; i < 120; i++) task(id: '$i')],
+      );
+      await openBoard(tester, repo);
+      final boardView = tester.widget<AppFlowyBoard>(
+        find.byType(AppFlowyBoard),
+      );
+      final scroll = columnScroll(tester, '100');
+      scroll.position.jumpTo(450);
+      await tester.pumpAndSettle();
+      final pending = Completer<Taskboard>();
+      repo.nextRead = pending;
+      await tester.pump(const Duration(seconds: 20));
+      await tester.pump();
+      expect(columnScroll(tester, '100').position.pixels, 450);
+      expect(
+        tester.widget<AppFlowyBoard>(find.byType(AppFlowyBoard)),
+        same(boardView),
+      );
+      pending.complete(
+        Taskboard(
+          columns: [column('1'), column('2')],
+          tasks: [for (var i = 100; i < 120; i++) task(id: '$i')],
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Обновить'));
+      await tester.pumpAndSettle();
+      expect(columnScroll(tester, '100'), same(scroll));
+      expect(scroll.position.pixels, 450);
+      expect(
+        tester.widget<AppFlowyBoard>(find.byType(AppFlowyBoard)),
+        same(boardView),
+      );
+      repo.failRead = true;
+      await tester.pump(const Duration(seconds: 20));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('Данные могут быть устаревшими'),
+        findsOneWidget,
+      );
+      expect(columnScroll(tester, '100'), same(scroll));
+      expect(scroll.position.pixels, 450);
+      repo.failRead = false;
+      await tester.pump(const Duration(seconds: 20));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('Данные могут быть устаревшими'),
+        findsNothing,
+      );
+      expect(columnScroll(tester, '100'), same(scroll));
+      expect(scroll.position.pixels, 450);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'real changes update cards without resetting vertical scroll or open checklists',
+    (tester) async {
+      final repo = RefreshRepository();
+      repo.board = Taskboard(
+        columns: [column('1'), column('2')],
+        tasks: [
+          for (var i = 100; i < 120; i++) task(id: '$i'),
+          for (var i = 200; i < 216; i++) task(id: '$i', columnId: '2'),
+        ],
+      );
+      await openBoard(tester, repo);
+      final checklist = find.descendant(
+        of: find.byKey(const ValueKey('100')),
+        matching: find.text('Подзадачи · 0/1'),
+      );
+      await tester.tap(checklist);
+      await tester.pumpAndSettle();
+      final scroll = columnScroll(tester, '100');
+      scroll.position.jumpTo(450);
+      columnScroll(tester, '200').position.jumpTo(180);
+      await tester.pumpAndSettle();
+      repo.board = Taskboard(
+        columns: [column('1'), column('2')],
+        tasks: [
+          for (var i = 100; i < 120; i++)
+            task(
+              id: '$i',
+              title: i == 100 ? 'Изменена другим сотрудником' : 'Первая задача',
+              version: i == 100 ? 2 : 1,
+            ),
+          task(id: '120'),
+          task(id: '121', columnId: '2'),
+          for (var i = 200; i < 216; i++) task(id: '$i', columnId: '2'),
+        ],
+      );
+      await tester.pump(const Duration(seconds: 20));
+      await tester.pumpAndSettle();
+      expect(columnScroll(tester, '100'), same(scroll));
+      expect(scroll.position.pixels, 450);
+      expect(find.text('Изменена другим сотрудником'), findsOneWidget);
+      expect(find.byKey(const ValueKey('120')), findsOneWidget);
+      expect(find.byKey(const ValueKey('121')), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('100')),
+          matching: find.text('Проверить'),
+        ),
+        findsOneWidget,
+      );
+      repo.board = Taskboard(
+        columns: [
+          column('2'),
+          column('1', name: 'Новое название'),
+          column('3'),
+        ],
+        tasks: repo.board.tasks,
+      );
+      await tester.pump(const Duration(seconds: 20));
+      await tester.pumpAndSettle();
+      expect(find.text('Новое название'), findsOneWidget);
+      expect(controller(tester).groupIds, ['2', '1', '3']);
+      expect(columnScroll(tester, '100').position.pixels, 450);
+      expect(columnScroll(tester, '200').position.pixels, 180);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('100')),
+          matching: find.text('Проверить'),
+        ),
+        findsOneWidget,
+      );
+      repo.board = Taskboard(
+        columns: repo.board.columns,
+        tasks: [
+          task(id: '100', title: 'Осталась одна'),
+          task(id: '200', columnId: '2'),
+        ],
+      );
+      await tester.pump(const Duration(seconds: 20));
+      await tester.pumpAndSettle();
+      expect(columnScroll(tester, '100').position.pixels, 0);
+      expect(columnScroll(tester, '200').position.pixels, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('background error keeps data, avoids snackbars and recovers', (
     tester,

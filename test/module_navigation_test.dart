@@ -2,6 +2,7 @@ import 'package:crm_interface/core/api_client/client.dart';
 import 'package:crm_interface/core/modules/module_definition.dart';
 import 'package:crm_interface/core/modules/module_registry.dart';
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/keyboard/search_shortcut_scope.dart';
 import 'package:crm_interface/layout/app_shell.dart';
 import 'package:crm_interface/modules/auth/auth_session.dart';
 import 'package:crm_interface/modules/auth/models/profile.dart';
@@ -45,6 +46,56 @@ class _CounterScreenState extends State<CounterScreen> {
     child: TextButton(
       onPressed: () => setState(() => count++),
       child: Text('${widget.label}: $count'),
+    ),
+  );
+}
+
+class SavedPage extends StatefulWidget {
+  const SavedPage({super.key, required this.load});
+  final Future<String> Function() load;
+  @override
+  State<SavedPage> createState() => _SavedPageState();
+}
+
+class _SavedPageState extends State<SavedPage> {
+  final search = FocusNode();
+  final text = TextEditingController();
+  final scroll = ScrollController();
+  late final Future<String> data;
+
+  @override
+  void initState() {
+    super.initState();
+    data = widget.load();
+  }
+
+  @override
+  void dispose() {
+    search.dispose();
+    text.dispose();
+    scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => RegisterSearchFocus(
+    node: search,
+    child: Column(
+      children: [
+        TextField(controller: text, focusNode: search),
+        FutureBuilder<String>(
+          future: data,
+          builder: (_, snapshot) => Text(snapshot.data ?? 'Загрузка страницы'),
+        ),
+        Expanded(
+          child: ListView.builder(
+            controller: scroll,
+            itemCount: 100,
+            itemExtent: 40,
+            itemBuilder: (_, index) => Text('Строка $index'),
+          ),
+        ),
+      ],
     ),
   );
 }
@@ -97,6 +148,129 @@ void main() {
     await tester.tap(find.byKey(ValueKey('module-placement-$id')));
     await tester.pumpAndSettle();
   }
+
+  testWidgets(
+    'screens are created lazily and keep independent State on return',
+    (tester) async {
+      final modules = ModuleRegistry([
+        section('first', order: 1),
+        section('second'),
+      ]);
+      await showShell(tester, modules: modules);
+      expect(find.byType(CounterScreen, skipOffstage: false), findsOneWidget);
+      final first = tester.state(find.byType(CounterScreen));
+      await tester.tap(find.text('first: 0'));
+      await tester.tap(panel('second'));
+      await tester.pumpAndSettle();
+      expect(first.mounted, isTrue);
+      expect(TickerMode.valuesOf(first.context).enabled, isFalse);
+      expect(find.text('first: 1'), findsNothing);
+      expect(find.byType(CounterScreen, skipOffstage: false), findsNWidgets(2));
+      await tester.tap(find.text('second: 0'));
+      await tester.tap(panel('first'));
+      await tester.pumpAndSettle();
+      expect(tester.state(find.byType(CounterScreen)), same(first));
+      expect(TickerMode.valuesOf(first.context).enabled, isTrue);
+      expect(find.text('first: 1'), findsOneWidget);
+      await tester.tap(panel('second'));
+      await tester.pumpAndSettle();
+      expect(find.text('second: 1'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+      expect(first.mounted, isFalse);
+    },
+  );
+
+  testWidgets(
+    'search shortcut follows the active cached module in either direction',
+    (tester) async {
+      final modules = ModuleRegistry([
+        for (final id in ['first', 'second'])
+          ModuleDefinition(
+            id: id,
+            title: id,
+            description: 'Fixture',
+            icon: Icons.apps,
+            screenBuilder: (_) => SavedPage(load: () async => id),
+          ),
+      ]);
+      await showShell(tester, modules: modules);
+      final first = tester.state<_SavedPageState>(find.byType(SavedPage));
+      await tester.tap(panel('second'));
+      await tester.pumpAndSettle();
+      final second = tester.state<_SavedPageState>(find.byType(SavedPage));
+      for (final (id, current, hidden) in [
+        ('second', second, first),
+        ('first', first, second),
+      ]) {
+        await tester.tap(panel(id));
+        await tester.pumpAndSettle();
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pumpAndSettle();
+        expect(current.search.hasFocus, isTrue);
+        expect(hidden.search.hasFocus, isFalse);
+      }
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'return keeps data, draft and scroll; hidden search loses focus',
+    (tester) async {
+      var reads = 0;
+      final modules = ModuleRegistry([
+        ModuleDefinition(
+          id: 'saved',
+          title: 'Saved',
+          description: 'Fixture',
+          icon: Icons.apps,
+          order: 1,
+          screenBuilder: (_) => SavedPage(
+            load: () async {
+              reads++;
+              return 'Загружено';
+            },
+          ),
+        ),
+        section('second'),
+      ]);
+      await showShell(tester, modules: modules);
+      final page = tester.state<_SavedPageState>(find.byType(SavedPage));
+      await tester.enterText(find.byType(TextField), 'Несохранённый поиск');
+      page.scroll.jumpTo(600);
+      await tester.pumpAndSettle();
+      await tester.tap(panel('second'));
+      await tester.pumpAndSettle();
+      expect(page.search.hasFocus, isFalse);
+      page.search.requestFocus();
+      await tester.pump();
+      expect(page.search.hasFocus, isFalse);
+      // The sidebar shortcut must not focus a retained but invisible input.
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(page.search.hasFocus, isFalse);
+      await tester.tap(panel('saved'));
+      await tester.pumpAndSettle();
+      expect(tester.state(find.byType(SavedPage)), same(page));
+      expect(reads, 1);
+      expect(page.scroll.offset, 600);
+      expect(find.text('Несохранённый поиск'), findsOneWidget);
+      expect(find.text('Загружено'), findsOneWidget);
+      expect(find.text('Загрузка страницы'), findsNothing);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(page.search.hasFocus, isTrue);
+      await showShell(tester, modules: ModuleRegistry(modules.modules));
+      expect(page.mounted, isFalse);
+      expect(reads, 2);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('additional sections open once and highlight the more button', (
     tester,

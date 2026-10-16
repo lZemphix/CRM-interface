@@ -24,9 +24,9 @@ class TasksRepository {
     } on DioException catch (error) {
       throw TaskRequestException.fromDio(error);
     } on FormatException {
-      throw const TaskRequestException('Некорректная история задачи');
+      throw const TaskRequestException('Некорректные данные задачи');
     } on TypeError {
-      throw const TaskRequestException('Некорректная история задачи');
+      throw const TaskRequestException('Некорректные данные задачи');
     }
   }
 
@@ -221,6 +221,25 @@ class TasksRepository {
       );
       if (response.statusCode != 200 || response.data == null) {
         throw const FormatException('Task update response is invalid');
+      }
+      return TaskboardTask.fromApi(response.data!);
+    } on DioException catch (error) {
+      throw TaskRequestException.fromDio(error);
+    }
+  }
+
+  Future<TaskboardTask> updateDescription(
+    String taskId,
+    UpdateTaskDescriptionRequest request,
+  ) async {
+    try {
+      final response = await apiClient.dio.patch<Map<String, dynamic>>(
+        '/tasks/$taskId',
+        data: request.toApi(),
+        options: Options(contentType: Headers.jsonContentType),
+      );
+      if (response.statusCode != 200 || response.data == null) {
+        throw const FormatException('Task description response is invalid');
       }
       return TaskboardTask.fromApi(response.data!);
     } on DioException catch (error) {

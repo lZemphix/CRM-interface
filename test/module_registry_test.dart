@@ -157,7 +157,7 @@ void main() {
     },
   );
 
-  testWidgets('same widget types do not leak state between sections', (
+  testWidgets('same widget types retain independent cached state', (
     tester,
   ) async {
     final registry = ModuleRegistry([definition('a'), definition('b')]);
@@ -170,7 +170,10 @@ void main() {
     expect(find.text('b: 0'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('sidebar-module-a')));
     await tester.pumpAndSettle();
-    expect(find.text('a: 0'), findsOneWidget);
+    expect(find.text('a: 1'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('sidebar-module-b')));
+    await tester.pumpAndSettle();
+    expect(find.text('b: 0'), findsOneWidget);
   });
 
   testWidgets(

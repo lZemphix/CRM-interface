@@ -1,4 +1,4 @@
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 
 import 'column_decoration.dart';
@@ -19,7 +19,9 @@ class TaskColumnFooter extends StatelessWidget {
               ? 'Создание в этой колонке недоступно'
               : 'Создать задачу в этой колонке',
           child: CustomPaint(
-            foregroundPainter: const DashedColumnBorder(),
+            foregroundPainter: DashedColumnBorder(
+              color: context.colors.strongBorder,
+            ),
             child: OutlinedButton.icon(
               onPressed: onCreate,
               icon: const Icon(Icons.add_rounded, size: 16),
@@ -30,7 +32,7 @@ class TaskColumnFooter extends StatelessWidget {
               ),
               style: OutlinedButton.styleFrom(
                 alignment: Alignment.centerLeft,
-                foregroundColor: AppColors.activeElement,
+                foregroundColor: context.colors.accent,
                 backgroundColor: Colors.transparent,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 8,
@@ -41,7 +43,7 @@ class TaskColumnFooter extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
                 side: BorderSide.none,
-                overlayColor: Colors.white,
+                overlayColor: context.colors.surface,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),

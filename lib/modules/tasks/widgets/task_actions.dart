@@ -6,6 +6,7 @@ import '../models/tasks.dart';
 import '../repos/request_error.dart';
 import 'task_card.dart';
 import 'customer_field.dart';
+import 'task_checklist_editor.dart';
 
 class TaskActionWindow extends StatefulWidget {
   const TaskActionWindow({
@@ -16,14 +17,20 @@ class TaskActionWindow extends StatefulWidget {
     required this.onEdit,
     required this.onAssign,
     this.searchCustomers,
+    this.includeAssignment = false,
+    this.assignmentEnabled = true,
+    this.onReload,
   });
 
   final TaskboardTask task;
   final TaskCardAction action;
   final List<TaskEmployee> employees;
-  final Future<void> Function(EditTaskRequest) onEdit;
-  final Future<void> Function(AssignTaskRequest) onAssign;
+  final Future<TaskboardTask> Function(EditTaskRequest) onEdit;
+  final Future<TaskboardTask> Function(AssignTaskRequest) onAssign;
   final Future<List<TaskCustomerOption>> Function(String)? searchCustomers;
+  final bool includeAssignment;
+  final bool assignmentEnabled;
+  final Future<TaskboardTask> Function()? onReload;
 
   @override
   State<TaskActionWindow> createState() => _TaskActionWindowState();
@@ -42,12 +49,55 @@ class _TaskActionWindowState extends State<TaskActionWindow> {
   String? _error;
   TaskCustomerOption? _customer;
   bool _customerChanged = false;
+  late TaskboardTask _baseline;
+  bool _requiresRefresh = false;
+  int _formRevision = 0;
+  late List<TaskSubtaskDraft> _subtasks;
+  bool _checklistConflict = false;
 
   bool get _isEdit => widget.action == TaskCardAction.edit;
+  bool get _combined => _isEdit && widget.includeAssignment;
+  bool get _closed =>
+      _combined && const {'confirmed', 'cancelled'}.contains(_baseline.status);
+  bool get _fieldsEnabled => !_saving && !_requiresRefresh && !_closed;
+  bool get _canAssignStatus =>
+      const {'new', 'in_progress', 'rework'}.contains(_baseline.status);
+  bool get _checklistChanged => !_sameChecklist(_subtasks, _drafts(_baseline));
+
+  List<TaskSubtaskDraft> _drafts(TaskboardTask task) => [
+    for (final item in task.subtasks)
+      TaskSubtaskDraft(id: item.id, title: item.title),
+  ];
+
+  bool _sameChecklist(List<TaskSubtaskDraft> a, List<TaskSubtaskDraft> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].id != b[i].id || a[i].title != b[i].title) return false;
+    }
+    return true;
+  }
+
+  bool _matchesSubmittedChecklist(TaskboardTask fresh, TaskboardTask previous) {
+    if (_subtasks.length != fresh.subtasks.length) return false;
+    final previousIds = previous.subtasks.map((item) => item.id).toSet();
+    for (var i = 0; i < _subtasks.length; i++) {
+      final desired = _subtasks[i];
+      final actual = fresh.subtasks[i];
+      if (desired.title != actual.title) return false;
+      if (desired.id != null
+          ? desired.id != actual.id
+          : previousIds.contains(actual.id)) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   @override
   void initState() {
     super.initState();
+    _baseline = widget.task;
+    _subtasks = _drafts(widget.task);
     _title = widget.task.title;
     if (widget.task.customerId != null) {
       _customer = TaskCustomerOption(
@@ -64,44 +114,206 @@ class _TaskActionWindowState extends State<TaskActionWindow> {
   }
 
   Future<void> _save() async {
-    if (_saving || !_formKey.currentState!.validate()) return;
+    if (!_fieldsEnabled ||
+        _checklistConflict ||
+        !_formKey.currentState!.validate()) {
+      return;
+    }
     _formKey.currentState!.save();
+    var parametersSaved = false;
     setState(() {
       _saving = true;
       _error = null;
     });
     try {
       if (_isEdit) {
-        await widget.onEdit(
-          EditTaskRequest(
-            title: _title,
-            description: _description,
-            priority: _priority!,
-            version: widget.task.version,
-            customerId: _customer?.id,
-            updateCustomer: _customerChanged,
-          ),
-        );
+        final parametersChanged =
+            !_combined ||
+            _title != _baseline.title ||
+            _description != (_baseline.description ?? '') ||
+            _priority?.name != _baseline.priority ||
+            _customerChanged ||
+            _checklistChanged;
+        if (parametersChanged) {
+          final updated = await widget.onEdit(
+            EditTaskRequest(
+              title: _title,
+              description: _description,
+              priority: _priority!,
+              version: _baseline.version,
+              customerId: _customer?.id,
+              updateCustomer: _customerChanged,
+              subtasks: _checklistChanged ? List.of(_subtasks) : null,
+            ),
+          );
+          parametersSaved = true;
+          _baseline = updated;
+          if (_combined) {
+            _adoptMetadata(updated);
+            _formRevision++;
+          }
+        }
+        if (_combined &&
+            _employeeId != (_baseline.responsibleEmployeeId ?? 0)) {
+          if (!_canAssignStatus || !widget.assignmentEnabled) {
+            throw const TaskRequestException(
+              'В этом состоянии задачи исполнитель не может быть изменён.',
+            );
+          }
+          _baseline = await widget.onAssign(_assignmentRequest());
+        }
       } else {
-        await widget.onAssign(
-          AssignTaskRequest(
-            employeeId: _employeeId == 0 ? null : _employeeId,
-            reason: _reason.isEmpty ? null : _reason,
-          ),
-        );
+        await widget.onAssign(_assignmentRequest());
       }
       if (mounted) Navigator.of(context).pop();
+    } on TaskRequestException catch (error) {
+      _saveFailed(error.message, parametersSaved);
+    } catch (_) {
+      _saveFailed(
+        'Не удалось подтвердить сохранение изменений.',
+        parametersSaved,
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  AssignTaskRequest _assignmentRequest() => AssignTaskRequest(
+    employeeId: _employeeId == 0 ? null : _employeeId,
+    reason: _reason.isEmpty ? null : _reason,
+  );
+
+  void _adoptMetadata(TaskboardTask task) {
+    _title = task.title;
+    _description = task.description ?? '';
+    _priority = Priority.values
+        .where((value) => value.name == task.priority)
+        .firstOrNull;
+    _customer = task.customerId == null
+        ? null
+        : TaskCustomerOption(
+            id: task.customerId!,
+            fullName: task.customerName ?? 'Клиент #${task.customerId}',
+          );
+    _customerChanged = false;
+    _subtasks = _drafts(task);
+  }
+
+  void _saveFailed(String message, bool parametersSaved) {
+    if (!mounted) return;
+    setState(() {
+      _requiresRefresh = _combined || _checklistChanged;
+      _error =
+          '${parametersSaved && _combined ? 'Параметры уже сохранены. Назначение не подтверждено. ' : ''}$message'
+          '${_requiresRefresh ? ' Обновите состояние задачи перед повторным сохранением — введённые данные останутся в форме.' : ''}';
+    });
+  }
+
+  Future<void> _reload() async {
+    if (_saving || widget.onReload == null) return;
+    _formKey.currentState!.save();
+    final titleChanged = _title != _baseline.title;
+    final descriptionChanged = _description != (_baseline.description ?? '');
+    final priorityChanged = _priority?.name != _baseline.priority;
+    final customerChanged = _customer?.id != _baseline.customerId;
+    final assigneeChanged =
+        _employeeId != (_baseline.responsibleEmployeeId ?? 0);
+    final previous = _baseline;
+    final checklistChanged = _checklistChanged;
+    setState(() => _saving = true);
+    try {
+      final fresh = await widget.onReload!();
+      if (!mounted) return;
+      if (fresh.id != _baseline.id || fresh.version < _baseline.version) {
+        throw const TaskRequestException(
+          'Получены устаревшие данные задачи. Повторите обновление.',
+        );
+      }
+      setState(() {
+        if (!checklistChanged || _matchesSubmittedChecklist(fresh, previous)) {
+          _subtasks = _drafts(fresh);
+          _checklistConflict = false;
+        } else if (!_sameChecklist(_drafts(previous), _drafts(fresh))) {
+          _checklistConflict = true;
+        }
+        _baseline = fresh;
+        if (!titleChanged) _title = fresh.title;
+        if (!descriptionChanged) _description = fresh.description ?? '';
+        if (!priorityChanged) {
+          _priority = Priority.values
+              .where((value) => value.name == fresh.priority)
+              .firstOrNull;
+        }
+        if (!customerChanged) {
+          _customer = fresh.customerId == null
+              ? null
+              : TaskCustomerOption(
+                  id: fresh.customerId!,
+                  fullName: fresh.customerName ?? 'Клиент #${fresh.customerId}',
+                );
+        }
+        if (!assigneeChanged || !_canAssignStatus) {
+          _employeeId = fresh.responsibleEmployeeId ?? 0;
+        }
+        _customerChanged = _customer?.id != fresh.customerId;
+        _requiresRefresh = false;
+        _error = _closed
+            ? 'Задача закрыта. Изменение недоступно.'
+            : assigneeChanged && !_canAssignStatus
+            ? 'Статус задачи изменился: переназначение недоступно. Показан текущий исполнитель.'
+            : null;
+        if (_checklistConflict) {
+          _error = 'Подзадачи изменились на сервере. Ваш черновик оставлен в форме. Загрузите актуальный список перед сохранением, чтобы не убрать чужие изменения.';
+        }
+        _formRevision++;
+      });
     } on TaskRequestException catch (error) {
       if (mounted) setState(() => _error = error.message);
     } catch (_) {
       if (mounted) {
         setState(
-          () => _error = 'Не удалось сохранить изменения. Попробуйте ещё раз.',
+          () => _error =
+              'Не удалось обновить задачу. Введённые данные сохранены в форме.',
         );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  Future<void> _reloadChecklist() async {
+    if (_saving) return;
+    _formKey.currentState!.save();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => DialogKeyboardScope(
+        onClose: () => Navigator.of(context).pop(false),
+        child: AlertDialog(
+          title: const Text('Загрузить актуальные подзадачи?'),
+          content: const Text(
+            'Черновик списка будет заменён данными сервера. Остальные изменения формы сохранятся.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Оставить черновик'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Загрузить список'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || confirmed != true) return;
+    setState(() {
+      _subtasks = _drafts(_baseline);
+      _checklistConflict = false;
+      _error = null;
+      _formRevision++;
+    });
   }
 
   @override
@@ -113,7 +325,11 @@ class _TaskActionWindowState extends State<TaskActionWindow> {
       hasChanges: () => _dirty || _customerChanged || _reason.isNotEmpty,
       child: AlertDialog(
         title: Text(
-          _isEdit ? 'Редактировать задачу' : 'Назначить ответственного',
+          _combined
+              ? 'Изменить параметры задачи'
+              : _isEdit
+              ? 'Редактировать задачу'
+              : 'Назначить ответственного',
         ),
         content: SizedBox(
           width: 420,
@@ -122,10 +338,15 @@ class _TaskActionWindowState extends State<TaskActionWindow> {
               key: _formKey,
               onChanged: () => _dirty = true,
               child: Column(
+                key: ValueKey(_formRevision),
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   ...(_isEdit ? _editFields() : _assignmentFields()),
+                  if (_combined) ...[
+                    const SizedBox(height: 16),
+                    ..._assignmentFields(),
+                  ],
                   if (_error != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 12),
@@ -135,6 +356,16 @@ class _TaskActionWindowState extends State<TaskActionWindow> {
                           color: Theme.of(context).colorScheme.error,
                         ),
                       ),
+                    ),
+                  if (_requiresRefresh && widget.onReload != null)
+                    TextButton(
+                      onPressed: _saving ? null : _reload,
+                      child: const Text('Обновить состояние задачи'),
+                    ),
+                  if (_checklistConflict)
+                    TextButton(
+                      onPressed: _saving ? null : _reloadChecklist,
+                      child: const Text('Загрузить актуальные подзадачи'),
                     ),
                 ],
               ),
@@ -149,7 +380,7 @@ class _TaskActionWindowState extends State<TaskActionWindow> {
             child: const Text('Отмена'),
           ),
           FilledButton(
-            onPressed: _saving ? null : _save,
+            onPressed: _fieldsEnabled && !_checklistConflict ? _save : null,
             child: Text(_saving ? 'Сохраняем…' : 'Сохранить'),
           ),
         ],
@@ -162,17 +393,17 @@ class _TaskActionWindowState extends State<TaskActionWindow> {
       TaskCustomerField(
         initialCustomer: _customer,
         searchCustomers: widget.searchCustomers,
-        enabled: !_saving,
+        enabled: _fieldsEnabled,
         onSelected: (customer) {
           _customer = customer;
-          _customerChanged = customer?.id != widget.task.customerId;
+          _customerChanged = customer?.id != _baseline.customerId;
         },
       ),
       const SizedBox(height: 12),
     ],
     TextFormField(
       initialValue: _title,
-      enabled: !_saving,
+      enabled: _fieldsEnabled,
       maxLength: 255,
       decoration: const InputDecoration(labelText: 'Название *'),
       validator: (value) =>
@@ -181,7 +412,7 @@ class _TaskActionWindowState extends State<TaskActionWindow> {
     ),
     TextFormField(
       initialValue: _description,
-      enabled: !_saving,
+      enabled: _fieldsEnabled,
       maxLength: 4000,
       minLines: 3,
       maxLines: 6,
@@ -205,20 +436,28 @@ class _TaskActionWindowState extends State<TaskActionWindow> {
             }),
           ),
       ],
-      onChanged: _saving ? null : (value) => _priority = value,
+      onChanged: !_fieldsEnabled ? null : (value) => _priority = value,
+    ),
+    const SizedBox(height: 16),
+    TaskChecklistEditor(
+      initialSubtasks: _subtasks,
+      enabled: _fieldsEnabled,
+      onChanged: (value) {
+        _subtasks = value;
+        _dirty = true;
+      },
     ),
   ];
 
   List<Widget> _assignmentFields() {
     final employees = [...widget.employees];
-    final current = widget.task.responsibleEmployeeId;
+    final current = _baseline.responsibleEmployeeId;
     if (current != null &&
         !employees.any((employee) => employee.id == current)) {
       employees.add(
         TaskEmployee(
           id: current,
-          fullName:
-              widget.task.responsibleEmployeeName ?? 'Сотрудник #$current',
+          fullName: _baseline.responsibleEmployeeName ?? 'Сотрудник #$current',
         ),
       );
     }
@@ -235,15 +474,28 @@ class _TaskActionWindowState extends State<TaskActionWindow> {
               child: Text(employee.fullName, overflow: TextOverflow.ellipsis),
             ),
         ],
-        onChanged: _saving
+        onChanged:
+            !_fieldsEnabled ||
+                (_combined && (!_canAssignStatus || !widget.assignmentEnabled))
             ? null
             : (value) {
                 if (value != null) _employeeId = value;
               },
       ),
+      if (_combined && (!_canAssignStatus || !widget.assignmentEnabled))
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Text(
+            !_canAssignStatus ? 'В этом статусе нельзя менять исполнителя.' : 'Список сотрудников недоступен. Параметры задачи можно изменить; для назначения попробуйте открыть форму позже.',
+            style: const TextStyle(fontSize: 12),
+          ),
+        ),
       const SizedBox(height: 12),
       TextFormField(
-        enabled: !_saving,
+        initialValue: _reason,
+        enabled:
+            _fieldsEnabled &&
+            (!_combined || (_canAssignStatus && widget.assignmentEnabled)),
         maxLength: 2000,
         maxLines: 3,
         decoration: const InputDecoration(

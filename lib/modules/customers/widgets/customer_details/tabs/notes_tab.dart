@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:crm_interface/core/widgets/section_refresh_controller.dart';
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 
 import '../../../models/customer_note.dart';
 import '../../../repos/customers_repository.dart';
@@ -201,9 +201,9 @@ class _CustomerNotesPanelState extends State<CustomerNotesPanel>
     key: ValueKey('customer-note-${note.id}'),
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: context.colors.surface,
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: AppColors.notActiveBorder),
+      border: Border.all(color: context.colors.notActiveBorder),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,13 +248,13 @@ class _CustomerNotesPanelState extends State<CustomerNotesPanel>
           children: [
             Text(
               _date(note.createdAt),
-              style: const TextStyle(color: AppColors.textMutted, fontSize: 12),
+              style: TextStyle(color: context.colors.textMutted, fontSize: 12),
             ),
             if (note.editedAt != null)
               Text(
                 'Изменено ${_date(note.editedAt!)}',
-                style: const TextStyle(
-                  color: AppColors.textMutted,
+                style: TextStyle(
+                  color: context.colors.textMutted,
                   fontSize: 12,
                 ),
               ),
@@ -270,8 +270,8 @@ class _CustomerNotesPanelState extends State<CustomerNotesPanel>
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AppColors.notActiveBorder),
+        color: context.colors.surface,
+        border: Border.all(color: context.colors.notActiveBorder),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(

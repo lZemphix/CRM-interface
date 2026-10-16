@@ -5,7 +5,7 @@ import 'package:crm_interface/core/keyboard/keybindings.dart';
 
 import '../../models/customer_note.dart';
 import '../../repos/customers_repository.dart';
-import '../../../../core/theme/light/colorscheme.dart';
+import '../../../../core/theme/app_palette.dart';
 
 class CustomerNoteEditor extends StatefulWidget {
   const CustomerNoteEditor({
@@ -193,22 +193,22 @@ class _CustomerNoteEditorState extends State<CustomerNoteEditor> {
         filled: true,
         fillColor: WidgetStateColor.resolveWith(
           (states) => states.contains(WidgetState.focused)
-              ? Colors.white
-              : AppColors.background,
+              ? context.colors.surface
+              : context.colors.background,
         ),
         constraints: const BoxConstraints(minHeight: 84),
         contentPadding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.notActiveBorder),
+          borderSide: BorderSide(color: context.colors.notActiveBorder),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.notActiveBorder),
+          borderSide: BorderSide(color: context.colors.notActiveBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.activeElement),
+          borderSide: BorderSide(color: context.colors.accent),
         ),
       ),
       validator: (value) {
@@ -231,20 +231,20 @@ class _CustomerNoteEditorState extends State<CustomerNoteEditor> {
           : _save,
       style:
           FilledButton.styleFrom(
-            backgroundColor: AppColors.activeElement,
-            foregroundColor: Colors.white,
+            backgroundColor: context.colors.activeElement,
+            foregroundColor: context.colors.onAccent,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
           ).copyWith(
             backgroundColor: WidgetStateProperty.resolveWith((states) {
               if (states.contains(WidgetState.disabled)) {
-                return AppColors.notActiveBorder;
+                return context.colors.notActiveBorder;
               }
               return states.contains(WidgetState.hovered) ||
                       states.contains(WidgetState.pressed)
-                  ? AppColors.activeElementHover
-                  : AppColors.activeElement;
+                  ? context.colors.activeElementHover
+                  : context.colors.activeElement;
             }),
           ),
       child: Text(_saving ? 'Сохранение…' : 'Сохранить'),

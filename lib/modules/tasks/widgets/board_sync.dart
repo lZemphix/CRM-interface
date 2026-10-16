@@ -14,12 +14,17 @@ class TasksCanbanCard extends AppFlowyGroupItem {
 
 /// Reconcile a server snapshot without clearing controllers or unchanged cards.
 /// Both polling and a future push notification can use this same path.
-void synchronizeTaskBoard(AppFlowyBoardController controller, Taskboard board) {
+/// Returns whether controller data changed; equal snapshots send no notifications.
+bool synchronizeTaskBoard(AppFlowyBoardController controller, Taskboard board) {
+  var changed = false;
   final columnIds = board.columns.map((column) => column.id).toSet();
   final tasksById = {for (final task in board.tasks) task.id: task};
 
   for (final id in controller.groupIds.toList()) {
-    if (!columnIds.contains(id)) controller.removeGroup(id);
+    if (!columnIds.contains(id)) {
+      controller.removeGroup(id);
+      changed = true;
+    }
   }
   for (var index = 0; index < board.columns.length; index++) {
     final column = board.columns[index];
@@ -28,10 +33,18 @@ void synchronizeTaskBoard(AppFlowyBoardController controller, Taskboard board) {
         index,
         AppFlowyGroupData(id: column.id, name: column.name, items: []),
       );
+      changed = true;
     } else {
       final currentIndex = controller.groupIds.indexOf(column.id);
-      if (currentIndex != index) controller.moveGroup(currentIndex, index);
-      controller.getGroupController(column.id)!.updateGroupName(column.name);
+      if (currentIndex != index) {
+        controller.moveGroup(currentIndex, index);
+        changed = true;
+      }
+      final group = controller.getGroupController(column.id)!;
+      if (group.groupData.headerData.groupName != column.name) {
+        group.updateGroupName(column.name);
+        changed = true;
+      }
     }
   }
 
@@ -39,6 +52,7 @@ void synchronizeTaskBoard(AppFlowyBoardController controller, Taskboard board) {
     for (final item in group.items.toList()) {
       if (tasksById[item.id]?.columnId != group.id) {
         controller.removeGroupItem(group.id, item.id);
+        changed = true;
       }
     }
     final tasks = board.tasks
@@ -56,16 +70,34 @@ void synchronizeTaskBoard(AppFlowyBoardController controller, Taskboard board) {
           index,
           TasksCanbanCard(task: task),
         );
+        changed = true;
       } else {
-        if (currentIndex != index) groupController.move(currentIndex, index);
+        if (currentIndex != index) {
+          groupController.move(currentIndex, index);
+          changed = true;
+        }
         final current = groupController.items[index] as TasksCanbanCard;
         if (!_sameTask(current.task, task)) {
           controller.updateGroupItem(group.id, TasksCanbanCard(task: task));
+          changed = true;
         }
       }
     }
   }
+  return changed;
 }
+
+bool sameTaskBoardColumns(
+  List<TaskboardColumn> a,
+  List<TaskboardColumn> b,
+) => listEquals(
+  a
+      .map((c) => (c.id, c.name, c.order, c.countsAsDone, c.status, c.version))
+      .toList(),
+  b
+      .map((c) => (c.id, c.name, c.order, c.countsAsDone, c.status, c.version))
+      .toList(),
+);
 
 bool _sameTask(TaskboardTask a, TaskboardTask b) =>
     (

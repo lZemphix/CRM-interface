@@ -1,36 +1,40 @@
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:crm_interface/modules/customers/models/customer.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-Icon getContactIcon(CustomerContact contact) {
+Icon getContactIcon(BuildContext context, CustomerContact contact) {
   switch (contact.type) {
     case ContactType.phone:
-      return Icon(Icons.phone_outlined, color: AppColors.textMutted, size: 15);
+      return Icon(
+        Icons.phone_outlined,
+        color: context.colors.textMutted,
+        size: 15,
+      );
     case ContactType.email:
       return Icon(
         Icons.mail_lock_outlined,
-        color: AppColors.textMutted,
+        color: context.colors.textMutted,
         size: 15,
       );
     case ContactType.telegram:
-      return Icon(Icons.telegram, color: AppColors.textMutted, size: 15);
+      return Icon(Icons.telegram, color: context.colors.textMutted, size: 15);
     case ContactType.max:
       return Icon(
         Icons.chat_bubble_outline_rounded,
-        color: AppColors.textMutted,
+        color: context.colors.textMutted,
         size: 15,
       );
     case ContactType.other:
       return Icon(
         Icons.contact_page_outlined,
-        color: AppColors.textMutted,
+        color: context.colors.textMutted,
         size: 15,
       );
     case ContactType.unknown:
       return Icon(
         Icons.help_center_outlined,
-        color: AppColors.textMutted,
+        color: context.colors.textMutted,
         size: 15,
       );
   }
@@ -83,8 +87,8 @@ Widget overviewTab(
         spacing: 20,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          aboutCustomer(customer, branchLabel, onEdit: onEditCustomer),
-          contacts(customer, onEdit: onEditContacts),
+          aboutCustomer(context, customer, branchLabel, onEdit: onEditCustomer),
+          contacts(context, customer, onEdit: onEditContacts),
         ],
       );
       return SingleChildScrollView(
@@ -107,13 +111,13 @@ Widget overviewTab(
   );
 }
 
-Widget aboutCustomerElement(String key, String value) {
+Widget aboutCustomerElement(BuildContext context, String key, String value) {
   return Row(
     children: [
       Expanded(
         child: Text(
           key,
-          style: TextStyle(fontSize: 13, color: AppColors.textMutted),
+          style: TextStyle(fontSize: 13, color: context.colors.textMutted),
         ),
       ),
       Expanded(child: Text(value, style: TextStyle(fontSize: 13))),
@@ -122,6 +126,7 @@ Widget aboutCustomerElement(String key, String value) {
 }
 
 Widget aboutCustomer(
+  BuildContext context,
   CustomerDetails customer,
   String branchLabel, {
   VoidCallback? onEdit,
@@ -129,8 +134,8 @@ Widget aboutCustomer(
   return Container(
     padding: EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: Colors.white,
-      border: Border.all(color: AppColors.notActiveBorder),
+      color: context.colors.surface,
+      border: Border.all(color: context.colors.notActiveBorder),
       borderRadius: BorderRadius.circular(12),
     ),
     child: Column(
@@ -150,7 +155,7 @@ Widget aboutCustomer(
               onPressed: onEdit,
               child: Text(
                 'Изменить',
-                style: TextStyle(color: AppColors.activeElement),
+                style: TextStyle(color: context.colors.accent),
               ),
             ),
           ],
@@ -159,28 +164,37 @@ Widget aboutCustomer(
           spacing: 10,
           children: [
             aboutCustomerElement(
+              context,
               'Пол',
               getGenderTranslate(customer.gender ?? '_'),
             ),
             aboutCustomerElement(
+              context,
               'Дата рождения',
               customer.dateOfBirth == null
                   ? 'Не указана'
                   : DateFormat('dd.MM.yyyy').format(customer.dateOfBirth!),
             ),
-            aboutCustomerElement('Предпочитаемый филиал', branchLabel),
-            aboutCustomerElement('Источник', customer.acquisitionSourceName),
+            aboutCustomerElement(context, 'Предпочитаемый филиал', branchLabel),
             aboutCustomerElement(
+              context,
+              'Источник',
+              customer.acquisitionSourceName,
+            ),
+            aboutCustomerElement(
+              context,
               'Рекомендовал',
               customer.referredByCustomerId == null
                   ? 'Не указан'
                   : 'Клиент #${customer.referredByCustomerId}',
             ),
             aboutCustomerElement(
+              context,
               'Способ регистрации',
               getRegistrationMethodTranslate(customer.registrationMethod),
             ),
             aboutCustomerElement(
+              context,
               'Создавший сотрудник',
               customer.createdBy?.fullName ??
                   (customer.createdByEmployeeId == null
@@ -194,7 +208,13 @@ Widget aboutCustomer(
   );
 }
 
-Widget contactElement(Icon icon, String key, String value, {String? label}) {
+Widget contactElement(
+  BuildContext context,
+  Icon icon,
+  String key,
+  String value, {
+  String? label,
+}) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
@@ -211,23 +231,30 @@ Widget contactElement(Icon icon, String key, String value, {String? label}) {
             if (label != null)
               Text(
                 label,
-                style: TextStyle(color: AppColors.textMutted, fontSize: 12),
+                style: TextStyle(
+                  color: context.colors.textMutted,
+                  fontSize: 12,
+                ),
               ),
           ],
         ),
       ),
       const SizedBox(width: 10),
-      Text(key, style: TextStyle(color: AppColors.textMutted)),
+      Text(key, style: TextStyle(color: context.colors.textMutted)),
     ],
   );
 }
 
-Widget contacts(CustomerDetails customer, {VoidCallback? onEdit}) {
+Widget contacts(
+  BuildContext context,
+  CustomerDetails customer, {
+  VoidCallback? onEdit,
+}) {
   return Container(
     padding: EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: Colors.white,
-      border: Border.all(color: AppColors.notActiveBorder),
+      color: context.colors.surface,
+      border: Border.all(color: context.colors.notActiveBorder),
       borderRadius: BorderRadius.circular(12),
     ),
     child: Column(
@@ -247,7 +274,7 @@ Widget contacts(CustomerDetails customer, {VoidCallback? onEdit}) {
               onPressed: onEdit,
               child: Text(
                 'Изменить',
-                style: TextStyle(color: AppColors.activeElement),
+                style: TextStyle(color: context.colors.accent),
               ),
             ),
           ],
@@ -255,7 +282,8 @@ Widget contacts(CustomerDetails customer, {VoidCallback? onEdit}) {
         if (customer.contacts.isEmpty) const Text('Контакты не указаны'),
         for (CustomerContact contact in customer.contacts)
           contactElement(
-            getContactIcon(contact),
+            context,
+            getContactIcon(context, contact),
             contact.isPrimary ? 'Основной' : 'Запасной',
             contact.value.trim(),
             label: contact.label,

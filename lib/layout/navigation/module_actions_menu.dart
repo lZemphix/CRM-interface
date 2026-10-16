@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:crm_interface/core/modules/module_definition.dart';
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 
 Widget moduleActionButton(
@@ -13,8 +13,8 @@ Widget moduleActionButton(
   key: ValueKey('module-action-${module.id}-${action.id}'),
   leadingIcon: Icon(action.icon, size: 19),
   style: action.destructive
-      ? const ButtonStyle(
-          foregroundColor: WidgetStatePropertyAll(Color(0xFFB42318)),
+      ? ButtonStyle(
+          foregroundColor: WidgetStatePropertyAll(context.colors.danger),
         )
       : null,
   onPressed: () {
@@ -51,9 +51,9 @@ class _ModuleActionsMenuState extends State<ModuleActionsMenu> {
     childFocusNode: _focus,
     useRootOverlay: true,
     alignmentOffset: const Offset(10, 0),
-    style: const MenuStyle(
+    style: MenuStyle(
       alignment: Alignment.topRight,
-      backgroundColor: WidgetStatePropertyAll(AppColors.background),
+      backgroundColor: WidgetStatePropertyAll(context.colors.background),
       surfaceTintColor: WidgetStatePropertyAll(Colors.transparent),
     ),
     menuChildren: [
@@ -63,9 +63,9 @@ class _ModuleActionsMenuState extends State<ModuleActionsMenu> {
     builder: (context, controller, child) => InkWell(
       key: ValueKey('sidebar-module-${widget.module.id}'),
       focusNode: _focus,
-      hoverColor: AppColors.hoveredElement,
+      hoverColor: context.colors.hoveredElement,
       onTap: () => controller.isOpen ? controller.close() : controller.open(),
-      child: Icon(widget.module.icon, color: AppColors.sidebarElement),
+      child: Icon(widget.module.icon, color: context.colors.sidebarElement),
     ),
   );
 }

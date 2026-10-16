@@ -1,6 +1,7 @@
 import 'package:crm_interface/core/api_client/client.dart';
 import 'package:crm_interface/bootstrap/modules.g.dart';
 import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:crm_interface/main.dart';
 import 'package:crm_interface/modules/auth/auth_session.dart';
 import 'package:crm_interface/modules/auth/repos/auth.dart';
@@ -22,7 +23,7 @@ Future<void> openApp(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('screens and Material surfaces share AppColors background', (
+  testWidgets('backgrounds and elevated surfaces use neutral semantic colors', (
     tester,
   ) async {
     await openApp(tester);
@@ -30,16 +31,18 @@ void main() {
     final scheme = theme.colorScheme;
     expect(theme.scaffoldBackgroundColor, AppColors.background);
     expect(theme.canvasColor, AppColors.background);
+    expect(scheme.surface, AppPalette.light.surface);
+    expect(scheme.surfaceBright, AppPalette.light.surface);
+    expect(scheme.surfaceContainer, AppPalette.light.surface);
     expect([
-      scheme.surface,
       scheme.surfaceDim,
-      scheme.surfaceBright,
       scheme.surfaceContainerLowest,
       scheme.surfaceContainerLow,
-      scheme.surfaceContainer,
+    ], everyElement(AppColors.background));
+    expect([
       scheme.surfaceContainerHigh,
       scheme.surfaceContainerHighest,
-    ], everyElement(AppColors.background));
+    ], everyElement(AppPalette.light.surfaceMuted));
     expect(scheme.surfaceTint, Colors.transparent);
 
     final canvas = tester
@@ -66,7 +69,7 @@ void main() {
             )
             .first,
       );
-      expect(surface.color, AppColors.background);
+      expect(surface.color, AppPalette.light.surface);
       expect(surface.surfaceTintColor, Colors.transparent);
       Navigator.of(tester.element(find.byType(AlertDialog))).pop();
       await tester.pumpAndSettle();

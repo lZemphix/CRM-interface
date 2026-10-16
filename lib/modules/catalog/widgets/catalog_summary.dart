@@ -1,4 +1,4 @@
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 
 import '../models/catalog_item.dart';
@@ -8,13 +8,13 @@ class CatalogSummary extends StatelessWidget {
 
   final CatalogCounts? counts;
 
-  Widget _stat(String label, int? value) => Expanded(
+  Widget _stat(BuildContext context, String label, int? value) => Expanded(
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 17),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.notActiveBorder),
+        border: Border.all(color: context.colors.notActiveBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -23,14 +23,14 @@ class CatalogSummary extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(fontSize: 12, color: AppColors.textMutted),
+            style: TextStyle(fontSize: 12, color: context.colors.textMutted),
           ),
           Text(
             value?.toString() ?? '—',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 25,
               fontWeight: FontWeight.w700,
-              color: AppColors.taskCardText,
+              color: context.colors.taskCardText,
             ),
           ),
         ],
@@ -45,9 +45,9 @@ class CatalogSummary extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 14,
       children: [
-        _stat('Всего позиций', counts?.total),
-        _stat('Услуги', counts?.services),
-        _stat('Товары', counts?.products),
+        _stat(context, 'Всего позиций', counts?.total),
+        _stat(context, 'Услуги', counts?.services),
+        _stat(context, 'Товары', counts?.products),
       ],
     ),
   );

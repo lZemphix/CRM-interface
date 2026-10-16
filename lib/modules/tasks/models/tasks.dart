@@ -91,6 +91,16 @@ class MoveTaskRequest {
   };
 }
 
+class TaskSubtaskDraft {
+  const TaskSubtaskDraft({this.id, required this.title});
+
+  final int? id;
+  final String title;
+
+  // Leave done out: renaming/reordering must not change completion marks.
+  Map<String, dynamic> toApi() => {if (id != null) 'id': id, 'title': title};
+}
+
 class EditTaskRequest {
   const EditTaskRequest({
     required this.title,
@@ -99,6 +109,7 @@ class EditTaskRequest {
     required this.version,
     this.customerId,
     this.updateCustomer = false,
+    this.subtasks,
   });
 
   final String title;
@@ -107,6 +118,7 @@ class EditTaskRequest {
   final int version;
   final int? customerId;
   final bool updateCustomer;
+  final List<TaskSubtaskDraft>? subtasks;
 
   Map<String, dynamic> toApi() => {
     'title': title,
@@ -115,6 +127,23 @@ class EditTaskRequest {
     'version': version,
     // Отсутствие поля сохраняет привязку; explicit null снимает её.
     if (updateCustomer) 'customer_id': customerId,
+    if (subtasks != null)
+      'subtasks': subtasks!.map((item) => item.toApi()).toList(),
+  };
+}
+
+class UpdateTaskDescriptionRequest {
+  const UpdateTaskDescriptionRequest({
+    required this.description,
+    required this.version,
+  });
+
+  final String? description;
+  final int version;
+
+  Map<String, dynamic> toApi() => {
+    'description': description,
+    'version': version,
   };
 }
 

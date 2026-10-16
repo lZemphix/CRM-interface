@@ -1,5 +1,5 @@
 import 'package:crm_interface/core/api_client/client.dart';
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:crm_interface/modules/customers/models/customer.dart';
 import 'package:crm_interface/modules/customers/widgets/customer_details/detail_panel.dart';
 import 'package:crm_interface/modules/customers/widgets/entity_panel.dart';
@@ -43,7 +43,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
       child: CommandScope(
         commands: {AppCommand.focusSearch: _searchFocus.requestFocus},
         child: Container(
-          color: AppColors.background,
+          color: context.colors.background,
           child: Row(
             children: [
               SizedBox(

@@ -1,4 +1,4 @@
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:crm_interface/core/keyboard/dialog_keyboard_scope.dart';
 
@@ -32,7 +32,7 @@ class RoleDialogFrame extends StatelessWidget {
     hasChanges: hasChanges,
     onSubmit: onSubmit,
     child: Dialog(
-      backgroundColor: Colors.white,
+      backgroundColor: context.colors.surface,
       surfaceTintColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
@@ -53,8 +53,8 @@ class RoleDialogFrame extends StatelessWidget {
                           ? Icons.delete_outline
                           : Icons.admin_panel_settings_outlined,
                       color: danger
-                          ? const Color(0xFFB42318)
-                          : AppColors.activeElement,
+                          ? context.colors.danger
+                          : context.colors.activeElement,
                     ),
                     Expanded(
                       child: Text(
@@ -78,15 +78,15 @@ class RoleDialogFrame extends StatelessWidget {
                 ),
                 Text(
                   description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textMutted,
+                    color: context.colors.textMutted,
                   ),
                 ),
                 const SizedBox(height: 24),
                 body,
                 const SizedBox(height: 20),
-                const Divider(height: 1, color: AppColors.notActiveBorder),
+                Divider(height: 1, color: context.colors.notActiveBorder),
                 const SizedBox(height: 16),
                 Wrap(
                   alignment: WrapAlignment.end,
@@ -112,16 +112,16 @@ class RoleMessage extends StatelessWidget {
     width: double.infinity,
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: error ? const Color(0xFFFFF1F0) : AppColors.background,
+      color: error ? context.colors.dangerSoft : context.colors.background,
       borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: AppColors.notActiveBorder),
+      border: Border.all(color: context.colors.notActiveBorder),
     ),
     child: Text(
       message,
       style: TextStyle(
         fontSize: 12,
         height: 1.5,
-        color: error ? const Color(0xFFB42318) : AppColors.textMutted,
+        color: error ? context.colors.danger : context.colors.textMutted,
       ),
     ),
   );

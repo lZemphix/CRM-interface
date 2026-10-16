@@ -1,8 +1,8 @@
-// import 'package:crm_interface/core/theme/light/colorscheme.dart';
+// import 'package:crm_interface/core/theme/app_palette.dart';
 import 'package:crm_interface/core/modules/module_data_changes.dart';
 import 'package:crm_interface/core/api_client/client.dart';
 import 'package:crm_interface/core/widgets/section_refresh_controller.dart';
-import 'package:crm_interface/core/theme/light/colorscheme.dart';
+import 'package:crm_interface/core/theme/app_palette.dart';
 
 import 'customer_action_button.dart';
 import 'edit_customer.dart';
@@ -71,26 +71,33 @@ class _DetailPanelState extends State<DetailPanel>
   int? _dataRevision;
   bool _externalRefreshPending = false;
   bool _externalRefreshScheduled = false;
+  bool _screenVisible = true;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _screenVisible = Visibility.of(context);
     final revision = ModuleDataScope.revisionOf(context);
     if (_dataRevision != null && _dataRevision != revision) {
       _externalRefreshPending = true;
-      _scheduleExternalRefresh();
     }
     _dataRevision = revision;
+    if (_screenVisible) _scheduleExternalRefresh();
   }
 
   void _scheduleExternalRefresh() {
-    if (!mounted || !_externalRefreshPending || _externalRefreshScheduled) {
+    if (!mounted ||
+        !_screenVisible ||
+        !_externalRefreshPending ||
+        _externalRefreshScheduled) {
       return;
     }
     _externalRefreshScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _externalRefreshScheduled = false;
-      if (!mounted || !_externalRefreshPending || _busy) return;
+      if (!mounted || !_screenVisible || !_externalRefreshPending || _busy) {
+        return;
+      }
       _externalRefreshPending = false;
       _refreshCustomer();
     });
@@ -396,10 +403,10 @@ class _DetailPanelState extends State<DetailPanel>
               isScrollable: true,
               tabAlignment: TabAlignment.start,
               labelPadding: EdgeInsets.all(10),
-              unselectedLabelColor: AppColors.textMutted,
-              labelColor: AppColors.activeElement,
-              indicatorColor: AppColors.activeElement,
-              dividerColor: AppColors.notActiveBorder,
+              unselectedLabelColor: context.colors.textMutted,
+              labelColor: context.colors.activeElement,
+              indicatorColor: context.colors.activeElement,
+              dividerColor: context.colors.notActiveBorder,
               tabs: [
                 Text('Обзор'),
                 Text('Активность'),
@@ -511,7 +518,7 @@ class _DetailPanelState extends State<DetailPanel>
 
   Widget customerDetailsCard(CustomerDetails customer, String branchLabel) {
     return Container(
-      decoration: BoxDecoration(color: AppColors.background),
+      decoration: BoxDecoration(color: context.colors.background),
       padding: EdgeInsets.all(30),
       child: Column(
         spacing: 20,
@@ -533,8 +540,8 @@ class _DetailPanelState extends State<DetailPanel>
   Widget actionsCustomer(CustomerDetails customer) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AppColors.notActiveBorder),
+        color: context.colors.surface,
+        border: Border.all(color: context.colors.notActiveBorder),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -580,10 +587,10 @@ class _DetailPanelState extends State<DetailPanel>
       decoration: BoxDecoration(
         border: Border(
           right: rightBorder == true
-              ? BorderSide(color: AppColors.notActiveBorder)
+              ? BorderSide(color: context.colors.notActiveBorder)
               : BorderSide.none,
           left: leftBorder == true
-              ? BorderSide(color: AppColors.notActiveBorder)
+              ? BorderSide(color: context.colors.notActiveBorder)
               : BorderSide.none,
         ),
       ),
@@ -593,7 +600,7 @@ class _DetailPanelState extends State<DetailPanel>
         children: [
           Text(
             title,
-            style: TextStyle(color: AppColors.textMutted, fontSize: 11),
+            style: TextStyle(color: context.colors.textMutted, fontSize: 11),
           ),
           Text(
             description,
@@ -614,8 +621,8 @@ class _DetailPanelState extends State<DetailPanel>
         borderRadius: BorderRadius.all(Radius.circular(14)),
         gradient: LinearGradient(
           colors: [
-            const Color.fromARGB(255, 212, 215, 238),
-            const Color.fromARGB(255, 238, 235, 255),
+            context.colors.iconBackground1,
+            context.colors.iconBackground2,
           ],
           begin: AlignmentGeometry.bottomEnd,
           end: AlignmentGeometry.topStart,
@@ -625,7 +632,7 @@ class _DetailPanelState extends State<DetailPanel>
         child: Text(
           finalLetters,
           style: TextStyle(
-            color: AppColors.activeElement,
+            color: context.colors.accent,
             fontWeight: FontWeight(700),
             fontSize: 16,
           ),
@@ -636,8 +643,8 @@ class _DetailPanelState extends State<DetailPanel>
     return Container(
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AppColors.notActiveBorder),
+        color: context.colors.surface,
+        border: Border.all(color: context.colors.notActiveBorder),
         borderRadius: BorderRadius.circular(12),
       ),
       child: LayoutBuilder(
@@ -733,18 +740,24 @@ class _DetailPanelState extends State<DetailPanel>
                     Icons.circle,
                     size: 8,
                     color: customer.status == 'active'
-                        ? const Color.fromARGB(255, 81, 213, 85)
-                        : const Color.fromARGB(255, 169, 48, 48),
+                        ? context.colors.success
+                        : context.colors.danger,
                   ),
                   Text(
                     customer.status == 'active'
                         ? 'Активный клиент'
                         : 'Неактивный клиент',
-                    style: TextStyle(color: AppColors.textMutted),
+                    style: TextStyle(color: context.colors.textMutted),
                   ),
-                  Text(contact, style: TextStyle(color: AppColors.textMutted)),
+                  Text(
+                    contact,
+                    style: TextStyle(color: context.colors.textMutted),
+                  ),
                   if (branch != null)
-                    Text(branch, style: TextStyle(color: AppColors.textMutted)),
+                    Text(
+                      branch,
+                      style: TextStyle(color: context.colors.textMutted),
+                    ),
                 ],
               ),
             ],

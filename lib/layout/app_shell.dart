@@ -25,6 +25,7 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   String? _activeModuleId;
+  final _openedModuleIds = <String>{};
   final _pinOverrides = <String, bool>{};
   late Future<AuthProfile> _profile;
   bool _isLoggingOut = false;
@@ -40,6 +41,7 @@ class _AppShellState extends State<AppShell> {
   void initState() {
     super.initState();
     _activeModuleId = widget.modules.first?.id;
+    if (_activeModuleId != null) _openedModuleIds.add(_activeModuleId!);
     _profile = widget.authRepository.getProfile();
   }
 
@@ -50,6 +52,12 @@ class _AppShellState extends State<AppShell> {
     if (widget.modules[_activeModuleId]?.screenBuilder == null) {
       _activeModuleId = widget.modules.first?.id;
     }
+    // A new registry/auth graph must not retain screens using old repositories.
+    if (oldWidget.modules != widget.modules ||
+        oldWidget.authRepository != widget.authRepository) {
+      _openedModuleIds.clear();
+    }
+    if (_activeModuleId != null) _openedModuleIds.add(_activeModuleId!);
     if (oldWidget.authRepository != widget.authRepository) {
       _profile = widget.authRepository.getProfile();
     }
@@ -100,6 +108,7 @@ class _AppShellState extends State<AppShell> {
     }
     setState(() {
       _activeModuleId = id;
+      _openedModuleIds.add(id);
     });
   }
 
@@ -114,15 +123,30 @@ class _AppShellState extends State<AppShell> {
   };
 
   Widget currentScreen(BuildContext moduleContext) {
-    final module = widget.modules[_activeModuleId];
-    final builder = module?.screenBuilder;
-    if (builder == null) {
+    final sections = widget.modules.modules
+        .where((module) => module.screenBuilder != null)
+        .toList();
+    final activeIndex = sections.indexWhere((m) => m.id == _activeModuleId);
+    if (activeIndex == -1) {
       return const Center(child: Text('Нет доступных разделов'));
     }
-    // Different sections can return the same widget type, but not share State.
     return KeyedSubtree(
-      key: ValueKey(module!.id),
-      child: builder(moduleContext),
+      key: ValueKey((widget.modules, widget.authRepository)),
+      child: IndexedStack(
+        index: activeIndex,
+        sizing: StackFit.expand,
+        children: [
+          for (final module in sections)
+            TickerMode(
+              key: ValueKey(module.id),
+              enabled: module.id == _activeModuleId,
+              // Keep slots stable; initState runs only on the first visit.
+              child: _openedModuleIds.contains(module.id)
+                  ? Builder(builder: module.screenBuilder!)
+                  : const SizedBox.shrink(),
+            ),
+        ],
+      ),
     );
   }
 
